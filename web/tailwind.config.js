@@ -12,6 +12,9 @@ export default {
                 primary: 'var(--theme-text-primary)',
                 secondary: 'var(--theme-text-secondary)',
             },
+            borderColor: {
+                primary: 'var(--theme-text-primary)',
+            },
             colors: {
                 // background: 'var(--theme-bg-color)',
                 // text: 'var(--theme-text-color)',

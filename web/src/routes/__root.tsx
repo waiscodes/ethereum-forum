@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 
 import { Navbar } from '@/components/Navbar';
 import { AppWrapper } from '@/hooks/context';
+import { Sidebar } from '@/components/Sidebar';
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -12,7 +13,10 @@ function RootComponent() {
     return (
         <AppWrapper>
             <Navbar />
-            <Outlet />
+            <div className="flex">
+                <Sidebar />
+                <Outlet />
+            </div>
             <Toaster
                 expand={true}
                 theme="dark"
@@ -30,7 +34,7 @@ function RootComponent() {
                         boxShadow: 'none',
                     },
                 }}
-            />
+                />
         </AppWrapper>
     );
 }
