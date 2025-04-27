@@ -1,0 +1,78 @@
+use std::{num::NonZero, sync::Arc};
+
+use governor::Quota;
+use opentelemetry::global;
+use poem::{
+    endpoint::StaticFilesEndpoint, get, handler, listener::TcpListener,
+    middleware::{Cors, OpenTelemetryMetrics}, EndpointExt, Route, Server,
+};
+use poem_openapi::{payload::Html, OpenApi, OpenApiService, Tags};
+use ratelimit::GovRateLimitMiddleware;
+use topic::TopicApi;
+use tracing::info;
+use user::UserApi;
+
+use crate::state::AppState;
+// use tracing_mw::TraceId;
+
+pub mod topic;
+pub mod user;
+pub mod ratelimit;
+
+#[derive(Tags)]
+pub enum ApiTags {
+    /// Topic Related Operations
+    Topic,
+    /// User Related Operations
+    User,
+}
+
+fn get_api(state: AppState) -> impl OpenApi {
+    (
+        TopicApi,
+        UserApi,
+    )
+}
+
+pub async fn start_http(state: AppState) {
+    info!("Starting HTTP server");
+    let api_service = OpenApiService::new(get_api(state.clone()), "Ethereum Forum", "0.0.1")
+        .server("http://localhost:3000/api");
+
+    let spec = api_service.spec_endpoint();
+
+    let limiter = GovRateLimitMiddleware::new(
+        Quota::per_minute(NonZero::new(120).unwrap()),
+        Quota::per_minute(NonZero::new(60).unwrap()),
+    );
+
+    let api_service = api_service
+        .with(limiter)
+        // .with(TraceId::new(Arc::new(global::tracer("ethereum-forum"))))
+        .with(OpenTelemetryMetrics::new());
+
+    let path = std::path::Path::new("./www");
+
+    let spa_endpoint = StaticFilesEndpoint::new(path)
+        .show_files_listing()
+        .index_file("index.html")
+        .fallback_to_index();
+
+    let app = Route::new()
+        .nest("/", spa_endpoint)
+        .nest("/openapi.json", spec)
+        .nest("/docs", get(get_openapi_docs))
+        .nest("/api", api_service)
+        .data(state)
+        .with(Cors::new());
+
+    Server::new(TcpListener::bind("0.0.0.0:3000"))
+        .run(app)
+        .await
+        .unwrap();
+}
+
+#[handler]
+async fn get_openapi_docs() -> Html<&'static str> {
+    Html(include_str!("./index.html"))
+}
