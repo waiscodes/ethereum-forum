@@ -12,6 +12,7 @@ pub mod tmp;
 #[async_std::main]
 pub async fn main() -> Result<(), Error> {
     dotenvy::dotenv().ok();
+    tracing_subscriber::fmt::init();
     // let topics = modules::discourse::fetch_latest_topics().await?;
 
     let state = state::AppStateInner::init().await;

@@ -1,4 +1,4 @@
-use crate::{tmp::CacheService, database::Database};
+use crate::{database::Database, modules::ical::{self, ICalConfig}, tmp::CacheService};
 use figment::{providers::Env, Figment};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -12,6 +12,7 @@ pub struct DatabaseConfig {
 
 pub struct AppStateInner {
     pub database: Database,
+    pub ical: Option<ICalConfig>,
 
     //
     pub cache: CacheService,
@@ -27,10 +28,13 @@ impl AppStateInner {
 
         let database = Database::init(&database_config).await;
 
-        let cache = CacheService::new();
+        let cache = CacheService::default();
+
+        let ical = ical::init_ical(Figment::new()).await;
 
         Self {
             database,
+            ical,
             cache,
         }
     }

@@ -1,5 +1,6 @@
 use std::{num::NonZero, sync::Arc};
 
+use events::EventsApi;
 use governor::Quota;
 use opentelemetry::global;
 use poem::{
@@ -17,6 +18,7 @@ use crate::state::AppState;
 
 pub mod topic;
 pub mod user;
+pub mod events;
 pub mod ratelimit;
 
 #[derive(Tags)]
@@ -25,12 +27,15 @@ pub enum ApiTags {
     Topic,
     /// User Related Operations
     User,
+    /// Events Related Operations
+    Events,
 }
 
 fn get_api(state: AppState) -> impl OpenApi {
     (
         TopicApi,
         UserApi,
+        EventsApi,
     )
 }
 

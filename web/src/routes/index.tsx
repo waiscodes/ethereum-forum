@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { LuGithub, LuHeart } from 'react-icons/lu';
 
+import { Meetings } from '@/components/Meetings';
+
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 });
@@ -16,6 +18,7 @@ function RouteComponent() {
           </p>
         </div>
       </div>
+      <Meetings />
       <div className="w-full flex items-center justify-center text-secondary gap-4 text-sm">
         <div className="flex items-center gap-1">
           Made with <LuHeart className="size-4" /> by{' '}
