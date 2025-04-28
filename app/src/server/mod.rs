@@ -1,8 +1,7 @@
-use std::{num::NonZero, sync::Arc};
-
+use std::num::NonZero;
 use events::EventsApi;
 use governor::Quota;
-use opentelemetry::global;
+use opengraph::OpenGraph;
 use poem::{
     endpoint::StaticFilesEndpoint, get, handler, listener::TcpListener,
     middleware::{Cors, OpenTelemetryMetrics}, EndpointExt, Route, Server,
@@ -19,6 +18,7 @@ use crate::state::AppState;
 pub mod topic;
 pub mod user;
 pub mod events;
+pub mod opengraph;
 pub mod ratelimit;
 
 #[derive(Tags)]
@@ -51,6 +51,8 @@ pub async fn start_http(state: AppState) {
         Quota::per_minute(NonZero::new(60).unwrap()),
     );
 
+    let opengraph = OpenGraph::new(&state);
+
     let api_service = api_service
         .with(limiter)
         // .with(TraceId::new(Arc::new(global::tracer("ethereum-forum"))))
@@ -61,7 +63,8 @@ pub async fn start_http(state: AppState) {
     let spa_endpoint = StaticFilesEndpoint::new(path)
         .show_files_listing()
         .index_file("index.html")
-        .fallback_to_index();
+        .fallback_to_index()
+        .with(opengraph);
 
     let app = Route::new()
         .nest("/", spa_endpoint)

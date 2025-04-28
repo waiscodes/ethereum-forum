@@ -59,12 +59,25 @@ impl DiscourseService {
             info!("Received request: {:?}", request);
 
             if let Ok(topic) = fetch_topic(request.topic_id, request.page).await {
+                let existing_topic = Topic::get_by_topic_id(topic.id, &state).await.ok();
+                let worth_fetching_more = existing_topic.is_none() || {
+                    let existing = existing_topic.unwrap();
+                    existing.post_count != topic.posts_count ||
+                    existing.last_post_at.unwrap_or_default() < topic.last_posted_at
+                };
+
+                if !worth_fetching_more {
+                    info!("Topic {:?} is up to date, skipping", topic.id);
+                    continue;
+                }
+
                 if !topic.post_stream.posts.is_empty() {
                     state.discourse.enqueue(request.topic_id, request.page + 1).await;
                 }
 
                 if request.page == 1 {
                     let topic = Topic::from_discourse(&topic);
+
                     match topic.upsert(&state).await {
                         Ok(_) => {
                             info!("Upserted topic: {:?}", topic.topic_id);
