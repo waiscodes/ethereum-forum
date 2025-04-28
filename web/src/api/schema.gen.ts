@@ -135,7 +135,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": components["schemas"]["Post"][];
+                        "application/json; charset=utf-8": components["schemas"]["PostsResponse"];
                     };
                 };
             };
@@ -269,6 +269,11 @@ export interface components {
             cooked?: string;
             post_url?: string;
             extra?: unknown;
+        };
+        /** PostsResponse */
+        PostsResponse: {
+            posts: components["schemas"]["Post"][];
+            has_more: boolean;
         };
         /** Topic */
         Topic: {

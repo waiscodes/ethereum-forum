@@ -12,6 +12,12 @@ use crate::state::AppState;
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct TopicApi;
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct PostsResponse {
+    pub posts: Vec<Post>,
+    pub has_more: bool,
+}
+
 #[OpenApi]
 impl TopicApi {
     /// /topics
@@ -60,15 +66,15 @@ impl TopicApi {
         state: Data<&AppState>,
         #[oai(style = "simple")] topic_id: Path<i32>,
         #[oai(style = "simple")] page: Query<i32>,
-    ) -> Result<Json<Vec<Post>>> {
+    ) -> Result<Json<PostsResponse>> {
         let topic_id = topic_id.0;
         let page = page.0;
 
-        let posts = Post::find_by_topic_id(topic_id, page, &state).await.map_err(|e| {
+        let (posts, has_more) = Post::find_by_topic_id(topic_id, page, &state).await.map_err(|e| {
             tracing::error!("Error finding posts: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        Ok(Json(posts))
+        Ok(Json(PostsResponse { posts, has_more }))
     }
 }

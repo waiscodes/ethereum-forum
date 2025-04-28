@@ -79,17 +79,21 @@ impl Post {
         topic_id: i32,
         page: i32,
         state: &AppState,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    ) -> Result<(Vec<Self>, bool), sqlx::Error> {
         let offset = (page - 1) * 20;
         let posts = query_as!(
             Self,
-            "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 20 OFFSET $2",
+            "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 21 OFFSET $2",
             topic_id,
             offset as i64
         )
         .fetch_all(&state.database.pool)
         .await?;
-        Ok(posts)
+
+        let has_more = posts.len() == 21;
+        let posts = posts.into_iter().take(20).collect();
+
+        Ok((posts, has_more))
     }
 }
 

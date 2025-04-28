@@ -154,9 +154,9 @@ function RouteComponent() {
             <div>Error fetching posts</div>
           ) : (
             <>
-              {data.pages.map((page, i) => (
+              {data.pages?.map((page, i) => (
                 <Fragment key={i}>
-                  {page.map((post) => (
+                  {page.posts?.map((post) => (
                     <TopicPost key={post.post_id} post={post} />
                   ))}
                 </Fragment>
