@@ -2,8 +2,8 @@ import { Link } from '@tanstack/react-router';
 
 export const Sidebar = () => {
     return (
-        <div className="bg-primary p-4 fixed">
-            <nav className="w-screen max-w-xs space-y-2">
+        <div className="bg-primary p-4 xl:fixed">
+            <nav className="w-full xl:w-screen xl:max-w-xs space-y-2">
                 <p className="font-bold w-full border-b-2 border-b-primary pb-1">Navigation</p>
                 <ul>
                     {
