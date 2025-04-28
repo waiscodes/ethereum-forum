@@ -27,7 +27,7 @@ pub async fn fetch_topic(topic_id: TopicId, page: u32) -> Result<DiscourseTopicR
     Ok(parsed)
 }
 
-pub type TopicId = u32;
+pub type TopicId = i32;
 
 #[derive(Debug)]
 pub struct DiscourseTopicIndexRequest {

@@ -13,11 +13,50 @@
     z-index: 0 !important;
 }
 
-:root {
+html.light {
     --theme-bg-primary: #FDF6E3;
     --theme-bg-secondary: #EEE8D5;
     --theme-text-primary: #657B83;
     --theme-text-secondary: #268BD2;
+    --theme-border: #657B83;
+    --theme-border-secondary: #EEE8D5;
+}
+
+html.dark {
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #0D0D0D;
+    --theme-text-primary: #747474;
+    --theme-text-secondary: #268BD2;
+    --theme-border: #242424;
+    --theme-border-secondary: #242424;
+    .github-icon {
+        /* filter: invert(1); */
+        fill: #efefef;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    html {
+        --theme-bg-primary: #FDF6E3;
+        --theme-bg-secondary: #EEE8D5;
+        --theme-text-primary: #657B83;
+        --theme-text-secondary: #268BD2;
+        --theme-border: #657B83;
+        --theme-border-secondary: #EEE8D5;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    html {
+        --theme-bg-primary: #000000;
+        --theme-bg-secondary: #0D0D0D;
+        --theme-text-primary: #747474;
+        --theme-text-secondary: #268BD2;
+        --theme-border: #242424;
+        --theme-border-secondary: #242424;
+        .github-icon {
+            fill: #efefef;
+        }
+    }
 }
 
 @font-face {
@@ -128,6 +167,10 @@ input.input {
 
 .prose {
     @apply whitespace-normal space-y-4 break-words block;
+
+    hr {
+        @apply border-primary;
+    }
 
     h1, h2, h3, h4, h5 {
         @apply font-bold;

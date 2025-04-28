@@ -13,7 +13,8 @@ export default {
                 secondary: 'var(--theme-text-secondary)',
             },
             borderColor: {
-                primary: 'var(--theme-text-primary)',
+                primary: 'var(--theme-border)',
+                secondary: 'var(--theme-border-secondary)',
             },
             colors: {
                 // background: 'var(--theme-bg-color)',

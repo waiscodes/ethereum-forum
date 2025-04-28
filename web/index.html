@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,23 +13,37 @@
     <meta property="og:image" content="/og-preview.png">
     <meta property="og:url" content="https://ethereum.forum">
     <meta property="og:type" content="website">
-    
+
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="ethereum.forum">
     <meta name="twitter:description" content="An aggregate of all things Ethereum">
     <meta name="twitter:image" content="/og-preview.png">
-    
+
     <meta name="theme-color" content="#2d2b29">
     <meta name="theme-color" content="var(--background-color)">
 </head>
-<body className="bg-tertiary">
+
+<body class="bg-primary">
     <div id="root"></div>
-    <!-- <script
-    crossOrigin="anonymous"
-    src="//unpkg.com/react-scan/dist/auto.global.js"
-  ></script> -->
+    <script>
+        /** Load Theme */
+        if (
+            localStorage.getItem('color-theme') === 'dark' ||
+            (!('color-theme' in localStorage) &&
+                window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        window.OG_FAVICON = document
+            .getElementById('favicon')
+            .getAttribute('href');
+    </script>
     <script type="module" src="./src/index.tsx"></script>
     <script defer data-domain="ethereum.forum" src="https://internal.v3x.report/js/script.js"></script>
 </body>
+
 </html>

@@ -39,6 +39,21 @@ impl TopicApi {
         Ok(Json(topic))
     }
 
+    /// /t/:topic_id
+    /// 
+    /// Force refresh a topic
+    #[oai(path = "/t/:topic_id/refresh", method = "post", tag = "ApiTags::Topic")]
+    async fn refresh_topic(&self, state: Data<&AppState>, #[oai(style = "simple")] topic_id: Path<i32>) -> Result<Json<serde_json::Value>> {
+        let topic = Topic::get_by_topic_id(topic_id.0, &state).await.map_err(|e| {
+            tracing::error!("Error getting topic: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        state.discourse.enqueue(topic.topic_id, 1).await;
+
+        Ok(Json(serde_json::json!({})))
+    }
+
     /// /t/:topic_id/posts?page={page}
     ///
     /// Get all data for a topic

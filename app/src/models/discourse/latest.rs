@@ -24,12 +24,12 @@ pub struct DiscourseLatestTopicList {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiscourseLatestTopic {
-    pub id: u32,
+    pub id: i32,
     pub title: String,
     pub fancy_title: String,
     pub slug: String,
-    pub posts_count: u32,
-    pub reply_count: u32,
+    pub posts_count: i32,
+    pub reply_count: i32,
     pub highest_post_number: u32,
     pub image_url: Option<String>,
     // pub created_at: String,
