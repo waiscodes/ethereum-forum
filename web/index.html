@@ -29,10 +29,14 @@
     <div id="root"></div>
     <script>
         /** Load Theme */
-        if (localStorage.getItem('color-theme') === 'dark') {
-            document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('dark', 'light', 'system');
+        const themes = ['dark', 'light', 'system'];
+        const theme = localStorage.getItem('color-theme') || 'system';
+
+        if (themes.includes(theme)) {
+            document.documentElement.classList.add(theme);
         } else {
-            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('system');
         }
 
         /** Load Prose Width */
