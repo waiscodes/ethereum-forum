@@ -79,7 +79,7 @@ function RouteComponent() {
                 Created
               </div>
               <div className="text-base">
-                {formatDistanceToNow(new Date(topic?.created_at ?? '')).replace('about ', '')} ago
+                {topic?.created_at && formatDistanceToNow(new Date(topic.created_at)).replace('about ', '')} ago
               </div>
             </li>
             <li className="flex items-center gap-1 mx-1.5 justify-between">
@@ -87,7 +87,7 @@ function RouteComponent() {
                 Last Post
               </div>
               <div className="text-base">
-                {formatDistanceToNow(new Date(topic?.last_post_at ?? '')).replace('about ', '')} ago
+                {topic?.last_post_at && formatDistanceToNow(new Date(topic.last_post_at)).replace('about ', '')} ago
               </div>
             </li>
             <li className="flex items-center gap-1 mx-1.5 justify-between">
