@@ -224,4 +224,23 @@ input.input {
             @apply flex;
         }
     }
+
+    .md-table {
+        @apply overflow-x-auto;
+        table {
+            @apply w-screen max-w-fit;
+            thead {
+                @apply border-b-2 text-left border-b-primary;
+                th {
+                    @apply px-1.5;
+                }
+            }
+            td {
+                @apply whitespace-nowrap px-1 py-1;
+                img {
+                    @apply inline-block;
+                }
+            }
+        }
+    }
 }
