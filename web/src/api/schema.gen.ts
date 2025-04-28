@@ -134,9 +134,24 @@ export interface components {
             /** Format: date-time */
             start?: string;
             occurance: components["schemas"]["EventOccurrence"];
+            meeting?: components["schemas"]["Meeting"];
         };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
+        Meeting: components["schemas"]["Meeting_ZoomMeetingData"];
+        Meeting_ZoomMeetingData: {
+            /**
+             * @example Zoom
+             * @enum {string}
+             */
+            type: "Zoom";
+        } & components["schemas"]["ZoomMeetingData"];
+        /** ZoomMeetingData */
+        ZoomMeetingData: {
+            link: string;
+            meeting_id?: string;
+            passcode?: string;
+        };
     };
     responses: never;
     parameters: never;

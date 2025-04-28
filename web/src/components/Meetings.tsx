@@ -1,7 +1,8 @@
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { FiRefreshCcw } from 'react-icons/fi';
+import { SiZoom } from 'react-icons/si';
 
-import { useEvents } from '@/api/events';
+import { Meeting, useEvents } from '@/api/events';
 
 export const Meetings = () => {
     const { data } = useEvents();
@@ -20,12 +21,34 @@ export const Meetings = () => {
                             </div>
                         </div>
                         <div dangerouslySetInnerHTML={{ __html: event.description ?? '' }} className="grow max-h-40 overflow-y-auto" />
-                        <p className="text-sm text-gray-500 text-end">
-                            {event.start && formatDistanceToNow(parseISO(event.start), { addSuffix: true })}
-                        </p>
+                        <div className="flex justify-between flex-wrap">
+                            <div>
+                                {
+                                    event.meeting && (
+                                        <MeetingLink meeting={event.meeting} />
+                                    )
+                                }
+                            </div>
+                            <p className="text-sm text-gray-500 text-end">
+                                {event.start && formatDistanceToNow(parseISO(event.start), { addSuffix: true })}
+                            </p>
+                        </div>
                     </div>
                 ))
             }
         </div>
+    );
+};
+
+const platformToIcon = {
+    Zoom: <SiZoom />
+};
+
+export const MeetingLink = ({ meeting }: { meeting: Meeting }) => {
+    return (
+        <a href={meeting.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-primary px-1.5 rounded-sm bg-primary">
+            {platformToIcon[meeting.type]}
+            <span className="text-sm">{meeting.type}</span>
+        </a>
     );
 };

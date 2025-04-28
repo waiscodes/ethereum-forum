@@ -4,6 +4,7 @@ import { useApi } from './api';
 import { components } from './schema.gen';
 
 export type CalendarEvent = components['schemas']['CalendarEvent'];
+export type Meeting = components['schemas']['Meeting'];
 
 export const getEvents = () => queryOptions({
     queryKey: ['events'],
