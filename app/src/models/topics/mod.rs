@@ -154,4 +154,15 @@ impl Topic {
         .await?;
         Ok(topic)
     }
+
+    pub async fn get_first_post(&self, state: &AppState) -> Result<Post, sqlx::Error> {
+        let post = query_as!(
+            Post,
+            "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 1",
+            self.topic_id
+        )
+        .fetch_one(&state.database.pool)
+        .await?;
+        Ok(post)
+    }
 }
