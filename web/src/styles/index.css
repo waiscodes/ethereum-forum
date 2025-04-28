@@ -117,3 +117,7 @@ input.input {
         transform: scale(1);
     }
 }
+
+.right-bar {
+    @apply md:fixed right-0 w-screen md:max-w-[340px] h-full px-4 py-2;
+}

@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+
 export const Sidebar = () => {
     return (
         <div className="bg-primary p-4 fixed">
@@ -30,7 +32,7 @@ export const Sidebar = () => {
                             }
                         ].map((item) => (
                             <li key={item.href}>
-                                <a href={item.href} className="flex justify-between hover:bg-secondary px-2 py-0.5">
+                                <Link to={item.href} className="flex justify-between hover:bg-secondary px-2 py-0.5">
                                     <span>
                                         {item.title}
                                     </span>
@@ -41,7 +43,7 @@ export const Sidebar = () => {
                                             </span>
                                         )
                                     }
-                                </a>
+                                </Link>
                             </li>
                         ))
                     }
