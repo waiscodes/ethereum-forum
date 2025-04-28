@@ -83,10 +83,10 @@ where
                 &format!("property=\"og:title\" content=\"{}\"", title),
             );
 
-            let regex = Regex::new(r#"property="twitter:title" content="[^"]*?""#).unwrap();
+            let regex = Regex::new(r#"name="twitter:title" content="[^"]*?""#).unwrap();
             let body = regex.replace(
                 &body,
-                &format!("property=\"twitter:title\" content=\"{}\"", title),
+                &format!("name=\"twitter:title\" content=\"{}\"", title),
             );
 
             let regex = Regex::new(r#"<title>[^<]*?</title>"#).unwrap();
