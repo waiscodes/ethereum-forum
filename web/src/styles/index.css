@@ -183,7 +183,7 @@ input.input {
     }
 
     p {
-        @apply whitespace-normal block break-all;
+        @apply whitespace-normal block break-words;
         * {
             @apply whitespace-normal inline-block;
         }

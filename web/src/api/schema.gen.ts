@@ -75,7 +75,31 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        /**
+         * /t/:topic_id
+         * @description Force refresh a topic
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    topic_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": unknown;
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

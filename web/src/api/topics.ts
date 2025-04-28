@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 
 import { useApi } from './api';
 import { components } from './schema.gen';
@@ -32,6 +32,19 @@ export const getTopic = (topicId: string) => queryOptions({
 });
 
 export const useTopic = (topicId: string) => useQuery(getTopic(topicId));
+
+export const useTopicRefresh = (topicId: string) => useMutation({
+    mutationFn: async () => {
+        const response = await useApi('/t/{topic_id}', 'post', {
+            path: {
+                topic_id: Number(topicId),
+            },
+        });
+
+        return response.data;
+    },
+});
+
 
 export const getPosts = (topicId: string, page: number) => queryOptions({
     queryKey: ['posts', topicId, page],

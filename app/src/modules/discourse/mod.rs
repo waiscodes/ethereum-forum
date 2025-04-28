@@ -68,6 +68,7 @@ impl DiscourseService {
 
                 if !worth_fetching_more {
                     info!("Topic {:?} is up to date, skipping", topic.id);
+                    self.topic_lock.lock().await.remove(&(request.topic_id, request.page));
                     continue;
                 }
 
@@ -97,9 +98,8 @@ impl DiscourseService {
                     }
                 }
             }
-
-            let key = (request.topic_id, request.page);
-            self.topic_lock.lock().await.remove(&key);
+            
+            self.topic_lock.lock().await.remove(&(request.topic_id, request.page));
         }
     }
 
@@ -115,6 +115,8 @@ impl DiscourseService {
                     page,
                 })
                 .await;
+        } else {
+            info!("Topic {:?} is already enqueued, skipping", topic_id);
         }
     }
 }

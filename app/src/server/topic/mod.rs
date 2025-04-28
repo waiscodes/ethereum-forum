@@ -3,6 +3,7 @@ use poem_openapi::param::{Path, Query};
 use poem_openapi::{Object, OpenApi, payload::Json};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 use crate::models::topics::{Post, Topic};
 use crate::server::ApiTags;
@@ -42,14 +43,10 @@ impl TopicApi {
     /// /t/:topic_id
     /// 
     /// Force refresh a topic
-    #[oai(path = "/t/:topic_id/refresh", method = "post", tag = "ApiTags::Topic")]
+    #[oai(path = "/t/:topic_id", method = "post", tag = "ApiTags::Topic")]
     async fn refresh_topic(&self, state: Data<&AppState>, #[oai(style = "simple")] topic_id: Path<i32>) -> Result<Json<serde_json::Value>> {
-        let topic = Topic::get_by_topic_id(topic_id.0, &state).await.map_err(|e| {
-            tracing::error!("Error getting topic: {:?}", e);
-            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-        })?;
-
-        state.discourse.enqueue(topic.topic_id, 1).await;
+        info!("Refreshing topic: {:?}", topic_id.0);
+        state.discourse.enqueue(topic_id.0, 1).await;
 
         Ok(Json(serde_json::json!({})))
     }

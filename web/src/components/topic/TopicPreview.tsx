@@ -5,6 +5,7 @@ import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 
 import { Topic } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
+import { formatBigNumber } from '@/util/numbers';
 
 type Participant = {
     id: number;
@@ -47,7 +48,7 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
                 {
                     participants && participants.length > 8 && (
                         <div className="text-sm text-gray-500 bg-primary py-0.5 rounded-md px-1 leading-4">
-                            +{participants.length - 8}
+                            +{formatBigNumber(participants.length - 8)}
                         </div>
                     )
                 }
@@ -58,19 +59,19 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
                     <div className='flex items-center gap-1'>
                         <FiEye />
                         {
-                            topic?.view_count
+                            formatBigNumber(topic?.view_count ?? 0)
                         }
                     </div>
                     <div className='flex items-center gap-1'>
                         <FiHeart />
                         {
-                            topic?.like_count
+                            formatBigNumber(topic?.like_count ?? 0)
                         }
                     </div>
                     <div className='flex items-center gap-1'>
                         <FiMessageSquare />
                         {
-                            topic?.post_count
+                            formatBigNumber(topic?.post_count ?? 0)
                         }
                     </div>
                 </div>
