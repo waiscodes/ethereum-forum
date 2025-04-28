@@ -29,14 +29,16 @@
     <div id="root"></div>
     <script>
         /** Load Theme */
-        if (localStorage.getItem('color-theme') === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        const theme = localStorage.getItem('color-theme') || 'system';
+        const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        document.documentElement.classList.add(
+            theme === 'system' ? (isDarkMode ? 'dark' : 'light') : theme
+        );
 
         /** Load Prose Width */
-        if (localStorage.getItem('prose-width') === 'prose-wide') {
+        const proseWidth = localStorage.getItem('prose-width');
+        if (proseWidth === 'prose-wide') {
             document.documentElement.classList.add('prose-wide');
         }
     </script>
