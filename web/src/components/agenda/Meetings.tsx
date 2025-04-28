@@ -1,8 +1,10 @@
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { FiRefreshCcw } from 'react-icons/fi';
 import { SiZoom } from 'react-icons/si';
 
 import { Meeting, useEvents } from '@/api/events';
+
+import { TimeAgo } from '../TimeAgo';
 
 export const Meetings = () => {
     const { data } = useEvents();
@@ -30,7 +32,7 @@ export const Meetings = () => {
                                 }
                             </div>
                             <p className="text-sm text-gray-500 text-end">
-                                {event.start && formatDistanceToNow(parseISO(event.start), { addSuffix: true })}
+                                {event.start && <TimeAgo date={parseISO(event.start)} />}
                             </p>
                         </div>
                     </div>

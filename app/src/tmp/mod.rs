@@ -11,7 +11,7 @@ pub struct CacheService {
 impl Default for CacheService {
     fn default() -> Self {
         Self {
-            ical_cache: Cache::builder().time_to_live(Duration::from_secs(60 * 60 * 24)).build(),
+            ical_cache: Cache::builder().time_to_live(Duration::from_secs(60 * 60)).build(),
         }
     }
 }

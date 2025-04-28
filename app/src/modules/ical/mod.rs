@@ -1,5 +1,5 @@
 use anyhow::Error;
-use chrono::{Duration, DurationRound, Utc};
+use chrono::{Datelike, Duration, DurationRound, Utc};
 use figment::{providers::Env, Figment};
 use icalendar::{Calendar, CalendarComponent};
 use serde::Deserialize;
@@ -30,8 +30,8 @@ impl ICalConfig {
 
         let cal: Calendar = body.parse().unwrap();
         let mut events: Vec<CalendarEvent> = Vec::new();
-        // now rounded down to the last half an hour
-        let now = Utc::now().duration_round(Duration::minutes(30)).unwrap();
+        // now rounded down to the start of the day
+        let now = Utc::now().date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc();
         for calendar in cal.components {
             if let CalendarComponent::Event(event) = calendar {
                 let parsed_events = match CalendarEvent::from_event(event) {

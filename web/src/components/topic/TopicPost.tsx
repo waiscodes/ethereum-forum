@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { formatDistanceToNow } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { FC } from 'react';
 import { FiHeart, FiLink } from 'react-icons/fi';
 import { LuHammer, LuShield } from 'react-icons/lu';
@@ -7,6 +7,7 @@ import { SiEthereum } from 'react-icons/si';
 
 import { Post } from '@/api/topics';
 
+import { TimeAgo } from '../TimeAgo';
 import { Tooltip } from '../Tooltip';
 import { TrustLevel } from '../TrustLevel';
 import { Prose } from './Prose';
@@ -63,7 +64,7 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     </div>
                 </div>
                 <div className="text-end font-bold text-sm">
-                    {post.updated_at ? formatDistanceToNow(post.updated_at) : ''} ago
+                    {post.updated_at ? <TimeAgo date={parseISO(post.updated_at)} /> : ''}
                 </div>
             </div>
             <Prose content={post.cooked ?? ''} topicId={post.topic_id} postId={post.post_id} />

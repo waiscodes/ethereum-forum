@@ -1,11 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { SiZoom } from 'react-icons/si';
 
-import { useEvents } from '@/api/events';
+import { useEventsUpcoming } from '@/api/events';
+
+import { TimeAgo } from '../TimeAgo';
 
 export const ProtocolAgendaUpcoming = () => {
-    const { data } = useEvents();
+    const { data } = useEventsUpcoming();
 
     return (
         <div className="space-y-1.5">
@@ -22,7 +24,7 @@ export const ProtocolAgendaUpcoming = () => {
                                     {event.meeting?.type === 'Zoom' && <SiZoom className="size-5" />}
                                 </div>
                                 <p className="text-sm flex-1 whitespace-nowrap text-gray-500 text-end">
-                                    {event.start && formatDistanceToNow(parseISO(event.start), { addSuffix: true }).replace('about ', '')}
+                                    {event.start && <TimeAgo date={parseISO(event.start)} />}
                                 </p>
                             </Link>
                         </li>

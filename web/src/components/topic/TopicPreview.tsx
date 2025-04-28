@@ -1,11 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { formatDistanceToNow } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { FC } from 'react';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 
 import { Topic } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
 import { formatBigNumber } from '@/util/numbers';
+
+import { TimeAgo } from '../TimeAgo';
 
 type Participant = {
     id: number;
@@ -77,7 +79,7 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
                 </div>
 
                 <div>
-                    {topic.last_post_at && formatDistanceToNow(new Date(topic.last_post_at)).replace('about ', '')} ago
+                    {topic.last_post_at && <TimeAgo date={parseISO(topic.last_post_at)} />}
                 </div>
             </div>
         </Link>

@@ -11,8 +11,28 @@ export const getEvents = () => queryOptions({
     queryFn: async () => {
         const response = await useApi('/events', 'get', {});
 
-        return response.data as CalendarEvent[];
+        const events = response.data as CalendarEvent[];
+
+        return events;
     },
+    refetchInterval: 1000 * 60,
 });
 
 export const useEvents = () => useQuery(getEvents());
+
+export const useEventsUpcoming = () => {
+    const { data: events, ...other } = useEvents();
+
+    const now = new Date();
+    const now_floor_hour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
+
+    const data = events?.filter((event) => {
+        if (!event.start) return false;
+
+        const event_start = new Date(event.start);
+
+        return event_start >= now_floor_hour;
+    });
+
+    return { data, ...other };
+};

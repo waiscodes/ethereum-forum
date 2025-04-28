@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import classNames from 'classnames';
-import { formatDistanceToNow } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 import { LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
 
 import { usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
+import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
 import { decodeCategory } from '@/util/category';
 import { formatBigNumber } from '@/util/numbers';
@@ -81,7 +82,7 @@ function RouteComponent() {
                 Created
               </div>
               <div className="text-base">
-                {topic?.created_at && formatDistanceToNow(new Date(topic.created_at)).replace('about ', '')} ago
+                {topic?.created_at && <TimeAgo date={parseISO(topic.created_at)} />}
               </div>
             </li>
             <li className="flex items-center gap-1 px-1.5 justify-between">
@@ -89,7 +90,7 @@ function RouteComponent() {
                 Last Post
               </div>
               <div className="text-base">
-                {topic?.last_post_at && formatDistanceToNow(new Date(topic.last_post_at)).replace('about ', '')} ago
+                {topic?.last_post_at && <TimeAgo date={parseISO(topic.last_post_at)} />}
               </div>
             </li>
             <li className="flex items-center gap-1 px-1.5 justify-between">
