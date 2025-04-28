@@ -207,6 +207,49 @@ input.input {
             h3 {
                 @apply font-bold text-secondary;
             }
+            .github-row {
+                @apply flex items-center gap-2;
+
+                .github-icon-container {
+                    > svg {
+                        @apply size-12;
+                    }
+                }
+                .github-info-container {
+                    @apply grow;
+
+                    .branches {
+                        @apply flex items-center gap-2;
+                        code {
+                            @apply bg-primary py-0.5 leading-4 text-sm px-1 rounded-md;
+                        }
+                    }
+                    .github-info {
+                        @apply flex items-center gap-2 w-full;
+                        .date {
+                            @apply grow italic;
+                        }
+                        .user {
+                            a {
+                                @apply flex justify-center items-center gap-1;
+                                img {
+                                    @apply w-6 h-6;
+                                }                
+                            }
+                        }
+                        .lines {
+                            a {
+                                .added {
+                                    @apply text-green-500;
+                                }
+                                .removed {
+                                    @apply text-red-500;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     pre {
