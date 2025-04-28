@@ -179,6 +179,13 @@ input.input {
 .prose {
     @apply whitespace-normal space-y-4 break-words block;
 
+    img {
+        @apply inline-block;
+        &.emoji {
+            @apply size-4 -mt-1;
+        }
+    }
+
     hr {
         @apply border-primary;
     }
