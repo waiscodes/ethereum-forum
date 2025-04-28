@@ -150,7 +150,14 @@ impl DiscourseService {
         // trigger once on startup and then at exactly every round 30 minute mark cron style
 
         loop {
-            self.fetch_latest().await.unwrap();
+            match self.fetch_latest().await {
+                Ok(_) => {
+                    info!("Fetched latest topics");
+                }
+                Err(e) => {
+                    error!("Error fetching latest topics: {:?}", e);
+                }
+            }
 
             let now = Utc::now();
             let next = now.duration_round_up(TimeDelta::minutes(30)).unwrap();
