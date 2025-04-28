@@ -6,8 +6,10 @@ import { ThemeSwitcher } from './preferences/ThemeSwitcher';
 export const Sidebar = () => {
     return (
         <div className="bg-primary p-4 xl:fixed space-y-2">
-            <nav className="w-full xl:w-screen xl:max-w-xs space-y-2">
-                <p className="font-bold w-full border-b border-b-primary pb-1 mx-1.5">Navigation</p>
+            <nav className="w-full xl:w-screen xl:max-w-xs space-y-1.5">
+                <div className="px-1.5">
+                    <p className="font-bold w-full border-b border-b-primary pb-1">Navigation</p>
+                </div>
                 <ul>
                     {
                         [

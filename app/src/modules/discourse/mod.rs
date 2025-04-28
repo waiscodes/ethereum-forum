@@ -146,9 +146,8 @@ impl DiscourseService {
         Ok(())
     }
 
+    // trigger once on startup and then at exactly every round 30 minute mark cron style
     pub async fn fetch_periodically(&self) {
-        // trigger once on startup and then at exactly every round 30 minute mark cron style
-
         loop {
             match self.fetch_latest().await {
                 Ok(_) => {

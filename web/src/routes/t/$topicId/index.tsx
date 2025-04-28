@@ -56,8 +56,10 @@ function RouteComponent() {
   return (
     <>
       <div className="right-bar space-y-4">
-        <div>
-          <h3 className="font-bold w-full border-b border-b-primary pb-1 mx-1.5">Thread Info</h3>
+        <div className="space-y-1.5">
+          <div className="px-1.5">
+            <h3 className="font-bold w-full border-b border-b-primary pb-1">Thread Info</h3>
+          </div>
           <ul>
             {creator && (
               <li className="flex items-center gap-1 mx-1.5 justify-between">
@@ -74,7 +76,7 @@ function RouteComponent() {
                 </a>
               </li>
             )}
-            <li className="flex items-center gap-1 mx-1.5 justify-between">
+            <li className="flex items-center gap-1 px-1.5 justify-between">
               <div className="text-base">
                 Created
               </div>
@@ -82,7 +84,7 @@ function RouteComponent() {
                 {topic?.created_at && formatDistanceToNow(new Date(topic.created_at)).replace('about ', '')} ago
               </div>
             </li>
-            <li className="flex items-center gap-1 mx-1.5 justify-between">
+            <li className="flex items-center gap-1 px-1.5 justify-between">
               <div className="text-base">
                 Last Post
               </div>
@@ -90,7 +92,7 @@ function RouteComponent() {
                 {topic?.last_post_at && formatDistanceToNow(new Date(topic.last_post_at)).replace('about ', '')} ago
               </div>
             </li>
-            <li className="flex items-center gap-1 mx-1.5 justify-between">
+            <li className="flex items-center gap-1 px-1.5 justify-between">
               <div className="text-base">
                 Source
               </div>
@@ -103,8 +105,10 @@ function RouteComponent() {
             </li>
           </ul>
         </div>
-        <div>
-          <h3 className="font-bold w-full border-b border-b-primary pb-1 ml-1.5">Related Links</h3>
+        <div className="space-y-1.5">
+          <div className="px-1.5">
+            <h3 className="font-bold w-full border-b border-b-primary pb-1">Related Links</h3>
+          </div>
           <ul>
             {
               relevant_links?.sort((a, b) => b.clicks - a.clicks).map((link) => (
@@ -198,7 +202,7 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
   }
 
   return (
-    <a href={link.url} target="_blank" rel="noreferrer" className="flex justify-between hover:bg-secondary pl-1.5 gap-3 items-center">
+    <a href={link.url} target="_blank" rel="noreferrer" className="flex justify-between hover:bg-secondary px-1.5 gap-3 items-center">
       <div className="w-full flex items-center gap-1 truncate">
         {icon && <div className="size-4 text-sm">{icon}</div>}
         <div className="truncate">

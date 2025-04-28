@@ -61,12 +61,12 @@ html.dark {
 
 html {
     .prose-width {
-        @apply max-w-[690px];
+        @apply max-w-[690px] px-5 md:px-0;
     }
 }
 html.prose-wide {
     .prose-width {
-        @apply max-w-[1032px];
+        @apply max-w-[1032px] px-5 md:px-0;
     }
 }
 
@@ -169,7 +169,7 @@ input.input {
 }
 
 .right-bar {
-    @apply xl:fixed right-0 w-screen xl:max-w-[340px] h-full px-4 py-2;
+    @apply xl:fixed right-0 w-screen xl:max-w-[340px] h-full p-4;
 }
 
 .post {
