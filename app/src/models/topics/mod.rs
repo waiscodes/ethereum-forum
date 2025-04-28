@@ -139,4 +139,15 @@ impl Topic {
 
         Ok(topics)
     }
+
+    pub async fn get_by_topic_id(topic_id: i32, state: &AppState) -> Result<Self, sqlx::Error> {
+        let topic = query_as!(
+            Self,
+            "SELECT * FROM topics WHERE topic_id = $1",
+            topic_id
+        )
+        .fetch_one(&state.database.pool)
+        .await?;
+        Ok(topic)
+    }
 }

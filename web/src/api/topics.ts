@@ -18,6 +18,21 @@ export const getTopics = () => queryOptions({
 
 export const useTopics = () => useQuery(getTopics());
 
+export const getTopic = (topicId: string) => queryOptions({ 
+    queryKey: ['topic', topicId],
+    queryFn: async () => {
+        const response = await useApi('/t/{topic_id}', 'get', {
+            path: {
+                topic_id: Number(topicId),
+            },
+        });
+
+        return response.data;
+    },
+});
+
+export const useTopic = (topicId: string) => useQuery(getTopic(topicId));
+
 export const getPosts = (topicId: string, page: number) => queryOptions({
     queryKey: ['posts', topicId, page],
     queryFn: async () => {

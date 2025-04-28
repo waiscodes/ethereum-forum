@@ -123,7 +123,50 @@ input.input {
 }
 
 .prose {
-    @apply whitespace-normal space-y-4;
+    @apply whitespace-normal space-y-4 break-words block;
+
+    h1, h2, h3, h4, h5 {
+        @apply font-bold;
+        a {
+            scroll-margin-top: 100px;
+        }
+        a:before {
+            @apply content-['#'] pr-1;
+        }
+    }
+
+    p {
+        @apply whitespace-normal block break-all;
+        * {
+            @apply whitespace-normal inline-block;
+        }
+    }
+    p, li {
+        code {
+            @apply bg-secondary px-1 rounded-md inline py-0.5 break-all;
+        }
+    }
+
+    ul {
+        @apply list-disc list-outside pl-6;
+        li {
+            p {
+                @apply inline;
+            }
+        }
+    }
+    ol {
+        @apply list-decimal list-outside pl-6;
+        li {
+            p {
+                @apply inline;
+            }
+        }
+    }
+
+    em {
+        @apply bg-secondary px-1 rounded-md inline;
+    }
 
     a:not(.mention) {
         @apply text-secondary hover:underline;
@@ -136,6 +179,9 @@ input.input {
         @apply border-l-2 border-primary bg-secondary py-2 px-3 space-y-2 whitespace-normal;
         p {
             @apply whitespace-pre-wrap;
+        }
+        a.mention {
+            @apply bg-primary;
         }
     }
     aside {

@@ -26,6 +26,19 @@ impl TopicApi {
         Ok(Json(topics))
     }
 
+    /// /t/:topic_id
+    ///
+    /// Get a topic
+    #[oai(path = "/t/:topic_id", method = "get", tag = "ApiTags::Topic")]
+    async fn get_topic(&self, state: Data<&AppState>, #[oai(style = "simple")] topic_id: Path<i32>) -> Result<Json<Topic>> {
+        let topic = Topic::get_by_topic_id(topic_id.0, &state).await.map_err(|e| {
+            tracing::error!("Error getting topic: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(topic))
+    }
+
     /// /t/:topic_id/posts?page={page}
     ///
     /// Get all data for a topic

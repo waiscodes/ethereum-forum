@@ -42,6 +42,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/t/{topic_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /t/:topic_id
+         * @description Get a topic
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    topic_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Topic"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/t/{topic_id}/posts": {
         parameters: {
             query?: never;
