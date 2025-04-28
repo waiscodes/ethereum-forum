@@ -29,7 +29,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": unknown;
+                        "application/json; charset=utf-8": components["schemas"]["Topic"][];
                     };
                 };
             };
@@ -200,8 +200,31 @@ export interface components {
             post_number: number;
             /** Format: date-time */
             updated_at?: string;
+            /** Format: date-time */
+            created_at?: string;
             cooked?: string;
             post_url?: string;
+            extra?: unknown;
+        };
+        /** Topic */
+        Topic: {
+            /** Format: int32 */
+            topic_id: number;
+            title: string;
+            slug: string;
+            /** Format: int32 */
+            post_count: number;
+            /** Format: int32 */
+            view_count: number;
+            /** Format: int32 */
+            like_count: number;
+            image_url?: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_post_at?: string;
+            /** Format: date-time */
+            bumped_at?: string;
             extra?: unknown;
         };
         /** ZoomMeetingData */

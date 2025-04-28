@@ -123,23 +123,23 @@ input.input {
 }
 
 .prose {
-    @apply whitespace-pre-wrap;
+    @apply whitespace-normal space-y-4;
 
     a:not(.mention) {
         @apply text-secondary hover:underline;
     }
     a.mention {
-        @apply bg-primary px-1 rounded-md;
+        @apply bg-secondary px-1 rounded-md;
     }
 
     blockquote {
-        @apply border-l-2 border-primary bg-primary py-2 px-3 space-y-2 whitespace-normal;
+        @apply border-l-2 border-primary bg-secondary py-2 px-3 space-y-2 whitespace-normal;
         p {
             @apply whitespace-pre-wrap;
         }
     }
     aside {
-        @apply bg-primary border border-primary whitespace-normal;
+        @apply bg-secondary border border-primary whitespace-normal;
         .title {
             @apply text-secondary flex items-center whitespace-pre-wrap px-2 py-1 border-b border-b-primary;
         }
@@ -160,13 +160,13 @@ input.input {
         }
     }
     pre {
-        @apply bg-primary border border-primary p-4 overflow-x-auto;
+        @apply bg-secondary border border-primary p-4 overflow-x-auto;
         code {
-            @apply bg-primary;
+            @apply bg-secondary;
         }
     }
     .lightbox-wrapper {
-        @apply bg-primary border border-primary gap-2;
+        @apply bg-secondary border border-primary gap-2;
         svg {
             @apply w-6 h-6 fill-neutral-100;
         }

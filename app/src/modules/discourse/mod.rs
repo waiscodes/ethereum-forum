@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc};
 
 use crate::{
-    models::{discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse}, topics::Post},
+    models::{discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse}, topics::{Post, Topic}},
     state::AppState,
 };
 use anyhow::Error;
@@ -61,6 +61,16 @@ impl DiscourseService {
             if let Ok(topic) = fetch_topic(request.topic_id, request.page).await {
                 if !topic.post_stream.posts.is_empty() {
                     state.discourse.enqueue(request.topic_id, request.page + 1).await;
+                }
+
+                if request.page == 1 {
+                    let topic = Topic::from_discourse(&topic);
+                    match topic.upsert(&state).await {
+                        Ok(_) => {
+                            info!("Upserted topic: {:?}", topic.topic_id);
+                        }
+                        Err(e) => error!("Error upserting topic: {:?}", e),
+                    }
                 }
 
                 // found topic

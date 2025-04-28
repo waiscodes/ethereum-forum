@@ -4,7 +4,7 @@ use poem_openapi::{Object, OpenApi, payload::Json};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use crate::models::topics::Post;
+use crate::models::topics::{Post, Topic};
 use crate::server::ApiTags;
 use crate::state::AppState;
 
@@ -17,17 +17,13 @@ impl TopicApi {
     ///
     /// List topics
     #[oai(path = "/topics", method = "get", tag = "ApiTags::Topic")]
-    async fn list(&self, state: Data<&AppState>) -> Result<Json<serde_json::Value>> {
-        // let party = Party::create(&user.user_id, state.0).await.map_err(|e| {
-        //     tracing::error!("Error creating party: {:?}", e);
-        //     poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-        // })?;
+    async fn list(&self, state: Data<&AppState>) -> Result<Json<Vec<Topic>>> {
+        let topics = Topic::get_by_latest_post_at(&state).await.map_err(|e| {
+            tracing::error!("Error getting topics: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
 
-        // Ok(Json(PartyCreateResponse {
-        //     id: party.party_id,
-        //     created_at: party.created_at.to_rfc3339(),
-        // }))
-        Ok(Json(serde_json::Value::Null))
+        Ok(Json(topics))
     }
 
     /// /t/:topic_id/posts?page={page}

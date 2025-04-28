@@ -5,6 +5,18 @@ import { components } from './schema.gen';
 
 // Get the Post type from schema
 export type Post = components['schemas']['Post'];
+export type Topic = components['schemas']['Topic'];
+
+export const getTopics = () => queryOptions({
+    queryKey: ['topics'],
+    queryFn: async () => {
+        const response = await useApi('/topics', 'get', {});
+
+        return response.data;
+    },
+});
+
+export const useTopics = () => useQuery(getTopics());
 
 export const getPosts = (topicId: string, page: number) => queryOptions({
     queryKey: ['posts', topicId, page],

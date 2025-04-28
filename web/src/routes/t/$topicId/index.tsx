@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { Fragment } from 'react/jsx-runtime';
 
 import { usePostsInfinite } from '@/api/topics';
+import { TopicPost } from '@/components/topic/TopicPost';
 
 export const Route = createFileRoute('/t/$topicId/')({
   component: RouteComponent,
@@ -9,10 +11,10 @@ export const Route = createFileRoute('/t/$topicId/')({
 function RouteComponent() {
   const { topicId } = Route.useParams();
 
-  const { 
-    data, 
-    fetchNextPage, 
-    hasNextPage, 
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
     isFetchingNextPage,
     status
   } = usePostsInfinite(topicId);
@@ -20,7 +22,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto w-full max-w-[690px] pt-8 px-2 space-y-4">
       <h1 className="">topic/<b>{topicId}</b></h1>
-      <div className="space-y-4 pb-10">
+      <div className="space-y-8 pb-10">
         {status === 'pending' ? (
           <div>Loading...</div>
         ) : status === 'error' ? (
@@ -28,14 +30,11 @@ function RouteComponent() {
         ) : (
           <>
             {data.pages.map((page, i) => (
-              <div key={i} className="space-y-4">
+              <Fragment key={i}>
                 {page.map((post) => (
-                  <div key={post.post_id} className="card">
-                    <div>{post.user_id}</div>
-                    <div dangerouslySetInnerHTML={{ __html: post.cooked ?? '' }} className="prose" />
-                  </div>
+                  <TopicPost key={post.post_id} post={post} />
                 ))}
-              </div>
+              </Fragment>
             ))}
             <div className="mt-4 flex justify-center">
               <button
@@ -46,8 +45,8 @@ function RouteComponent() {
                 {isFetchingNextPage
                   ? 'Loading more...'
                   : hasNextPage
-                  ? 'Load More'
-                  : 'No more posts'}
+                    ? 'Load More'
+                    : 'No more posts'}
               </button>
             </div>
           </>
