@@ -144,6 +144,18 @@ impl Topic {
         Ok(topics)
     }
 
+    // order by views and require that last_post_at is within 14 days
+    pub async fn get_by_trending(state: &AppState) -> Result<Vec<Self>, sqlx::Error> {
+        let topics = query_as!(
+            Self,
+            "SELECT * FROM topics WHERE last_post_at > NOW() - INTERVAL '14 days' ORDER BY view_count DESC LIMIT 20"
+        )
+        .fetch_all(&state.database.pool)
+        .await?;
+
+        Ok(topics)
+    }
+
     pub async fn get_by_topic_id(topic_id: i32, state: &AppState) -> Result<Self, sqlx::Error> {
         let topic = query_as!(
             Self,

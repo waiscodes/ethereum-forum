@@ -16,7 +16,18 @@ export const getTopics = () => queryOptions({
     },
 });
 
-export const useTopics = () => useQuery(getTopics());
+export const useTopicsLatest = () => useQuery(getTopics());
+
+export const getTopicsTrending = () => queryOptions({
+    queryKey: ['topics', 'trending'],
+    queryFn: async () => {
+        const response = await useApi('/topics/trending', 'get', {});
+
+        return response.data;
+    },
+});
+
+export const useTopicsTrending = () => useQuery(getTopicsTrending());
 
 export const getTopic = (topicId: string) => queryOptions({ 
     queryKey: ['topic', topicId],

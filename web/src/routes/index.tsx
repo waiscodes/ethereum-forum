@@ -3,6 +3,7 @@ import { LuGithub, LuHeart } from 'react-icons/lu';
 
 import { ProtocolAgendaUpcoming } from '@/components/agenda/Upcoming';
 import { TopicList } from '@/components/topic/TopicList';
+import { TopicsTrending } from '@/components/topic/TopicsTrending';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -22,6 +23,7 @@ function RouteComponent() {
               Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.
             </p>
           </div>
+          <TopicsTrending />
           <TopicList />
         </div>
         <div className="w-full flex items-center justify-center text-secondary gap-4 text-sm">

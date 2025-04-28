@@ -22,11 +22,24 @@ pub struct PostsResponse {
 impl TopicApi {
     /// /topics
     ///
-    /// List topics
+    /// List topics by latest activity
     #[oai(path = "/topics", method = "get", tag = "ApiTags::Topic")]
     async fn list(&self, state: Data<&AppState>) -> Result<Json<Vec<Topic>>> {
         let topics = Topic::get_by_latest_post_at(&state).await.map_err(|e| {
             tracing::error!("Error getting topics: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(topics))
+    }
+
+    /// /topics/trending
+    ///
+    /// List trending topics
+    #[oai(path = "/topics/trending", method = "get", tag = "ApiTags::Topic")]
+    async fn trending(&self, state: Data<&AppState>) -> Result<Json<Vec<Topic>>> {
+        let topics = Topic::get_by_trending(&state).await.map_err(|e| {
+            tracing::error!("Error getting trending topics: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
