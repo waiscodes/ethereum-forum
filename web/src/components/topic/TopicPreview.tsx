@@ -4,6 +4,7 @@ import { FC } from 'react';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 
 import { Topic } from '@/api/topics';
+import { decodeCategory } from '@/util/category';
 
 type Participant = {
     id: number;
@@ -22,7 +23,7 @@ type Participant = {
 
 export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
     const extra = (topic.extra || {}) as Record<string, unknown>;
-    const tags = extra?.tags as string[];
+    const tags = [...decodeCategory(extra?.['category_id'] as number), ...(extra?.['tags'] as string[])];
     const participants = (extra?.details as Record<string, unknown>)?.participants as Participant[];
 
     return (

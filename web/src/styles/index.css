@@ -122,6 +122,10 @@ input.input {
     @apply xl:fixed right-0 w-screen xl:max-w-[340px] h-full px-4 py-2;
 }
 
+.post {
+    scroll-margin-top: 100px;
+}
+
 .prose {
     @apply whitespace-normal space-y-4 break-words block;
 

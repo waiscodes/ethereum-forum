@@ -2,8 +2,13 @@ import classNames from 'classnames';
 import { formatDistanceToNow } from 'date-fns';
 import { FC } from 'react';
 import { FiHeart, FiLink } from 'react-icons/fi';
+import { LuHammer, LuShield } from 'react-icons/lu';
+import { SiEthereum } from 'react-icons/si';
 
 import { Post } from '@/api/topics';
+
+import { Tooltip } from '../Tooltip';
+import { TrustLevel } from '../TrustLevel';
 
 export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const extra = post.extra as Record<string, unknown>;
@@ -15,9 +20,12 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const likes = actions_summary.find((action) => action.id === 2)?.count || 0;
     const post_url = post.post_url ?? '';
     const hidden = extra?.['hidden'] as boolean;
+    const trustLevel = extra?.['trust_level'] as number;
+    const isModerator = extra?.['moderator'] as boolean;
+    const isAdmin = extra?.['admin'] as boolean;
 
     return (
-        <div key={post.post_id} className={classNames('space-y-2', hidden && 'opacity-50')}>
+        <div key={post.post_id} id={`p-${post.post_id}`} className={classNames('post space-y-2', hidden && 'opacity-50')}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                     {avatar &&
@@ -31,6 +39,27 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                             )
                         }
                     </div>
+                    <div className="flex items-center gap-0.5 pl-1">
+                        <TrustLevel trustLevel={trustLevel} />
+                        {isModerator &&
+                            <Tooltip trigger={
+                                <button className="p-1 hover:bg-secondary rounded-sm text-sm">
+                                    <LuShield />
+                                </button>
+                            }>
+                                Moderator
+                            </Tooltip>
+                        }
+                        {isAdmin &&
+                            <Tooltip trigger={
+                                <button className="p-1 hover:bg-secondary rounded-sm text-sm">
+                                    <LuHammer />
+                                </button>
+                            }>
+                                Admin
+                            </Tooltip>
+                        }
+                    </div>
                 </div>
                 <div className="text-end font-bold text-sm">
                     {post.updated_at ? formatDistanceToNow(post.updated_at) : ''} ago
@@ -42,10 +71,13 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     <div className="flex items-center gap-1">
                         <FiHeart /> {likes}
                     </div>
+                    <a href={'#p-' + post.post_id} className="text-sm text-gray-500 flex items-center gap-1 hover:bg-secondary p-1">
+                        <FiLink />
+                    </a>
                     {
                         post_url && (
                             <a href={'https://ethereum-magicians.org' + post_url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 flex items-center gap-1 hover:bg-secondary p-1">
-                                <FiLink />
+                                <SiEthereum />
                             </a>
                         )
                     }

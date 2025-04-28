@@ -1,8 +1,8 @@
+import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { SiZoom } from 'react-icons/si';
 
 import { useEvents } from '@/api/events';
-import { Link } from '@tanstack/react-router';
 
 export const ProtocolAgendaUpcoming = () => {
     const { data } = useEvents();
