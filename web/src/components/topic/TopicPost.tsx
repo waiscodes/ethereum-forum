@@ -9,6 +9,7 @@ import { Post } from '@/api/topics';
 
 import { Tooltip } from '../Tooltip';
 import { TrustLevel } from '../TrustLevel';
+import { Prose } from './Prose';
 
 export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const extra = post.extra as Record<string, unknown>;
@@ -65,8 +66,9 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     {post.updated_at ? formatDistanceToNow(post.updated_at) : ''} ago
                 </div>
             </div>
-            <div dangerouslySetInnerHTML={{ __html: post.cooked ?? '' }} className="prose" />
+            <Prose content={post.cooked ?? ''} topicId={post.topic_id} postId={post.post_id} />
             <div className="flex items-center gap-2 justify-end">
+
                 <div className="text-sm text-gray-500 flex items-center gap-1">
                     <div className="flex items-center gap-1">
                         <FiHeart /> {likes}
