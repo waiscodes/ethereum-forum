@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN post_number INT NOT NULL DEFAULT 0;

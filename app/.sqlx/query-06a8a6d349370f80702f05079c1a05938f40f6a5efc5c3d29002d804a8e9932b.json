@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 20 OFFSET $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "post_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "topic_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "cooked",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "post_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "extra",
+        "type_info": "Json"
+      },
+      {
+        "ordinal": 7,
+        "name": "post_number",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "06a8a6d349370f80702f05079c1a05938f40f6a5efc5c3d29002d804a8e9932b"
+}

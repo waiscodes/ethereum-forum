@@ -1,5 +1,15 @@
-use crate::models::discourse::DiscourseLatestResponse;
+use std::{collections::HashSet, sync::Arc};
+
+use crate::{
+    models::{discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse}, topics::Post},
+    state::AppState,
+};
 use anyhow::Error;
+use async_std::{
+    channel::{Receiver, Sender},
+    sync::Mutex,
+};
+use tracing::{error, info};
 
 pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
     let url = "https://ethereum-magicians.org/latest.json";
@@ -7,6 +17,83 @@ pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
     let body = response.text().await?;
     let parsed: DiscourseLatestResponse = serde_json::from_str(&body)?;
     Ok(parsed)
+}
+
+pub async fn fetch_topic(topic_id: TopicId, page: u32) -> Result<DiscourseTopicResponse, Error> {
+    let url = format!("https://ethereum-magicians.org/t/{}.json?page={}", topic_id, page);
+    let response = reqwest::get(url).await?;
+    let body = response.text().await?;
+    let parsed: DiscourseTopicResponse = serde_json::from_str(&body)?;
+    Ok(parsed)
+}
+
+pub type TopicId = u32;
+
+#[derive(Debug)]
+pub struct DiscourseTopicIndexRequest {
+    pub topic_id: TopicId,
+    pub page: u32,
+}
+
+pub struct DiscourseService {
+    topic_tx: Sender<DiscourseTopicIndexRequest>,
+    topic_lock: Arc<Mutex<HashSet<(TopicId, u32)>>>,
+    topic_rx: Receiver<DiscourseTopicIndexRequest>,
+}
+
+impl Default for DiscourseService {
+    fn default() -> Self {
+        let (topic_tx, topic_rx) = async_std::channel::unbounded();
+        Self {
+            topic_tx,
+            topic_lock: Arc::new(Mutex::new(HashSet::new())),
+            topic_rx,
+        }
+    }
+}
+
+impl DiscourseService {
+    pub async fn run(&self, state: AppState) {
+        while let Ok(request) = self.topic_rx.recv().await {
+            // self.topic_lock.lock().await.insert(request.topic_id);
+            info!("Received request: {:?}", request);
+
+            if let Ok(topic) = fetch_topic(request.topic_id, request.page).await {
+                if !topic.post_stream.posts.is_empty() {
+                    state.discourse.enqueue(request.topic_id, request.page + 1).await;
+                }
+
+                // found topic
+                for post in topic.post_stream.posts {
+                    let post = Post::from_discourse(post);
+                    match post.upsert(&state).await {
+                        Ok(_) => {
+                            info!("Upserted post: {:?}", post.post_id);
+                        }
+                        Err(e) => error!("Error upserting post: {:?}", e),
+                    }
+                }
+            }
+
+            let key = (request.topic_id, request.page);
+            self.topic_lock.lock().await.remove(&key);
+        }
+    }
+
+    pub async fn enqueue(&self, topic_id: TopicId, page: u32) {
+        let mut set = self.topic_lock.lock().await;
+        let key = (topic_id, page);
+        if set.insert(key) {
+            // only send if newly inserted
+            let _ = self
+                .topic_tx
+                .send(DiscourseTopicIndexRequest {
+                    topic_id,
+                    page,
+                })
+                .await;
+        }
+    }
 }
 
 #[cfg(test)]

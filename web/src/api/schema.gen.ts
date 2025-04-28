@@ -42,6 +42,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/t/{topic_id}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /t/:topic_id/posts?page={page}
+         * @description Get all data for a topic
+         */
+        get: {
+            parameters: {
+                query: {
+                    page: number;
+                };
+                header?: never;
+                path: {
+                    topic_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Post"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users": {
         parameters: {
             query?: never;
@@ -146,6 +188,22 @@ export interface components {
              */
             type: "Zoom";
         } & components["schemas"]["ZoomMeetingData"];
+        /** Post */
+        Post: {
+            /** Format: int32 */
+            post_id: number;
+            /** Format: int32 */
+            topic_id: number;
+            /** Format: int32 */
+            user_id: number;
+            /** Format: int32 */
+            post_number: number;
+            /** Format: date-time */
+            updated_at?: string;
+            cooked?: string;
+            post_url?: string;
+            extra?: unknown;
+        };
         /** ZoomMeetingData */
         ZoomMeetingData: {
             link: string;
