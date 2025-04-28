@@ -25,16 +25,12 @@ pub async fn main() -> Result<(), Error> {
     let discourse_handle = async_std::task::spawn(async move {
         discourse_state.clone().discourse.run(discourse_state).await;
     });
+    let discourse2_state = state.clone();
+    let discourse2_handle = async_std::task::spawn(async move {
+        discourse2_state.clone().discourse.fetch_periodically().await;
+    });
     let server_handle = async_std::task::spawn(server::start_http(state.clone()));
 
-    // fetch discourse topics
-    let topics = modules::discourse::fetch_latest_topics().await?;
-    for topic in topics.topic_list.topics {
-        info!("Topic ({}): {:?}", topic.id, topic.title);
-        state.discourse.enqueue(topic.id, 1).await;
-        info!("Queued");
-    }
-
-    join!(server_handle, discourse_handle);
+    join!(server_handle, discourse_handle, discourse2_handle);
     Ok(())
 }

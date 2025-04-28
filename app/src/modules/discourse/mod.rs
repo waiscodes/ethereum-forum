@@ -1,7 +1,10 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
-    models::{discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse}, topics::{Post, Topic}},
+    models::{
+        discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse},
+        topics::{Post, Topic},
+    },
     state::AppState,
 };
 use anyhow::Error;
@@ -9,6 +12,7 @@ use async_std::{
     channel::{Receiver, Sender},
     sync::Mutex,
 };
+use chrono::{DurationRound, TimeDelta, Utc};
 use tracing::{error, info};
 
 pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
@@ -20,7 +24,10 @@ pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
 }
 
 pub async fn fetch_topic(topic_id: TopicId, page: u32) -> Result<DiscourseTopicResponse, Error> {
-    let url = format!("https://ethereum-magicians.org/t/{}.json?page={}", topic_id, page);
+    let url = format!(
+        "https://ethereum-magicians.org/t/{}.json?page={}",
+        topic_id, page
+    );
     let response = reqwest::get(url).await?;
     let body = response.text().await?;
     let parsed: DiscourseTopicResponse = serde_json::from_str(&body)?;
@@ -62,18 +69,24 @@ impl DiscourseService {
                 let existing_topic = Topic::get_by_topic_id(topic.id, &state).await.ok();
                 let worth_fetching_more = existing_topic.is_none() || {
                     let existing = existing_topic.unwrap();
-                    existing.post_count != topic.posts_count ||
-                    existing.last_post_at.unwrap_or_default() < topic.last_posted_at
+                    existing.post_count != topic.posts_count
+                        || existing.last_post_at.unwrap_or_default() < topic.last_posted_at
                 };
 
                 if !worth_fetching_more {
                     info!("Topic {:?} is up to date, skipping", topic.id);
-                    self.topic_lock.lock().await.remove(&(request.topic_id, request.page));
+                    self.topic_lock
+                        .lock()
+                        .await
+                        .remove(&(request.topic_id, request.page));
                     continue;
                 }
 
                 if !topic.post_stream.posts.is_empty() {
-                    state.discourse.enqueue(request.topic_id, request.page + 1).await;
+                    state
+                        .discourse
+                        .enqueue(request.topic_id, request.page + 1)
+                        .await;
                 }
 
                 if request.page == 1 {
@@ -98,8 +111,11 @@ impl DiscourseService {
                     }
                 }
             }
-            
-            self.topic_lock.lock().await.remove(&(request.topic_id, request.page));
+
+            self.topic_lock
+                .lock()
+                .await
+                .remove(&(request.topic_id, request.page));
         }
     }
 
@@ -110,13 +126,39 @@ impl DiscourseService {
             // only send if newly inserted
             let _ = self
                 .topic_tx
-                .send(DiscourseTopicIndexRequest {
-                    topic_id,
-                    page,
-                })
+                .send(DiscourseTopicIndexRequest { topic_id, page })
                 .await;
         } else {
             info!("Topic {:?} is already enqueued, skipping", topic_id);
+        }
+    }
+
+    pub async fn fetch_latest(&self) -> anyhow::Result<()> {
+        // fetch discourse topics
+        let topics = fetch_latest_topics().await?;
+
+        for topic in topics.topic_list.topics {
+            info!("Topic ({}): {:?}", topic.id, topic.title);
+            self.enqueue(topic.id, 1).await;
+            info!("Queued");
+        }
+
+        Ok(())
+    }
+
+    pub async fn fetch_periodically(&self) {
+        // trigger once on startup and then at exactly every round 30 minute mark cron style
+
+        loop {
+            self.fetch_latest().await.unwrap();
+
+            let now = Utc::now();
+            let next = now.duration_round_up(TimeDelta::minutes(30)).unwrap();
+
+            info!("Next fetch at: {:?}", next);
+
+            let duration = next.signed_duration_since(now);
+            async_std::task::sleep(Duration::from_secs(duration.num_seconds() as u64)).await;
         }
     }
 }
