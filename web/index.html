@@ -38,9 +38,10 @@
             document.documentElement.classList.remove('dark');
         }
 
-        window.OG_FAVICON = document
-            .getElementById('favicon')
-            .getAttribute('href');
+        /** Load Prose Width */
+        if (localStorage.getItem('prose-width') === 'prose-wide') {
+            document.documentElement.classList.add('prose-wide');
+        }
     </script>
     <script type="module" src="./src/index.tsx"></script>
     <script defer data-domain="ethereum.forum" src="https://internal.v3x.report/js/script.js"></script>

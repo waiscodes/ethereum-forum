@@ -1,7 +1,5 @@
 import { Link } from '@tanstack/react-router';
 
-import { ThemeSwitcher } from './ThemeSwitcher';
-
 export const Navbar = () => {
     return (
         <>
@@ -14,9 +12,8 @@ export const Navbar = () => {
                     </Link>
                 </div>
                 <div className="flex items-center h-full gap-2 flex-1 justify-end px-2 text-sm">
-                    <ThemeSwitcher />
                     {/* <UserProfile /> */}
-                    Last refreshed 2 minutes ago
+                    Last refreshed 2 min ago
                 </div>
             </div>
             <div className="h-8 w-full" />

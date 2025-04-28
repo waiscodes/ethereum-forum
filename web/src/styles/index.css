@@ -59,6 +59,17 @@ html.dark {
     }
 }
 
+html {
+    .prose-width {
+        @apply max-w-[690px];
+    }
+}
+html.prose-wide {
+    .prose-width {
+        @apply max-w-[1032px];
+    }
+}
+
 @font-face {
     font-family: 'Roboto Condensed';
     src: url('/Roboto/static/Roboto_Condensed-Bold.ttf') format('truetype');

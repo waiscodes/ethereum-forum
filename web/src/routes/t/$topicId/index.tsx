@@ -116,7 +116,7 @@ function RouteComponent() {
           </ul>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-[690px] pt-8 px-2 space-y-4">
+      <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4">
         <div>
           <h1 className="text-2xl"><b>{topic?.title}</b></h1>
           <div className='flex items-center gap-2'>

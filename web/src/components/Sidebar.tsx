@@ -1,10 +1,13 @@
 import { Link } from '@tanstack/react-router';
 
+import { ProseWidthSwitcher } from './preferences/ProseWidthSwitcher';
+import { ThemeSwitcher } from './preferences/ThemeSwitcher';
+
 export const Sidebar = () => {
     return (
-        <div className="bg-primary p-4 xl:fixed">
+        <div className="bg-primary p-4 xl:fixed space-y-2">
             <nav className="w-full xl:w-screen xl:max-w-xs space-y-2">
-                <p className="font-bold w-full border-b border-b-primary pb-1 ml-1.5">Navigation</p>
+                <p className="font-bold w-full border-b border-b-primary pb-1 mx-1.5">Navigation</p>
                 <ul>
                     {
                         [
@@ -32,7 +35,7 @@ export const Sidebar = () => {
                             }
                         ].map((item) => (
                             <li key={item.href}>
-                                <Link to={item.href} className="flex justify-between hover:bg-secondary pl-1.5">
+                                <Link to={item.href} className="flex justify-between hover:bg-secondary px-1.5">
                                     <span>
                                         {item.title}
                                     </span>
@@ -49,6 +52,16 @@ export const Sidebar = () => {
                     }
                 </ul>
             </nav>
+            <div className="px-2">
+                <div className="flex items-center gap-1">
+                    <span className="text-sm">Theme</span>
+                    <ThemeSwitcher />
+                </div>
+                <div className="flex items-center gap-1">
+                    <span className="text-sm">Text Width</span>
+                    <ProseWidthSwitcher />
+                </div>
+            </div>
         </div>
     );
 };
