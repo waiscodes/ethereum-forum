@@ -1,13 +1,16 @@
-use std::num::NonZero;
 use events::EventsApi;
 use governor::Quota;
 use opengraph::OpenGraph;
 use poem::{
-    endpoint::StaticFilesEndpoint, get, handler, listener::TcpListener,
-    middleware::{Cors, OpenTelemetryMetrics}, EndpointExt, Route, Server,
+    EndpointExt, Route, Server,
+    endpoint::StaticFilesEndpoint,
+    get, handler,
+    listener::TcpListener,
+    middleware::{Cors, OpenTelemetryMetrics},
 };
-use poem_openapi::{payload::Html, OpenApi, OpenApiService, Tags};
+use poem_openapi::{OpenApi, OpenApiService, Tags, payload::Html};
 use ratelimit::GovRateLimitMiddleware;
+use std::num::NonZero;
 use topic::TopicApi;
 use tracing::info;
 use user::UserApi;
@@ -15,11 +18,11 @@ use user::UserApi;
 use crate::state::AppState;
 // use tracing_mw::TraceId;
 
-pub mod topic;
-pub mod user;
 pub mod events;
 pub mod opengraph;
 pub mod ratelimit;
+pub mod topic;
+pub mod user;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -32,16 +35,13 @@ pub enum ApiTags {
 }
 
 fn get_api(state: AppState) -> impl OpenApi {
-    (
-        TopicApi,
-        UserApi,
-        EventsApi,
-    )
+    (TopicApi, UserApi, EventsApi)
 }
 
 pub async fn start_http(state: AppState) {
     info!("Starting HTTP server");
     let api_service = OpenApiService::new(get_api(state.clone()), "Ethereum Forum", "0.0.1")
+        .server("https://ethereum.forum/api")
         .server("http://localhost:3000/api");
 
     let spec = api_service.spec_endpoint();
