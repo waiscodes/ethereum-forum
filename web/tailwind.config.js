@@ -6,13 +6,17 @@ export default {
             backgroundColor: {
                 primary: 'var(--theme-bg-primary)',
                 secondary: 'var(--theme-bg-secondary)',
-                tertiary: '#2d2b29',
+                tertiary: 'var(--theme-bg-tertiary)',
             },
             textColor: {
                 primary: 'var(--theme-text-primary)',
                 secondary: 'var(--theme-text-secondary)',
             },
             borderColor: {
+                primary: 'var(--theme-border)',
+                secondary: 'var(--theme-border-secondary)',
+            },
+            outlineColor: {
                 primary: 'var(--theme-border)',
                 secondary: 'var(--theme-border-secondary)',
             },

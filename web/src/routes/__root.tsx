@@ -13,7 +13,7 @@ function RootComponent() {
     return (
         <AppWrapper>
             <Navbar />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 pb-16">
                 <Sidebar />
                 <Outlet />
             </div>
