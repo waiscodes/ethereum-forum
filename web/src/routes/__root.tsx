@@ -1,9 +1,9 @@
-import { createRootRoute,Outlet } from '@tanstack/react-router';
+import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
 import { Navbar } from '@/components/Navbar';
-import { AppWrapper } from '@/hooks/context';
 import { Sidebar } from '@/components/Sidebar';
+import { AppWrapper } from '@/hooks/context';
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -34,7 +34,7 @@ function RootComponent() {
                         boxShadow: 'none',
                     },
                 }}
-                />
+            />
         </AppWrapper>
     );
 }

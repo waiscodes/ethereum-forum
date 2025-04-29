@@ -30,7 +30,6 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
             const onClick = (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Link clicked:', a.href);
 
                 (async () => {
                     await trackLinkClick(a.href, topicId, postId);

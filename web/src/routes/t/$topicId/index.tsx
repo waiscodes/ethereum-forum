@@ -3,17 +3,18 @@ import classNames from 'classnames';
 import { parseISO } from 'date-fns';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
-import { LuArrowDown, LuArrowUp, LuGithub, LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
+import { LuArrowDown, LuArrowUp, LuGithub, LuLink, LuMessageCircle, LuNotebook, LuPaperclip, LuRefreshCcw, LuYoutube } from 'react-icons/lu';
 import { PiReceipt } from 'react-icons/pi';
-import { SiEthereum } from 'react-icons/si';
+import { SiEthereum, SiReddit } from 'react-icons/si';
 
-import { usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
+import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
 import { decodeCategory } from '@/util/category';
-import { isGithub, isStandardsLink, spliceRelatedLinks } from '@/util/links';
+import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
+import { queryClient } from '@/util/query';
 
 interface DiscourseUser {
   id: number,
@@ -26,6 +27,13 @@ interface DiscourseUser {
 
 export const Route = createFileRoute('/t/$topicId/')({
   component: RouteComponent,
+  beforeLoad: async ({ params }) => {
+    const topic = await queryClient.ensureQueryData(getTopic(params.topicId));
+
+    return {
+      title: topic?.title,
+    };
+  }
 });
 
 type RelevantLink = {
@@ -244,6 +252,12 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
     icon = <LuGithub />;
   } else if (url.startsWith('https://etherscan.io/')) {
     icon = <PiReceipt />;
+  } else if (url.startsWith('https://www.youtube.com/')) {
+    icon = <LuYoutube />;
+  } else if (url.startsWith('https://www.reddit.com/')) {
+    icon = <SiReddit />;
+  } else if (isHackmd(url)) {
+    icon = <LuNotebook />;
   }
 
   return (

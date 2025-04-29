@@ -349,3 +349,11 @@ input.input {
         }
     }
 }
+
+.only-after-scroll {
+    @apply opacity-0;
+}
+
+html.scrolled .only-after-scroll {
+    @apply opacity-100;
+}

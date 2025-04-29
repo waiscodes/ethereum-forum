@@ -14,7 +14,7 @@ const router = createRouter({
     // defaultPendingComponent,
     // defaultErrorComponent: PageErrorBoundary,
     context: {
-        title: 'Property',
+        title: 'Ethereum Forum',
     },
 });
 

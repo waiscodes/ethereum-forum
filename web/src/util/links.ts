@@ -26,7 +26,7 @@ export const isGithub = (link: string) => {
 
     const url = link.toLowerCase();
 
-    return url.startsWith('https://github.com/');
+    return !!['https://github.com/', 'https://gist.github.com/'].find(domain => url.startsWith(domain));
 };
 
 export const isStandardsLink = (link: string) => {
@@ -35,4 +35,12 @@ export const isStandardsLink = (link: string) => {
     const url = link.toLowerCase();
 
     return !!['https://eips.ethereum.org/', 'https://ercs.ethereum.org/', 'https://github.com/ethereum/eips/', 'https://github.com/ethereum/ercs/'].find(domain => url.startsWith(domain));
+};
+
+export const isHackmd = (link: string) => {
+    if (!link) return false;
+
+    const url = link.toLowerCase();
+
+    return !!['https://hackmd.io/', 'https://notes.ethereum.org/'].find(domain => url.startsWith(domain));
 };

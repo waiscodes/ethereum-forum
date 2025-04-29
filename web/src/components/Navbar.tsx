@@ -1,9 +1,20 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useMatches } from '@tanstack/react-router';
+import classNames from 'classnames';
+import { FC, useEffect, useState } from 'react';
 
-export const Navbar = () => {
+export const Navbar: FC = () => {
+    const data = useMatches();
+
+    const title = findMapReverse(data, m => {
+        if ('title' in m.context) {
+            if (m.context.title) return m.context.title as string;
+        }
+    });
+    const route = data[data.length - 1].routeId;
+
     return (
         <>
-            <div className="w-full bg-secondary fixed top-0 flex justify-between items-center">
+            <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-fit z-10">
                 <div className="flex items-stretch gap-2 h-full px-3">
                     <Link to="/" className="text-primary font-bold text-base hover:underline py-1 block">
                         <span>ethereum</span>
@@ -11,12 +22,70 @@ export const Navbar = () => {
                         <span>forum</span>
                     </Link>
                 </div>
+                <div className={
+                    classNames('w-screen h-full flex items-center', route.startsWith('/t/') ? 'prose-width' : 'max-w-[1032px]')}>
+                    <div className="px-2 truncate only-after-scroll font-bold transition-all duration-300">
+                        {title}
+                    </div>
+                </div>
                 <div className="flex items-center h-full gap-2 flex-1 justify-end px-2 text-sm">
                     {/* <UserProfile /> */}
                     Last refreshed 2 min ago
                 </div>
             </div>
             <div className="h-8 w-full" />
+            <ScrollListener />
         </>
     );
+};
+
+// function findMap<T, U>(data: T[], fn: (t: T) => U | undefined): U | undefined {
+//     for (const t of data) {
+//         const u = fn(t);
+
+//         if (u) return u;
+//     }
+// }
+
+function findMapReverse<T, U>(data: T[], fn: (t: T) => U | undefined): U | undefined {
+    for (let i = data.length - 1; i >= 0; i--) {
+        const t = data[i];
+        const u = fn(t);
+
+        if (u) return u;
+    }
+}
+
+const ScrollListener = () => {
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const h1Element = document.querySelector('h1');
+            const y = h1Element?.getBoundingClientRect().top || 0;
+
+            if (h1Element && y < 42) {
+                setScrolled(true);
+            } else {
+                setScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            document.documentElement.classList.remove('scrolled');
+        };
+    }, []);
+
+    useEffect(() => {
+        if (scrolled) {
+            document.documentElement.classList.add('scrolled');
+        } else {
+            document.documentElement.classList.remove('scrolled');
+        }
+    }, [scrolled]);
+
+    return <></>;
 };
