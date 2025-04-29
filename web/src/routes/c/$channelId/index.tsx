@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { AgendaContent } from '@/components/agenda/AgendaContent';
+import { EIPsContent } from '@/components/eips/EIPsContent';
 
 
 export const Route = createFileRoute('/c/$channelId/')({
@@ -14,6 +15,10 @@ function RouteComponent() {
 
   if (channelId === 'agenda') {
     content = <AgendaContent />;
+  }
+
+  if (channelId === 'eips') {
+    content = <EIPsContent />;
   }
 
   return (

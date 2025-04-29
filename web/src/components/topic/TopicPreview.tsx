@@ -31,11 +31,13 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
 
     return (
         <Link to="/t/$topicId" params={{ topicId: topic.topic_id.toString() }} className="card hover:border-primary border border-transparent gap-1 flex flex-col">
-            <div className="font-bold grow">{topic.title}</div>
-            <div className="flex gap-2 whitespace-nowrap overflow-x-hidden">
-                {tags?.map((tag) => (
-                    <div key={tag} className="text-sm text-gray-500 bg-primary px-1 border border-primary">{tag}</div>
-                ))}
+            <div className="grow space-y-1">
+                <div className="font-bold">{topic.title}</div>
+                <div className="flex gap-2 whitespace-nowrap overflow-x-hidden">
+                    {tags?.map((tag) => (
+                        <div key={tag} className="text-sm text-gray-500 bg-primary px-1 border border-primary">{tag}</div>
+                    ))}
+                </div>
             </div>
             <div className="flex items-center justify-end gap-1 -space-x-2">
                 {
