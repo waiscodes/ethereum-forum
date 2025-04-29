@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 21 OFFSET $2",
+  "query": "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT $2 OFFSET $3",
   "describe": {
     "columns": [
       {
@@ -52,6 +52,7 @@
     "parameters": {
       "Left": [
         "Int4",
+        "Int8",
         "Int8"
       ]
     },
@@ -67,5 +68,5 @@
       false
     ]
   },
-  "hash": "412a05bb4ad5b5ad081b9fdc3687af741c42315149cdebb47f010c6178c277f3"
+  "hash": "de85bd4bb7066727ae33d62e6fc1535e1bf23493070480e84e81919ddfb745ec"
 }

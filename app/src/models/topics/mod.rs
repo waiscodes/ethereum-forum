@@ -7,6 +7,8 @@ use crate::state::AppState;
 
 use super::discourse::topic::{DiscourseTopicPost, DiscourseTopicResponse};
 
+const POSTS_PER_PAGE: usize = 100;
+
 #[derive(Debug, Serialize, Deserialize, FromRow, Object)]
 pub struct Topic {
     pub topic_id: i32,
@@ -80,18 +82,19 @@ impl Post {
         page: i32,
         state: &AppState,
     ) -> Result<(Vec<Self>, bool), sqlx::Error> {
-        let offset = (page - 1) * 20;
+        let offset = (page - 1) * POSTS_PER_PAGE as i32;
         let posts = query_as!(
             Self,
-            "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 21 OFFSET $2",
+            "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT $2 OFFSET $3",
             topic_id,
+            POSTS_PER_PAGE as i64,
             offset as i64
         )
         .fetch_all(&state.database.pool)
         .await?;
 
-        let has_more = posts.len() == 21;
-        let posts = posts.into_iter().take(20).collect();
+        let has_more = posts.len() == POSTS_PER_PAGE + 1;
+        let posts = posts.into_iter().take(POSTS_PER_PAGE).collect();
 
         Ok((posts, has_more))
     }
