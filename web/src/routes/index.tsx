@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { LuGithub, LuHeart } from 'react-icons/lu';
+import { LuBook, LuGithub, LuHeart, LuWand, LuWandSparkles } from 'react-icons/lu';
 
 import { ProtocolAgendaUpcoming } from '@/components/agenda/Upcoming';
 import { TopicList } from '@/components/topic/TopicList';
@@ -26,18 +26,34 @@ function RouteComponent() {
           <TopicsTrending />
           <TopicList />
         </div>
-        <div className="w-full flex items-center justify-center text-secondary gap-4 text-sm">
+        <div className="w-full flex items-center justify-center gap-4 text-sm pb-8">
           <div className="flex items-center gap-1">
-            Made with <LuHeart className="size-4" /> by{' '}
             <a
-              href="https://v3x.company"
-              className="text-secondary"
+              href="/docs"
+              className="hover:text-secondary transition-colors flex items-center gap-1"
               target="_blank"
               rel="noreferrer"
             >
-              v3xlabs
+              <LuBook className="size-4" />
+              <span>Docs</span>
             </a>
+            <div>
+              (
+              <a href="/openapi.json" className="link">
+                <span>openapi.json</span>
+              </a>
+              )
+            </div>
           </div>
+          <a
+            href="https://ethereum-magicians.org/"
+            className="hover:text-secondary transition-colors flex items-center gap-1"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <LuWandSparkles className="size-4" />
+            <span>Ethereum Magicians</span>
+          </a>
           <a
             href="https://github.com/v3xlabs/ethereum-forum"
             className="hover:text-secondary transition-colors flex items-center gap-1"
