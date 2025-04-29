@@ -78,7 +78,7 @@ function RouteComponent() {
 
   return (
     <>
-      <div className="right-bar space-y-4">
+      <div className="right-bar p-4 space-y-4">
         <div className="space-y-1.5">
           <div className="px-1.5">
             <h3 className="font-bold w-full border-b border-b-primary pb-1">Thread Info</h3>

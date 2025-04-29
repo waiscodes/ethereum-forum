@@ -170,11 +170,11 @@ input.input {
 
 html:not(.prose-page) {
     .left-bar {
-        @apply 3xl:fixed left-0 w-screen 3xl:max-w-[340px] h-full p-4;
+        @apply 3xl:fixed left-0 w-screen 3xl:max-w-[340px] h-full;
         @apply 3xl:overflow-y-auto;
     }
     .right-bar {
-        @apply 3xl:fixed right-0 w-screen 3xl:max-w-[340px] h-full p-4;
+        @apply 3xl:fixed right-0 w-screen 3xl:max-w-[340px] h-full;
         @apply 3xl:overflow-y-auto;
     }
 }
@@ -182,21 +182,21 @@ html:not(.prose-page) {
 html.prose-page {
     &:not(.prose-wide) {
         .left-bar {
-            @apply 2xl:fixed left-0 w-screen 2xl:max-w-[340px] h-full p-4;
+            @apply 2xl:fixed left-0 w-screen 2xl:max-w-[340px] h-full;
             @apply 2xl:overflow-y-auto;
         }
         .right-bar {
-            @apply 2xl:fixed right-0 w-screen 2xl:max-w-[340px] h-full p-4;
+            @apply 2xl:fixed right-0 w-screen 2xl:max-w-[340px] h-full;
             @apply 2xl:overflow-y-auto;
         }
     }
     &.prose-wide {
         .left-bar {
-            @apply 3xl:fixed left-0 w-screen 3xl:max-w-[340px] h-full p-4;
+            @apply 3xl:fixed left-0 w-screen 3xl:max-w-[340px] h-full;
             @apply 3xl:overflow-y-auto;
         }
         .right-bar {
-            @apply 3xl:fixed right-0 w-screen 3xl:max-w-[340px] h-full p-4;
+            @apply 3xl:fixed right-0 w-screen 3xl:max-w-[340px] h-full;
             @apply 3xl:overflow-y-auto;
         }
     }
