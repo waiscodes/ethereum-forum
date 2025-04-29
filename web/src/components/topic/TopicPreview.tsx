@@ -31,31 +31,30 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
 
     return (
         <Link to="/t/$topicId" params={{ topicId: topic.topic_id.toString() }} className="card hover:border-primary border border-transparent gap-1 flex flex-col">
-            <div className="font-bold">{topic.title}</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="font-bold grow">{topic.title}</div>
+            <div className="flex gap-2 whitespace-nowrap overflow-x-hidden">
                 {tags?.map((tag) => (
                     <div key={tag} className="text-sm text-gray-500 bg-primary px-1 border border-primary">{tag}</div>
                 ))}
             </div>
-            <div className="flex gap-1 items-center">
+            <div className="flex items-center justify-end gap-1 -space-x-2">
                 {
                     participants && participants.slice(0, 8).map((participant) => (
                         <div key={participant.id} className="flex items-center gap-2">
                             <div className='size-6'>
-                                <img src={'https://ethereum-magicians.org' + participant.avatar_template.replace('{size}', '40')} alt={participant.username} className="size-full rounded-sm" />
+                                <img src={'https://ethereum-magicians.org' + participant.avatar_template.replace('{size}', '40')} alt={participant.username} className="size-full rounded-md" />
                             </div>
                         </div>
                     ))
                 }
                 {
                     participants && participants.length > 8 && (
-                        <div className="text-sm text-gray-500 bg-primary py-0.5 rounded-md px-1 leading-4">
+                        <div className="text-xs text-gray-500 bg-primary flex justify-center items-center h-full rounded-sm leading-4 aspect-square">
                             +{formatBigNumber(participants.length - 8)}
                         </div>
                     )
                 }
             </div>
-            <div className="grow"></div>
             <div className="flex justify-between items-start">
                 <div className='flex items-center gap-2 justify-start'>
                     <div className='flex items-center gap-1'>
