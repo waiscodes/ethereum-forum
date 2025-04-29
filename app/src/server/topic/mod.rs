@@ -48,8 +48,8 @@ impl TopicApi {
 
     /// /t/:topic_id
     ///
-    /// Get a topic
-    #[oai(path = "/t/:topic_id", method = "get", tag = "ApiTags::Topic")]
+    /// Get information about a topic
+    #[oai(path = "/t/:topic_id", method = "get", operation_id = "get_topic", tag = "ApiTags::Topic")]
     async fn get_topic(&self, state: Data<&AppState>, #[oai(style = "simple")] topic_id: Path<i32>) -> Result<Json<Topic>> {
         let topic = Topic::get_by_topic_id(topic_id.0, &state).await.map_err(|e| {
             tracing::error!("Error getting topic: {:?}", e);
@@ -62,7 +62,7 @@ impl TopicApi {
     /// /t/:topic_id
     /// 
     /// Force refresh a topic
-    #[oai(path = "/t/:topic_id", method = "post", tag = "ApiTags::Topic")]
+    #[oai(path = "/t/:topic_id", method = "post", operation_id = "refresh_topic", tag = "ApiTags::Topic")]
     async fn refresh_topic(&self, state: Data<&AppState>, #[oai(style = "simple")] topic_id: Path<i32>) -> Result<Json<serde_json::Value>> {
         info!("Refreshing topic: {:?}", topic_id.0);
         state.discourse.enqueue(topic_id.0, 1).await;
@@ -70,11 +70,12 @@ impl TopicApi {
         Ok(Json(serde_json::json!({})))
     }
 
-    /// /t/:topic_id/posts?page={page}
+    /// /t/:topic_id/posts
     ///
-    /// Get all data for a topic
-    #[oai(path = "/t/:topic_id/posts", method = "get", tag = "ApiTags::Topic")]
-    async fn get(
+    /// Get all posts for a topic
+    /// This endpoint is paginated, and uses ?page=1 as the first page
+    #[oai(path = "/t/:topic_id/posts", method = "get", operation_id = "get_posts", tag = "ApiTags::Topic")]
+    async fn get_posts(
         &self,
         state: Data<&AppState>,
         #[oai(style = "simple")] topic_id: Path<i32>,
