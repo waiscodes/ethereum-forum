@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use icalendar::{CalendarDateTime, Component, DatePerhapsTime, Event};
+use icalendar::{CalendarDateTime, Component, DatePerhapsTime, Event, EventLike};
 use meetings::{try_parse_meeting, Meeting};
 use poem_openapi::{Enum, Object};
 use rrule::RRuleSet;
@@ -16,7 +16,7 @@ pub struct CalendarEvent {
     pub created: Option<DateTime<Utc>>,
     pub start: Option<DateTime<Utc>>,
     pub occurance: EventOccurrence,
-    pub meeting: Option<Meeting>,
+    pub meetings: Vec<Meeting>,
     // pub end: Option<DateTime<Utc>>,
 }
 
@@ -31,12 +31,12 @@ impl CalendarEvent {
         let x = event.to_string();
         let mut events = vec![];
         let mut body: String = event.get_description().unwrap_or_default().to_string();
-        let meeting = match try_parse_meeting(&body) {
-            Ok((new_body, meeting)) => {
+        let meetings: Vec<Meeting> = match try_parse_meeting(&event, &body) {
+            Ok((new_body, meetings)) => {
                 body = new_body;
-                Some(meeting)
+                meetings
             }
-            Err(_) => None,
+            Err(_) => vec![],
         };
 
         if x.contains("RRULE") {
@@ -67,7 +67,7 @@ impl CalendarEvent {
                     start: Some(start),
                     // end,
                     occurance: EventOccurrence::Recurring,
-                    meeting: meeting.clone(),
+                    meetings: meetings.clone(),
                 });
             }
         } else {
@@ -81,7 +81,7 @@ impl CalendarEvent {
                 created: event.get_created(),
                 start,
                 occurance: EventOccurrence::Single,
-                meeting: meeting.clone(),
+                meetings,
             });
         }
 

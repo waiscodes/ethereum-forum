@@ -24,11 +24,11 @@ export const Meetings = () => {
                         </div>
                         <div dangerouslySetInnerHTML={{ __html: event.description ?? '' }} className="grow max-h-40 overflow-y-auto" />
                         <div className="flex justify-between flex-wrap">
-                            <div>
+                            <div className="flex flex-wrap gap-2">
                                 {
-                                    event.meeting && (
-                                        <MeetingLink meeting={event.meeting} />
-                                    )
+                                    event.meetings.map((meeting) => (
+                                        <MeetingLink key={meeting.link} meeting={meeting} />
+                                    ))
                                 }
                             </div>
                             <p className="text-sm text-gray-500 text-end">

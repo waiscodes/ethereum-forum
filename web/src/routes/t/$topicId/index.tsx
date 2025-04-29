@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { parseISO } from 'date-fns';
+import { useEffect } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 import { LuArrowDown, LuArrowUp, LuGithub, LuLink, LuMessageCircle, LuNotebook, LuPaperclip, LuRefreshCcw, LuYoutube } from 'react-icons/lu';
 import { PiReceipt } from 'react-icons/pi';
-import { SiEthereum, SiReddit } from 'react-icons/si';
+import { SiEthereum, SiOpenai, SiReddit } from 'react-icons/si';
 
 import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
 import { ExpandableList } from '@/components/list/ExpandableList';
@@ -15,7 +16,6 @@ import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 import { queryClient } from '@/util/query';
-import { useEffect } from 'react';
 
 interface DiscourseUser {
   id: number,
@@ -267,6 +267,8 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
     icon = <SiReddit />;
   } else if (isHackmd(url)) {
     icon = <LuNotebook />;
+  } else if (url.startsWith('https://chatgpt.com/')) {
+    icon = <SiOpenai />;
   }
 
   return (

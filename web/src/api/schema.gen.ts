@@ -217,7 +217,7 @@ export interface components {
             /** Format: date-time */
             start?: string;
             occurance: components["schemas"]["EventOccurrence"];
-            meeting?: components["schemas"]["Meeting"];
+            meetings: components["schemas"]["Meeting"][];
         };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
