@@ -13,6 +13,8 @@ export const Navbar: FC = () => {
     });
     const route = data[data.length - 1].routeId;
 
+    document.title = title ?? 'Ethereum Forum';
+
     return (
         <>
             <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-8 z-10">
