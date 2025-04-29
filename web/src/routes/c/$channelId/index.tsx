@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { Meetings } from '@/components/agenda/Meetings';
+import { AgendaContent } from '@/components/agenda/AgendaContent';
+
 
 export const Route = createFileRoute('/c/$channelId/')({
   component: RouteComponent,
@@ -12,7 +13,7 @@ function RouteComponent() {
   let content = <div className="card"></div>;
 
   if (channelId === 'agenda') {
-    content = <Meetings />;
+    content = <AgendaContent />;
   }
 
   return (

@@ -137,7 +137,7 @@ body {
 }
 
 .button {
-    @apply px-2 py-1 rounded-sm bg-primary text-primary hover:bg-tertiary hover:text-primary;
+    @apply px-2 py-1 rounded-sm bg-primary text-primary hover:bg-secondary hover:text-primary;
 }
 .button:disabled {
     @apply bg-primary text-secondary line-through cursor-not-allowed;
@@ -153,7 +153,7 @@ input.input {
 }
 
 .link {
-    @apply text-secondary hover:brightness-125;
+    @apply text-secondary hover:underline;
 }
 
 @keyframes zoom {
