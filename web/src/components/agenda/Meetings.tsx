@@ -48,7 +48,7 @@ const platformToIcon = {
 
 export const MeetingLink = ({ meeting }: { meeting: Meeting }) => {
     return (
-        <a href={meeting.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-primary px-1.5 rounded-sm bg-primary">
+        <a href={meeting.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 button">
             {platformToIcon[meeting.type]}
             <span className="text-sm">{meeting.type}</span>
         </a>

@@ -80,21 +80,23 @@ impl Post {
     pub async fn find_by_topic_id(
         topic_id: i32,
         page: i32,
+        size: Option<i32>,
         state: &AppState,
     ) -> Result<(Vec<Self>, bool), sqlx::Error> {
-        let offset = (page - 1) * POSTS_PER_PAGE as i32;
+        let size = size.unwrap_or(POSTS_PER_PAGE as i32);
+        let offset = (page - 1) * size;
         let posts = query_as!(
             Self,
             "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT $2 OFFSET $3",
             topic_id,
-            POSTS_PER_PAGE as i64,
+            size as i64,
             offset as i64
         )
         .fetch_all(&state.database.pool)
         .await?;
 
-        let has_more = posts.len() == POSTS_PER_PAGE + 1;
-        let posts = posts.into_iter().take(POSTS_PER_PAGE).collect();
+        let has_more = posts.len() == size as usize + 1;
+        let posts = posts.into_iter().take(size as usize).collect();
 
         Ok((posts, has_more))
     }

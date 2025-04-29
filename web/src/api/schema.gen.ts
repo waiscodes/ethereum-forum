@@ -89,55 +89,15 @@ export interface paths {
         };
         /**
          * /t/:topic_id
-         * @description Get a topic
+         * @description Get information about a topic
          */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    topic_id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["Topic"];
-                    };
-                };
-            };
-        };
+        get: operations["get_topic"];
         put?: never;
         /**
          * /t/:topic_id
          * @description Force refresh a topic
          */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    topic_id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": unknown;
-                    };
-                };
-            };
-        };
+        post: operations["refresh_topic"];
         delete?: never;
         options?: never;
         head?: never;
@@ -152,32 +112,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /t/:topic_id/posts?page={page}
-         * @description Get all data for a topic
+         * /t/:topic_id/posts
+         * @description Get all posts for a topic
+         *     This endpoint is paginated, and uses ?page=1 as the first page
          */
-        get: {
-            parameters: {
-                query: {
-                    page: number;
-                };
-                header?: never;
-                path: {
-                    topic_id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["PostsResponse"];
-                    };
-                };
-            };
-        };
+        get: operations["get_posts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -348,4 +287,71 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    get_topic: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                topic_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["Topic"];
+                };
+            };
+        };
+    };
+    refresh_topic: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                topic_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json; charset=utf-8": unknown;
+                };
+            };
+        };
+    };
+    get_posts: {
+        parameters: {
+            query: {
+                page: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                topic_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["PostsResponse"];
+                };
+            };
+        };
+    };
+}
