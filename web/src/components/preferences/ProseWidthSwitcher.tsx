@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { useState } from 'react';
-import { FiAlignJustify, FiList, FiMaximize2, FiMenu } from 'react-icons/fi';
+import { FiList, FiMenu } from 'react-icons/fi';
 
 export const updateProseWidth = () => {
     const proseWidth = localStorage.getItem('prose-width') || 'prose-normal';
@@ -36,7 +36,7 @@ export const ProseWidthSwitcher = () => {
                     }}
                     className={classNames(
                         currentProseWidth === proseWidth && 'bg-primary',
-                        'h-full flex items-center px-1 justify-center border border-secondary aspect-square rounded-md'
+                        'h-full flex items-center justify-center aspect-square button'
                     )}
                 >
                     {icon}

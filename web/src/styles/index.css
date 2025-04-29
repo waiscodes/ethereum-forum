@@ -137,7 +137,10 @@ body {
 }
 
 .button {
-    @apply px-2 py-1 rounded-sm bg-primary text-primary hover:bg-secondary hover:text-primary;
+    @apply px-2 py-1 bg-primary text-primary hover:bg-secondary hover:text-primary border border-secondary rounded-md;
+}
+.button.aspect-square {
+    @apply px-1 py-1;
 }
 .button:disabled {
     @apply bg-primary text-secondary line-through cursor-not-allowed;

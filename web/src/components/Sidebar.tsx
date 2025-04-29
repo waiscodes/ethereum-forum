@@ -55,7 +55,13 @@ export const Sidebar = () => {
                         }
                     </ul>
                 </nav>
-                <div className="py-4 px-6">
+                <div className="py-4 px-6 space-y-0.5">
+                    <div className="flex items-center justify-between gap-1">
+                        <span className="text-sm">ChatGPT Assist</span>
+                        <a href='https://chatgpt.com/g/g-68104906afb88191ae3f52c2aff36737-ethereum-forum-assistant' target="_blank" rel="noopener noreferrer" className="text-sm button">
+                            Open in ChatGPT
+                        </a>
+                    </div>
                     <div className="flex items-center justify-between gap-1">
                         <span className="text-sm">Theme</span>
                         <ThemeSwitcher />
@@ -64,6 +70,10 @@ export const Sidebar = () => {
                         <span className="text-sm">Text Width</span>
                         <ProseWidthSwitcher />
                     </div>
+                    {/* <div className="flex items-center justify-between gap-1 pr-1">
+                        <span className="text-sm">Last refreshed</span>
+                        <span className="text-sm">2 min ago</span>
+                    </div> */}
                 </div>
             </div>
         </div>

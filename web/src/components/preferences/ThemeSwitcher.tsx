@@ -37,7 +37,7 @@ export const ThemeSwitcher = () => {
                     }}
                     className={classNames(
                         currentTheme === theme && 'bg-primary',
-                        'h-full flex items-center px-1 justify-center border border-secondary aspect-square rounded-md'
+                        'h-full flex items-center justify-center aspect-square button'
                     )}
                 >
                     {icon}
