@@ -170,6 +170,7 @@ input.input {
 
 .right-bar {
     @apply xl:fixed right-0 w-screen xl:max-w-[340px] h-full p-4;
+    @apply xl:overflow-y-auto;
 }
 
 .post {

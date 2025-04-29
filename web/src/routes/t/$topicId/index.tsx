@@ -3,12 +3,16 @@ import classNames from 'classnames';
 import { parseISO } from 'date-fns';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
-import { LuArrowDown, LuArrowUp, LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
+import { LuArrowDown, LuArrowUp, LuGithub, LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
+import { PiReceipt } from 'react-icons/pi';
+import { SiEthereum } from 'react-icons/si';
 
 import { usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
+import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
 import { decodeCategory } from '@/util/category';
+import { isGithub, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 
 interface DiscourseUser {
@@ -31,7 +35,6 @@ type RelevantLink = {
   attachment: boolean;
   reflection: boolean;
   clicks: number;
-  user_id: number;
   domain: string;
   root_domain: string;
 };
@@ -51,7 +54,8 @@ function RouteComponent() {
   const extra = topic?.extra as Record<string, unknown>;
   const tags = decodeCategory(extra?.['category_id'] as number);
 
-  const relevant_links = extra?.details?.links as RelevantLink[];
+  const all_links = ((extra?.details?.links || []) as RelevantLink[]).sort((a, b) => b.clicks - a.clicks);
+  const [github_links, relevant_links] = spliceRelatedLinks(all_links, link => isGithub(link.url));
   const creator = extra?.details?.created_by as DiscourseUser;
 
   return (
@@ -106,20 +110,39 @@ function RouteComponent() {
             </li>
           </ul>
         </div>
-        <div className="space-y-1.5">
-          <div className="px-1.5">
-            <h3 className="font-bold w-full border-b border-b-primary pb-1">Related Links</h3>
-          </div>
-          <ul>
-            {
-              relevant_links?.sort((a, b) => b.clicks - a.clicks).map((link) => (
-                <li key={link.url}>
-                  <RelevantLink link={link} />
-                </li>
-              ))
-            }
-          </ul>
-        </div>
+        {
+          github_links.length > 0 && (
+            <ExpandableList
+              title="Github Links"
+              maxItems={4}
+            >
+              {
+                github_links.map((link) => (
+                  <li key={link.url}>
+                    <RelevantLink link={link} />
+                  </li>
+                ))
+              }
+            </ExpandableList>
+          )
+        }
+        {
+          relevant_links.length > 0 && (
+            <ExpandableList
+              title="Related Links"
+              maxItems={4}
+            >
+              {
+
+                relevant_links?.map((link) => (
+                  <li key={link.url}>
+                    <RelevantLink link={link} />
+                  </li>
+                ))
+              }
+            </ExpandableList>
+          )
+        }
       </div>
       <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4 relative">
         <UpDownScroller />
@@ -203,6 +226,18 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
     icon = <LuMessageCircle />;
   }
 
+  if (link.url.startsWith('https://github.com/')) {
+    icon = <LuGithub />;
+  }
+
+  if (['https://eips.ethereum.org/', 'https://ercs.ethereum.org/'].find(domain => link.url.startsWith(domain))) {
+    icon = <SiEthereum />;
+  }
+
+  if (['https://etherscan.io/'].find(domain => link.url.startsWith(domain))) {
+    icon = <PiReceipt />;
+  }
+
   return (
     <a href={link.url} target="_blank" rel="noreferrer" className="flex justify-between hover:bg-secondary px-1.5 gap-3 items-center">
       <div className="w-full flex items-center gap-1 truncate">
@@ -212,7 +247,7 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
         </div>
       </div>
       <div>
-        {link.clicks}
+        {formatBigNumber(link.clicks)}
       </div>
     </a>
   );
