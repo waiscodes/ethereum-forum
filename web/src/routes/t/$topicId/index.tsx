@@ -12,7 +12,7 @@ import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
 import { decodeCategory } from '@/util/category';
-import { isGithub, spliceRelatedLinks } from '@/util/links';
+import { isGithub, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 
 interface DiscourseUser {
@@ -55,7 +55,8 @@ function RouteComponent() {
   const tags = decodeCategory(extra?.['category_id'] as number);
 
   const all_links = ((extra?.details?.links || []) as RelevantLink[]).sort((a, b) => b.clicks - a.clicks);
-  const [github_links, relevant_links] = spliceRelatedLinks(all_links, link => isGithub(link.url));
+  const [standards_links, relevant_links1] = spliceRelatedLinks(all_links, link => isStandardsLink(link.url));
+  const [github_links, relevant_links] = spliceRelatedLinks(relevant_links1, link => isGithub(link.url));
   const creator = extra?.details?.created_by as DiscourseUser;
 
   return (
@@ -110,6 +111,22 @@ function RouteComponent() {
             </li>
           </ul>
         </div>
+        {
+          standards_links.length > 0 && (
+            <ExpandableList
+              title="Standards Links"
+              maxItems={4}
+            >
+              {
+                standards_links.map((link) => (
+                  <li key={link.url}>
+                    <RelevantLink link={link} />
+                  </li>
+                ))
+              }
+            </ExpandableList>
+          )
+        }
         {
           github_links.length > 0 && (
             <ExpandableList
@@ -221,9 +238,9 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
     icon = <LuPaperclip />;
   } else if (link.reflection) {
     icon = <LuMessageCircle />;
-  } else if (['https://eips.ethereum.org/', 'https://ercs.ethereum.org/', 'https://github.com/ethereum/eips/', 'https://github.com/ethereum/ercs/'].find(domain => url.startsWith(domain))) {
+  } else if (isStandardsLink(url)) {
     icon = <SiEthereum />;
-  } else if (url.startsWith('https://github.com/')) {
+  } else if (isGithub(url)) {
     icon = <LuGithub />;
   } else if (url.startsWith('https://etherscan.io/')) {
     icon = <PiReceipt />;
@@ -237,7 +254,7 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
           {link.title || link.root_domain}
         </div>
       </div>
-      <div>
+      <div className="text-xs">
         {formatBigNumber(link.clicks)}
       </div>
     </a>

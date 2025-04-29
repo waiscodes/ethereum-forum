@@ -24,5 +24,15 @@ export const spliceRelatedLinks = (links: RelevantLink[], predicate: (link: Rele
 export const isGithub = (link: string) => {
     if (!link) return false;
 
-    return link.startsWith('https://github.com/');
+    const url = link.toLowerCase();
+
+    return url.startsWith('https://github.com/');
+};
+
+export const isStandardsLink = (link: string) => {
+    if (!link) return false;
+
+    const url = link.toLowerCase();
+
+    return !!['https://eips.ethereum.org/', 'https://ercs.ethereum.org/', 'https://github.com/ethereum/eips/', 'https://github.com/ethereum/ercs/'].find(domain => url.startsWith(domain));
 };
