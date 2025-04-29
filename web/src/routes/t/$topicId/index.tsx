@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { parseISO } from 'date-fns';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
-import { LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
+import { LuArrowDown, LuArrowUp, LuLink, LuMessageCircle, LuPaperclip, LuRefreshCcw } from 'react-icons/lu';
 
 import { usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
 import { TimeAgo } from '@/components/TimeAgo';
@@ -121,7 +121,8 @@ function RouteComponent() {
           </ul>
         </div>
       </div>
-      <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4">
+      <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4 relative">
+        <UpDownScroller />
         <div>
           <h1 className="text-2xl"><b>{topic?.title}</b></h1>
           <div className='flex items-center gap-2'>
@@ -224,5 +225,30 @@ const RefreshTopicButton = ({ topicId }: { topicId: string }) => {
     <button className="text-sm text-gray-500 hover:bg-secondary p-1 group" onClick={() => refreshTopic()}>
       <LuRefreshCcw className={classNames('transition-transform duration-200 group-active:animate-spin', isPending && 'animate-spin')} />
     </button>
+  );
+};
+
+const UpDownScroller = () => {
+  return (
+    <div className="items-center gap-2 absolute right-0 top-28 hidden md:flex">
+      <div className="fixed flex flex-col gap-2 items-center translate-x-full ">
+        <button className="text-sm hover:bg-secondary p-1 group border border-primary rounded-md" onClick={() => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        }}>
+          <LuArrowUp />
+        </button>
+        <button className="text-sm hover:bg-secondary p-1 group border border-primary rounded-md" onClick={() => {
+          window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+          });
+        }}>
+          <LuArrowDown />
+        </button>
+      </div>
+    </div>
   );
 };
