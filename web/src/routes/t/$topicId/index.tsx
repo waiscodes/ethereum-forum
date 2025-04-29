@@ -213,28 +213,19 @@ function RouteComponent() {
 
 const RelevantLink = ({ link }: { link: RelevantLink }) => {
   let icon = undefined;
+  const url = link.url.toLowerCase();
 
   if (link.internal) {
     icon = <LuLink />;
-  }
-
-  if (link.attachment) {
+  } else if (link.attachment) {
     icon = <LuPaperclip />;
-  }
-
-  if (link.reflection) {
+  } else if (link.reflection) {
     icon = <LuMessageCircle />;
-  }
-
-  if (link.url.startsWith('https://github.com/')) {
-    icon = <LuGithub />;
-  }
-
-  if (['https://eips.ethereum.org/', 'https://ercs.ethereum.org/'].find(domain => link.url.startsWith(domain))) {
+  } else if (['https://eips.ethereum.org/', 'https://ercs.ethereum.org/', 'https://github.com/ethereum/eips/', 'https://github.com/ethereum/ercs/'].find(domain => url.startsWith(domain))) {
     icon = <SiEthereum />;
-  }
-
-  if (['https://etherscan.io/'].find(domain => link.url.startsWith(domain))) {
+  } else if (url.startsWith('https://github.com/')) {
+    icon = <LuGithub />;
+  } else if (url.startsWith('https://etherscan.io/')) {
     icon = <PiReceipt />;
   }
 

@@ -17,7 +17,7 @@ function RouteComponent() {
       </div>
       <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
         <div className="space-y-4 mx-auto">
-          <div className="card flex-1 flex flex-col gap-1 h-fit col-span-full xl:col-span-6 2xl:col-span-8 w-full">
+          <div className="card flex-1 flex flex-col gap-1 h-fit col-span-full w-full">
             <h1 className="">Welcome to Ethereum Forum!</h1>
             <p className="text-secondary">
               Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.
