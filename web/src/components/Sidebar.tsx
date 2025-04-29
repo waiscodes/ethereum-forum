@@ -6,7 +6,7 @@ import { ThemeSwitcher } from './preferences/ThemeSwitcher';
 export const Sidebar = () => {
     return (
         <div className="left-bar space-y-2">
-            <div className="flex flex-col justify-between h-full max-h-[calc(100vh-32px)]">
+            <div className="flex flex-col justify-between h-full">
                 <nav className="w-full space-y-1.5 p-4">
                     <div className="px-1.5">
                         <p className="font-bold w-full border-b border-b-primary pb-1">Navigation</p>
