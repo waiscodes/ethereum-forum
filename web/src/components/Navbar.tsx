@@ -1,6 +1,7 @@
 import { Link, useMatches } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { FC, useEffect, useState } from 'react';
+import { SiEthereum } from 'react-icons/si';
 
 export const Navbar: FC = () => {
     const data = useMatches();
@@ -14,21 +15,26 @@ export const Navbar: FC = () => {
 
     return (
         <>
-            <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-fit z-10">
+            <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-8 z-10">
                 <div className="flex items-stretch gap-2 h-full px-3">
-                    <Link to="/" className="text-primary font-bold text-base hover:underline py-1 block">
-                        <span>ethereum</span>
-                        <span className="text-secondary">.</span>
-                        <span>forum</span>
+                    <Link to="/" className="text-primary font-bold text-base hover:underline py-1 flex items-center gap-1">
+                        <SiEthereum />
+                        <span className="hidden lg:block">
+                            <span>ethereum</span>
+                            <span className="text-secondary">.</span>
+                            <span>forum</span>
+                        </span>
                     </Link>
                 </div>
-                <div className={
-                    classNames('w-screen h-full flex items-center', route.startsWith('/t/') ? 'prose-width' : 'max-w-[1032px]')}>
+                <div
+                    className={
+                        classNames('w-full h-full flex items-center', route.startsWith('/t/') ? 'prose-width' : 'max-w-[1032px]')
+                    }>
                     <div className="px-2 truncate only-after-scroll font-bold transition-all duration-300">
                         {title}
                     </div>
                 </div>
-                <div className="flex items-center h-full gap-2 flex-1 justify-end px-2 text-sm">
+                <div className="items-center h-full gap-2 flex-1 justify-end px-2 text-sm hidden 2xl:flex">
                     {/* <UserProfile /> */}
                     Last refreshed 2 min ago
                 </div>
