@@ -15,6 +15,7 @@ import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 import { queryClient } from '@/util/query';
+import { useEffect } from 'react';
 
 interface DiscourseUser {
   id: number,
@@ -66,6 +67,14 @@ function RouteComponent() {
   const [standards_links, relevant_links1] = spliceRelatedLinks(all_links, link => isStandardsLink(link.url));
   const [github_links, relevant_links] = spliceRelatedLinks(relevant_links1, link => isGithub(link.url));
   const creator = extra?.details?.created_by as DiscourseUser;
+
+  useEffect(() => {
+    document.documentElement.classList.add('prose-page');
+
+    return () => {
+      document.documentElement.classList.remove('prose-page');
+    };
+  }, []);
 
   return (
     <>
