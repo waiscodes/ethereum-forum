@@ -30,22 +30,34 @@
     <div id="root"></div>
     <script>
         /** Load Theme */
-        document.documentElement.classList.remove('dark', 'light', 'system');
         const themes = ['dark', 'light', 'system'];
-        const theme = localStorage.getItem('color-theme') || 'system';
 
-        if (themes.includes(theme)) {
-            document.documentElement.classList.add(theme);
-        } else {
-            document.documentElement.classList.add('system');
+        function updateTheme() {
+            const theme = localStorage.getItem('color-theme') || 'system';
+            
+            document.documentElement.classList.remove('dark', 'light', 'system');
+            if (themes.includes(theme)) {
+                document.documentElement.classList.add(theme);
+            } else {
+                document.documentElement.classList.add('system');
+            }
+
+            /** Load Prose Width */
+            if (localStorage.getItem('prose-width') === 'prose-wide') {
+                document.documentElement.classList.add('prose-wide');
+            } else {
+                document.documentElement.classList.remove('prose-wide');
+            }
         }
 
-        /** Load Prose Width */
-        if (localStorage.getItem('prose-width') === 'prose-wide') {
-            document.documentElement.classList.add('prose-wide');
-        }
+        updateTheme();
+
+        window.addEventListener('storage', () => {
+            updateTheme();
+        });
     </script>
     <script type="module" src="./src/index.tsx"></script>
     <script defer data-domain="ethereum.forum" src="https://internal.v3x.report/js/script.js"></script>
 </body>
+
 </html>
