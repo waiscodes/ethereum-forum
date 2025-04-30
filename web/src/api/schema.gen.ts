@@ -201,6 +201,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /events/recent
+         * @description List recent events
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["CalendarEvent"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -221,7 +259,25 @@ export interface components {
         };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
-        Meeting: components["schemas"]["Meeting_ZoomMeetingData"];
+        /** GoogleMeetingData */
+        GoogleMeetingData: {
+            link: string;
+        };
+        Meeting: components["schemas"]["Meeting_ZoomMeetingData"] | components["schemas"]["Meeting_GoogleMeetingData"] | components["schemas"]["Meeting_YoutubeMeetingData"];
+        Meeting_GoogleMeetingData: {
+            /**
+             * @example Google
+             * @enum {string}
+             */
+            type: "Google";
+        } & components["schemas"]["GoogleMeetingData"];
+        Meeting_YoutubeMeetingData: {
+            /**
+             * @example Youtube
+             * @enum {string}
+             */
+            type: "Youtube";
+        } & components["schemas"]["YoutubeMeetingData"];
         Meeting_ZoomMeetingData: {
             /**
              * @example Zoom
@@ -272,6 +328,10 @@ export interface components {
             /** Format: date-time */
             bumped_at?: string;
             extra?: unknown;
+        };
+        /** YoutubeMeetingData */
+        YoutubeMeetingData: {
+            link: string;
         };
         /** ZoomMeetingData */
         ZoomMeetingData: {

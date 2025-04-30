@@ -1,9 +1,15 @@
-import { FC } from 'react';
+import classNames from 'classnames';
+import { FC, useState } from 'react';
 import { LuCalendar } from 'react-icons/lu';
+
+import { useEventsRecent, useEventsUpcoming } from '@/api/events';
 
 import { Meetings } from './Meetings';
 
 export const AgendaContent: FC = () => {
+    const [tab, setTab] = useState<'upcoming' | 'recent'>('upcoming');
+    const { data: upcoming } = useEventsUpcoming();
+    const { data: recent } = useEventsRecent();
 
     return (
         <>
@@ -28,7 +34,17 @@ export const AgendaContent: FC = () => {
                     </div>
                 </div>
             </div>
-            <Meetings />
+            <div className="flex gap-1">
+                <button className={classNames('tab button', tab === 'upcoming' && 'active')} onClick={() => setTab('upcoming')}>Upcoming</button>
+                <button className={classNames('tab button', tab === 'recent' && 'active')} onClick={() => setTab('recent')}>Recent</button>
+            </div>
+            {
+                tab === 'upcoming' ? (
+                    <Meetings data={upcoming ?? []} key="upcoming" />
+                ) : (
+                    <Meetings data={recent ?? []} key="recent" />
+                )
+            }
         </>
     );
 };

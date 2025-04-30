@@ -1,19 +1,18 @@
 import { parseISO } from 'date-fns';
+import { FC } from 'react';
 import { FiRefreshCcw } from 'react-icons/fi';
-import { SiZoom } from 'react-icons/si';
+import { SiGooglemeet, SiYoutube, SiZoom } from 'react-icons/si';
 
-import { Meeting, useEvents } from '@/api/events';
+import { CalendarEvent, Meeting } from '@/api/events';
 
 import { TimeAgo } from '../TimeAgo';
 
-export const Meetings = () => {
-    const { data } = useEvents();
-
+export const Meetings: FC<{ data: CalendarEvent[] }> = ({ data }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {
                 data?.map((event) => (
-                    <div key={event.uid} className="card flex flex-col gap-2">
+                    <div key={event.uid + event.start?.toString()} className="card flex flex-col gap-2">
                         <div className="flex items-center gap-2 justify-between">
                             <h3 className="font-bold">{event.summary}</h3>
                             <div>
@@ -43,7 +42,9 @@ export const Meetings = () => {
 };
 
 const platformToIcon = {
-    Zoom: <SiZoom />
+    Zoom: <SiZoom />,
+    Google: <SiGooglemeet />,
+    Youtube: <SiYoutube />,
 };
 
 export const MeetingLink = ({ meeting }: { meeting: Meeting }) => {

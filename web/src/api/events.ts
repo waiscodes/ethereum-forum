@@ -36,3 +36,16 @@ export const useEventsUpcoming = () => {
 
     return { data, ...other };
 };
+
+export const getEventsRecent = () => queryOptions({
+    queryKey: ['events-recent'],
+    queryFn: async () => {
+        const response = await useApi('/events/recent', 'get', {});
+
+        const events = response.data as CalendarEvent[];
+
+        return events;
+    },
+});
+
+export const useEventsRecent = () => useQuery(getEventsRecent());

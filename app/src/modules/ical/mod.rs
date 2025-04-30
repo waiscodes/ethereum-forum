@@ -1,6 +1,6 @@
 use anyhow::Error;
 use chrono::{Datelike, Duration, DurationRound, Utc};
-use figment::{providers::Env, Figment};
+use figment::{Figment, providers::Env};
 use icalendar::{Calendar, CalendarComponent};
 use serde::Deserialize;
 use tracing::info;
@@ -13,7 +13,9 @@ pub struct ICalConfig {
 }
 
 pub async fn init_ical(figment: Figment) -> Option<ICalConfig> {
-    let config = figment.merge(Env::prefixed("ICAL_")).extract::<ICalConfig>();
+    let config = figment
+        .merge(Env::prefixed("ICAL_"))
+        .extract::<ICalConfig>();
     match config {
         Ok(config) => Some(config),
         Err(e) => {
@@ -30,8 +32,9 @@ impl ICalConfig {
 
         let cal: Calendar = body.parse().unwrap();
         let mut events: Vec<CalendarEvent> = Vec::new();
-        // now rounded down to the start of the day
-        let now = Utc::now().date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc();
+
+        // keep 365 days of history
+        let now = Utc::now() - Duration::days(365);
         for calendar in cal.components {
             if let CalendarComponent::Event(event) = calendar {
                 let parsed_events = match CalendarEvent::from_event(event) {
@@ -60,14 +63,38 @@ impl ICalConfig {
             .cache
             .ical_cache
             .try_get_with(self.url.clone(), ICalConfig::fetch(self))
-            .await {
-                Ok(x) => x,
-                Err(e) => {
-                    println!("Error fetching cached ical: {}", e);
-                    return Err(anyhow::anyhow!("Error fetching cached ical: {}", e));
-                }
-            };
+            .await
+        {
+            Ok(x) => x,
+            Err(e) => {
+                println!("Error fetching cached ical: {}", e);
+                return Err(anyhow::anyhow!("Error fetching cached ical: {}", e));
+            }
+        };
         Ok(x)
+    }
+
+    pub async fn fetch_upcoming(&self, state: &AppState) -> Result<Vec<CalendarEvent>, Error> {
+        let events = self.fetch_cached(state).await?;
+        let now = Utc::now().date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc();
+        let upcoming = events
+            .iter()
+            .filter(|event| event.start.unwrap() >= now)
+            .cloned()
+            .collect();
+        Ok(upcoming)
+    }
+
+    pub async fn fetch_recent(&self, state: &AppState) -> Result<Vec<CalendarEvent>, Error> {
+        let events = self.fetch_cached(state).await?;
+        let now = Utc::now();
+        let recent = events
+            .iter()
+            .rev()
+            .filter(|event| event.start.unwrap() < now)
+            .cloned()
+            .collect();
+        Ok(recent)
     }
 }
 

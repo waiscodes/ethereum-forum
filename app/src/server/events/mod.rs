@@ -19,8 +19,22 @@ impl EventsApi {
     #[oai(path = "/events", method = "get", tag = "ApiTags::Events")]
     async fn list(&self, state: Data<&AppState>) -> Result<Json<Vec<CalendarEvent>>> {
         if let Some(ical) = &state.ical {
-            let events = ical.fetch_cached(&state).await.unwrap();
-            let events = events.iter().take(10).cloned().collect();
+            let events = ical.fetch_upcoming(&state).await.unwrap();
+            let events = events.iter().take(32).cloned().collect();
+            return Ok(Json(events));
+        }
+
+        Err(poem::Error::from_status(StatusCode::NOT_IMPLEMENTED))
+    }
+
+    /// /events/recent
+    ///
+    /// List recent events
+    #[oai(path = "/events/recent", method = "get", tag = "ApiTags::Events")]
+    async fn recent(&self, state: Data<&AppState>) -> Result<Json<Vec<CalendarEvent>>> {
+        if let Some(ical) = &state.ical {
+            let events = ical.fetch_recent(&state).await.unwrap();
+            let events = events.iter().take(32).cloned().collect();
             return Ok(Json(events));
         }
 

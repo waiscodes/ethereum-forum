@@ -2,6 +2,7 @@ import { useTopicsLatest } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
 
 import { TopicPreview } from '../topic/TopicPreview';
+import { isDotDotDotToken } from 'typescript';
 
 export const EIPsContent = () => {
     const { data: topics } = useTopicsLatest();

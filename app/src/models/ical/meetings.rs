@@ -1,14 +1,16 @@
 use anyhow::Result;
-use icalendar::{Event, EventLike};
+use icalendar::{Component, Event, EventLike};
 use poem_openapi::{Object, Union};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{info, warn};
 
 #[derive(Debug, Serialize, Deserialize, Union, Clone, PartialEq, Eq)]
 #[oai(discriminator_name = "type")]
 pub enum Meeting {
     Zoom(ZoomMeetingData),
+    Google(GoogleMeetingData),
+    Youtube(YoutubeMeetingData),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Object, PartialEq, Eq)]
@@ -16,6 +18,16 @@ pub struct ZoomMeetingData {
     pub link: String,
     pub meeting_id: Option<String>,
     pub passcode: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Object, PartialEq, Eq)]
+pub struct GoogleMeetingData {
+    pub link: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Object, PartialEq, Eq)]
+pub struct YoutubeMeetingData {
+    pub link: String,
 }
 
 pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeting>)> {
@@ -39,6 +51,12 @@ pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeti
                 passcode: Some(passcode),
             }));
         }
+
+        let youtube_regex = Regex::new(r#"(https://www.youtube.com/live/[^"]+)"#).unwrap();
+        if let Some(captures) = youtube_regex.captures(location) {
+            let link = captures[1].to_string();
+            meetings.push(Meeting::Youtube(YoutubeMeetingData { link }));
+        }
     }
 
     // 'Join Zoom Meeting'
@@ -47,7 +65,7 @@ pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeti
 
     let x = new_body.split_once("Join Zoom Meeting");
     if let Some((split_body, body)) = x {
-        println!("left todo: {}", body);
+        // println!("left todo: {}", body);
 
         // match the first url in the body
         let link = regex::Regex::new(r#"href="([^"]+?)""#)
@@ -66,12 +84,14 @@ pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeti
                 }
             }));
 
-        let zoom_link_regex = Regex::new(r#"https://ethereumfoundation.zoom.us/j/(\d+)\?pwd=(\w+)"#).unwrap();
-        
-        let (meeting_id, passcode) = match zoom_link_regex.captures(link.as_deref().unwrap_or_default()) {
-            Some(captures) => (Some(captures[1].to_string()), Some(captures[2].to_string())),
-            None => (None, None),
-        };
+        let zoom_link_regex =
+            Regex::new(r#"https://ethereumfoundation.zoom.us/j/(\d+)\?pwd=(\w+)"#).unwrap();
+
+        let (meeting_id, passcode) =
+            match zoom_link_regex.captures(link.as_deref().unwrap_or_default()) {
+                Some(captures) => (Some(captures[1].to_string()), Some(captures[2].to_string())),
+                None => (None, None),
+            };
 
         new_body = split_body.to_string();
         meetings.push(Meeting::Zoom(ZoomMeetingData {
@@ -79,7 +99,21 @@ pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeti
             meeting_id,
             passcode,
         }));
+    }
 
+    // match, extract, and remove the first occurrence of the string
+    // "Google Meet: <a href="https://meet.google.com/odf-tghm-ttu"><u>https://meet.google.com/odf-tghm-ttu</u></a>"
+    if new_body.contains("Google Meet:") {
+        info!("google meet found {}", new_body);
+        let link = regex::Regex::new(r#"https://meet.google.com/[a-zA-Z0-9_\-]+"#).unwrap();
+        if let Some(captures) = link.captures(&new_body) {
+            let link = captures[0].to_string();
+            // TODO: update body to remove the link
+            // new_body = new_body.replace(&format!("Google Meet: <a {}</a>", link), "");
+            meetings.push(Meeting::Google(GoogleMeetingData { link }));
+        } else {
+            info!("no google meet found {}", new_body);
+        }
     }
 
     meetings.dedup_by(|a, b| a == b);
