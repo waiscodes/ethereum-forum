@@ -275,7 +275,7 @@ html.prose-page {
     }
 
     a:not(.mention) {
-        @apply text-secondary hover:underline;
+        @apply text-secondary hover:underline max-w-full;
     }
     a.mention {
         @apply bg-secondary px-1 rounded-md;
