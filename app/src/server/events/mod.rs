@@ -4,7 +4,6 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::models::ical::CalendarEvent;
-use crate::modules::ical::ICalConfig;
 use crate::server::ApiTags;
 use crate::state::AppState;
 

@@ -1,9 +1,9 @@
 use anyhow::Result;
-use icalendar::{Component, Event, EventLike};
+use icalendar::{Event, EventLike};
 use poem_openapi::{Object, Union};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn};
+use tracing::info;
 
 #[derive(Debug, Serialize, Deserialize, Union, Clone, PartialEq, Eq)]
 #[oai(discriminator_name = "type")]

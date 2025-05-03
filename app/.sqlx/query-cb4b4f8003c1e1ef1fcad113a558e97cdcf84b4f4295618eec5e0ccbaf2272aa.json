@@ -57,6 +57,11 @@
         "ordinal": 10,
         "name": "extra",
         "type_info": "Json"
+      },
+      {
+        "ordinal": 11,
+        "name": "pm_issue",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
@@ -73,6 +78,7 @@
       false,
       true,
       false,
+      true,
       true,
       true,
       true

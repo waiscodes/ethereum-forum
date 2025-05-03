@@ -1,7 +1,11 @@
+use std::ops::Deref;
+
 use chrono::{DateTime, Utc};
 use poem_openapi::Object;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
+use tracing::info;
 
 use crate::state::AppState;
 
@@ -21,6 +25,7 @@ pub struct Topic {
     pub created_at: DateTime<Utc>,
     pub last_post_at: Option<DateTime<Utc>>,
     pub bumped_at: Option<DateTime<Utc>>,
+    pub pm_issue: Option<i32>,
     pub extra: Option<serde_json::Value>,
 }
 
@@ -104,6 +109,25 @@ impl Post {
 
 impl Topic {
     pub fn from_discourse(topic: &DiscourseTopicResponse) -> Self {
+        let mut pm_issue = None;
+
+        if let Some(category_id) = topic.extra.get("category_id") {
+            let category_id = category_id.as_i64().unwrap();
+
+            // If "Protocol Calls"
+            if category_id == 63 {
+                info!("Found category_id: {}", category_id);
+                // Get first post
+                if let Some(first_post) = topic.post_stream.posts.first() {
+                    info!("Found first post: {}", first_post.cooked);
+                    if let Some(found_pm_issue) = try_extract_pm_issue(&first_post.cooked) {
+                        info!("Found pm_issue: {}", found_pm_issue);
+                        pm_issue = Some(found_pm_issue);
+                    }
+                }
+            }
+        }
+
         Self {
             topic_id: topic.id,
             title: topic.title.clone(),
@@ -116,11 +140,12 @@ impl Topic {
             extra: Some(topic.extra.clone()),
             created_at: topic.created_at,
             view_count: topic.views,
+            pm_issue,
         }
     }
 
     pub async fn upsert(&self, state: &AppState) -> Result<(), sqlx::Error> {
-        query!("INSERT INTO topics (topic_id, title, slug, post_count, view_count, like_count, image_url, created_at, last_post_at, bumped_at, extra) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (topic_id) DO UPDATE SET topic_id=$1, title=$2, slug=$3, post_count=$4, view_count=$5, like_count=$6, image_url=$7, created_at=$8, last_post_at=$9, bumped_at=$10, extra=$11",
+        query!("INSERT INTO topics (topic_id, title, slug, post_count, view_count, like_count, image_url, created_at, last_post_at, bumped_at, extra, pm_issue) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (topic_id) DO UPDATE SET topic_id=$1, title=$2, slug=$3, post_count=$4, view_count=$5, like_count=$6, image_url=$7, created_at=$8, last_post_at=$9, bumped_at=$10, extra=$11, pm_issue=$12",
             self.topic_id,
             self.title,
             self.slug,
@@ -132,6 +157,7 @@ impl Topic {
             self.last_post_at,
             self.bumped_at,
             self.extra,
+            self.pm_issue,
         )
         .execute(&state.database.pool)
         .await?;
@@ -162,13 +188,9 @@ impl Topic {
     }
 
     pub async fn get_by_topic_id(topic_id: i32, state: &AppState) -> Result<Self, sqlx::Error> {
-        let topic = query_as!(
-            Self,
-            "SELECT * FROM topics WHERE topic_id = $1",
-            topic_id
-        )
-        .fetch_one(&state.database.pool)
-        .await?;
+        let topic = query_as!(Self, "SELECT * FROM topics WHERE topic_id = $1", topic_id)
+            .fetch_one(&state.database.pool)
+            .await?;
         Ok(topic)
     }
 
@@ -182,4 +204,12 @@ impl Topic {
         .await?;
         Ok(post)
     }
+}
+
+// Match for <a href=\"https://github.com/ethereum/pm/issues/1518\">GitHub Issue</a>
+fn try_extract_pm_issue(cooked: &str) -> Option<i32> {
+    let re = Regex::new(r#"https://github\.com/ethereum/pm/issues/(\d+)"#).unwrap();
+    let caps = re.captures(cooked);
+
+    caps.map(|caps| caps.get(1).unwrap().as_str().parse().unwrap())
 }

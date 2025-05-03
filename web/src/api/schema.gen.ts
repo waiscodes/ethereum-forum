@@ -327,6 +327,8 @@ export interface components {
             last_post_at?: string;
             /** Format: date-time */
             bumped_at?: string;
+            /** Format: int32 */
+            pm_issue?: number;
             extra?: unknown;
         };
         /** YoutubeMeetingData */

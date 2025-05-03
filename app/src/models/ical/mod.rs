@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use icalendar::{CalendarDateTime, Component, DatePerhapsTime, Event, EventLike};
+use icalendar::{CalendarDateTime, Component, DatePerhapsTime, Event};
 use meetings::{try_parse_meeting, Meeting};
 use poem_openapi::{Enum, Object};
 use rrule::RRuleSet;

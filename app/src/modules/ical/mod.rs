@@ -1,5 +1,5 @@
 use anyhow::Error;
-use chrono::{Datelike, Duration, DurationRound, Utc};
+use chrono::{Duration, Utc};
 use figment::{Figment, providers::Env};
 use icalendar::{Calendar, CalendarComponent};
 use serde::Deserialize;

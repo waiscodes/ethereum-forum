@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use futures::join;
-use tracing::info;
 
 pub mod database;
 pub mod models;

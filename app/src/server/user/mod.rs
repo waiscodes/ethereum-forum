@@ -17,7 +17,7 @@ impl UserApi {
     #[oai(path = "/users", method = "get", tag = "ApiTags::User")]
     async fn list(
         &self,
-        state: Data<&AppState>,
+        _state: Data<&AppState>,
     ) -> Result<Json<serde_json::Value>> {
         // let party = Party::create(&user.user_id, state.0).await.map_err(|e| {
         //     tracing::error!("Error creating party: {:?}", e);

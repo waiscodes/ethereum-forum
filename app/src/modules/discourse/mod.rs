@@ -71,6 +71,7 @@ impl DiscourseService {
                     let existing = existing_topic.unwrap();
                     existing.post_count != topic.posts_count
                         || existing.last_post_at.unwrap_or_default() < topic.last_posted_at
+                        || existing.topic_id == 23997
                 };
 
                 if !worth_fetching_more {

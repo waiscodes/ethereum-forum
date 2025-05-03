@@ -1,0 +1,1 @@
+ALTER TABLE topics ADD COLUMN pm_issue INTEGER;

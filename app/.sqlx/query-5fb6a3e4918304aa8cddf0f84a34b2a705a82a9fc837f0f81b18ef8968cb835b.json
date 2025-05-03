@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO topics (topic_id, title, slug, post_count, view_count, like_count, image_url, created_at, last_post_at, bumped_at, extra, pm_issue) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (topic_id) DO UPDATE SET topic_id=$1, title=$2, slug=$3, post_count=$4, view_count=$5, like_count=$6, image_url=$7, created_at=$8, last_post_at=$9, bumped_at=$10, extra=$11, pm_issue=$12",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Text",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Json",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5fb6a3e4918304aa8cddf0f84a34b2a705a82a9fc837f0f81b18ef8968cb835b"
+}

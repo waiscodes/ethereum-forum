@@ -34,7 +34,7 @@ pub enum ApiTags {
     Events,
 }
 
-fn get_api(state: AppState) -> impl OpenApi {
+fn get_api(_state: AppState) -> impl OpenApi {
     (TopicApi, UserApi, EventsApi)
 }
 
