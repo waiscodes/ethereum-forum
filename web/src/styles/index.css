@@ -21,6 +21,7 @@ html.light {
     --theme-text-secondary: #268BD2;
     --theme-border: #657B83;
     --theme-border-secondary: #EEE8D5;
+    --theme-code-shadow: 1px;
 }
 
 html.dark {
@@ -31,6 +32,7 @@ html.dark {
     --theme-text-secondary: #268BD2;
     --theme-border: #242424;
     --theme-border-secondary: #242424;
+    --theme-code-shadow: 6px;
     .github-icon {
         /* filter: invert(1); */
         fill: #efefef;
@@ -38,7 +40,7 @@ html.dark {
 }
 
 @media (prefers-color-scheme: light) {
-    html {
+    html.system {
         --theme-bg-primary: #FDF6E3;
         --theme-bg-secondary: #EEE8D5;
         --theme-bg-tertiary: #ccc09d;
@@ -46,10 +48,11 @@ html.dark {
         --theme-text-secondary: #268BD2;
         --theme-border: #657B83;
         --theme-border-secondary: #EEE8D5;
+        --theme-code-shadow: 1px;
     }
 }
 @media (prefers-color-scheme: dark) {
-    html {
+    html.system {
         --theme-bg-primary: #000000;
         --theme-bg-secondary: #0D0D0D;
         --theme-bg-tertiary: #242424;
@@ -57,6 +60,7 @@ html.dark {
         --theme-text-secondary: #268BD2;
         --theme-border: #242424;
         --theme-border-secondary: #242424;
+        --theme-code-shadow: 6px;
         .github-icon {
             fill: #efefef;
         }
@@ -357,7 +361,7 @@ html.prose-page {
     pre {
         @apply bg-secondary border border-primary p-4 overflow-x-auto;
         code {
-            @apply bg-secondary;
+            /* @apply bg-secondary; */
         }
     }
     .lightbox-wrapper {

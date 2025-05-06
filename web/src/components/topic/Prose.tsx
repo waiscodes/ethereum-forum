@@ -1,3 +1,16 @@
+// import 'prismjs/themes/prism.css';
+import '../../styles/code.css';
+
+import * as Prism from 'prismjs';
+
+// This ensures prism is loaded first
+// @ts-ignore
+// eslint-disable-next-line
+const data = Prism.util;
+
+import 'prismjs/components/prism-solidity';
+import 'prismjs/components/prism-go';
+
 import { FC, useEffect, useRef } from 'react';
 
 const trackLinkClick = async (url: string, topicId: number, postId: number) => {
@@ -39,6 +52,8 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
 
             };
 
+            // TODO: Replace / ethmag links with https://ethereum-magicians.org/
+
             // force new-tab attrs
             a.setAttribute('target', '_blank');
             a.setAttribute('rel', 'noopener noreferrer');
@@ -47,12 +62,46 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
             return { a, onClick };
         });
 
+
+        const code = container.querySelectorAll('code');
+
+        for (const c of code) {
+            const langClass = [...c.classList.values()].find(l => l.startsWith('language-'));
+            const lang = langClass?.replace('language-', '');
+
+            console.log(lang);
+
+            if (lang == 'auto') {
+                // guess the lang and update it
+                const content = c.textContent;
+
+                console.log('detecting lang ', content);
+
+                if (['contract', 'uint256', 'address'].some(w => content?.includes(w))) {
+                    console.log('detected solidity');
+                    c.classList.add('language-solidity');
+                    c.classList.remove('language-auto');
+                }
+            }
+
+            if (lang == 'sol') {
+                c.classList.add('language-solidity');
+                c.classList.remove('language-sol');
+            }
+
+            if (lang == 'none') {
+                continue;
+            }
+
+            Prism.highlightElement(c);
+        }
+
         return () => {
             handlers.forEach(({ a, onClick }) =>
                 a.removeEventListener('click', onClick)
             );
         };
-    }, [content]);
+    }, [content, ref]);
 
     return (
         <div ref={ref} dangerouslySetInnerHTML={{ __html: content }} className="prose" />
