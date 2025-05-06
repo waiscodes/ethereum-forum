@@ -2,7 +2,6 @@ import { useTopicsLatest } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
 
 import { TopicPreview } from '../topic/TopicPreview';
-import { isDotDotDotToken } from 'typescript';
 
 export const EIPsContent = () => {
     const { data: topics } = useTopicsLatest();
@@ -13,7 +12,6 @@ export const EIPsContent = () => {
     });
 
     return (
-
         <div className="space-y-4">
             <div className="text-lg font-bold border-b border-b-primary">Latest Discussions</div>
             <div className="grid gap-2 grid-cols-1 md:grid-cols-2 mx-auto">

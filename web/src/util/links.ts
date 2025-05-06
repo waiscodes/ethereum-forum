@@ -7,16 +7,23 @@ type RelevantLink = {
     clicks: number;
 };
 
-export const spliceRelatedLinks = (links: RelevantLink[], predicate: (link: RelevantLink) => boolean, cap: number = Infinity) => {
-    const newLinks = links.reduce((acc, link) => {
-        if (acc[0].length < cap && predicate(link)) {
-            acc[0].push(link);
-        } else {
-            acc[1].push(link);
-        }
+export const spliceRelatedLinks = (
+    links: RelevantLink[],
+    predicate: (link: RelevantLink) => boolean,
+    cap: number = Infinity
+) => {
+    const newLinks = links.reduce(
+        (acc, link) => {
+            if (acc[0].length < cap && predicate(link)) {
+                acc[0].push(link);
+            } else {
+                acc[1].push(link);
+            }
 
-        return acc;
-    }, [[], []] as [RelevantLink[], RelevantLink[]]);
+            return acc;
+        },
+        [[], []] as [RelevantLink[], RelevantLink[]]
+    );
 
     return newLinks;
 };
@@ -26,7 +33,9 @@ export const isGithub = (link: string) => {
 
     const url = link.toLowerCase();
 
-    return !!['https://github.com/', 'https://gist.github.com/'].find(domain => url.startsWith(domain));
+    return !!['https://github.com/', 'https://gist.github.com/'].find((domain) =>
+        url.startsWith(domain)
+    );
 };
 
 export const isStandardsLink = (link: string) => {
@@ -34,7 +43,12 @@ export const isStandardsLink = (link: string) => {
 
     const url = link.toLowerCase();
 
-    return !!['https://eips.ethereum.org/', 'https://ercs.ethereum.org/', 'https://github.com/ethereum/eips/', 'https://github.com/ethereum/ercs/'].find(domain => url.startsWith(domain));
+    return !![
+        'https://eips.ethereum.org/',
+        'https://ercs.ethereum.org/',
+        'https://github.com/ethereum/eips/',
+        'https://github.com/ethereum/ercs/',
+    ].find((domain) => url.startsWith(domain));
 };
 
 export const isHackmd = (link: string) => {
@@ -42,5 +56,7 @@ export const isHackmd = (link: string) => {
 
     const url = link.toLowerCase();
 
-    return !!['https://hackmd.io/', 'https://notes.ethereum.org/'].find(domain => url.startsWith(domain));
+    return !!['https://hackmd.io/', 'https://notes.ethereum.org/'].find((domain) =>
+        url.startsWith(domain)
+    );
 };

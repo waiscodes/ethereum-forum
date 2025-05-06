@@ -1,6 +1,7 @@
 // ESLint v9 flat configuration file
 import js from '@eslint/js';
 import eslintPluginImport from 'eslint-plugin-import';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginReact from 'eslint-plugin-react';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
@@ -16,6 +17,7 @@ export default [
     // Base configs
     js.configs.recommended,
     ...tseslint.configs.recommended,
+    eslintPluginPrettierRecommended,
 
     // React config
     {
@@ -28,6 +30,11 @@ export default [
                 ecmaFeatures: {
                     jsx: true,
                 },
+            },
+        },
+        settings: {
+            react: {
+                version: 'detect',
             },
         },
         rules: {
@@ -80,8 +87,8 @@ export default [
                     vars: 'all',
                     varsIgnorePattern: '^_',
                     args: 'after-used',
-                    argsIgnorePattern: '^_'
-                }
+                    argsIgnorePattern: '^_',
+                },
             ],
             'simple-import-sort/imports': 'error',
             'simple-import-sort/exports': 'error',

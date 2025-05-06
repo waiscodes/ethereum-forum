@@ -86,6 +86,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      eslint-config-prettier:
+        specifier: ^10.1.2
+        version: 10.1.2(eslint@9.25.1(jiti@1.21.7))
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -160,8 +163,8 @@ importers:
         specifier: ^1.2.3
         version: 1.2.3(eslint@9.25.1(jiti@1.21.7))
       eslint-plugin-prettier:
-        specifier: ^5.2.5
-        version: 5.2.6(eslint@9.25.1(jiti@1.21.7))(prettier@3.5.3)
+        specifier: ^5.2.6
+        version: 5.2.6(eslint-config-prettier@10.1.2(eslint@9.25.1(jiti@1.21.7)))(eslint@9.25.1(jiti@1.21.7))(prettier@3.5.3)
       eslint-plugin-react:
         specifier: ^7.37.4
         version: 7.37.5(eslint@9.25.1(jiti@1.21.7))
@@ -1652,6 +1655,12 @@ packages:
   escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
+
+  eslint-config-prettier@10.1.2:
+    resolution: {integrity: sha512-Epgp/EofAUeEpIdZkW60MHKvPyru1ruQJxPL+WIycnaPApuseK0Zpkrh/FwL9oIpQvIhJwV7ptOy0DWUjTlCiA==}
+    hasBin: true
+    peerDependencies:
+      eslint: '>=7.0.0'
 
   eslint-import-resolver-node@0.3.9:
     resolution: {integrity: sha512-WFj2isz22JahUv+B788TlO3N6zL3nNJGU8CcZbPZvVEkBPaJdCV4vy5wyghty5ROFbCRnm132v8BScu5/1BQ8g==}
@@ -4600,6 +4609,10 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
+  eslint-config-prettier@10.1.2(eslint@9.25.1(jiti@1.21.7)):
+    dependencies:
+      eslint: 9.25.1(jiti@1.21.7)
+
   eslint-import-resolver-node@0.3.9:
     dependencies:
       debug: 3.2.7
@@ -4670,12 +4683,14 @@ snapshots:
     dependencies:
       eslint: 9.25.1(jiti@1.21.7)
 
-  eslint-plugin-prettier@5.2.6(eslint@9.25.1(jiti@1.21.7))(prettier@3.5.3):
+  eslint-plugin-prettier@5.2.6(eslint-config-prettier@10.1.2(eslint@9.25.1(jiti@1.21.7)))(eslint@9.25.1(jiti@1.21.7))(prettier@3.5.3):
     dependencies:
       eslint: 9.25.1(jiti@1.21.7)
       prettier: 3.5.3
       prettier-linter-helpers: 1.0.0
       synckit: 0.11.4
+    optionalDependencies:
+      eslint-config-prettier: 10.1.2(eslint@9.25.1(jiti@1.21.7))
 
   eslint-plugin-react@7.37.5(eslint@9.25.1(jiti@1.21.7)):
     dependencies:

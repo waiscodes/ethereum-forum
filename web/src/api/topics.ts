@@ -1,4 +1,10 @@
-import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import {
+    infiniteQueryOptions,
+    queryOptions,
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+} from '@tanstack/react-query';
 
 import { useApi } from './api';
 import { components } from './schema.gen';
@@ -7,91 +13,96 @@ import { components } from './schema.gen';
 export type Post = components['schemas']['Post'];
 export type Topic = components['schemas']['Topic'];
 
-export const getTopics = () => queryOptions({
-    queryKey: ['topics'],
-    queryFn: async () => {
-        const response = await useApi('/topics', 'get', {});
+export const getTopics = () =>
+    queryOptions({
+        queryKey: ['topics'],
+        queryFn: async () => {
+            const response = await useApi('/topics', 'get', {});
 
-        return response.data;
-    },
-});
+            return response.data;
+        },
+    });
 
 export const useTopicsLatest = () => useQuery(getTopics());
 
-export const getTopicsTrending = () => queryOptions({
-    queryKey: ['topics', 'trending'],
-    queryFn: async () => {
-        const response = await useApi('/topics/trending', 'get', {});
+export const getTopicsTrending = () =>
+    queryOptions({
+        queryKey: ['topics', 'trending'],
+        queryFn: async () => {
+            const response = await useApi('/topics/trending', 'get', {});
 
-        return response.data;
-    },
-});
+            return response.data;
+        },
+    });
 
 export const useTopicsTrending = () => useQuery(getTopicsTrending());
 
-export const getTopic = (topicId: string) => queryOptions({ 
-    queryKey: ['topic', topicId],
-    queryFn: async () => {
-        const response = await useApi('/t/{topic_id}', 'get', {
-            path: {
-                topic_id: Number(topicId),
-            },
-        });
+export const getTopic = (topicId: string) =>
+    queryOptions({
+        queryKey: ['topic', topicId],
+        queryFn: async () => {
+            const response = await useApi('/t/{topic_id}', 'get', {
+                path: {
+                    topic_id: Number(topicId),
+                },
+            });
 
-        return response.data;
-    },
-});
+            return response.data;
+        },
+    });
 
 export const useTopic = (topicId: string) => useQuery(getTopic(topicId));
 
-export const useTopicRefresh = (topicId: string) => useMutation({
-    mutationFn: async () => {
-        const response = await useApi('/t/{topic_id}', 'post', {
-            path: {
-                topic_id: Number(topicId),
-            },
-        });
+export const useTopicRefresh = (topicId: string) =>
+    useMutation({
+        mutationFn: async () => {
+            const response = await useApi('/t/{topic_id}', 'post', {
+                path: {
+                    topic_id: Number(topicId),
+                },
+            });
 
-        return response.data;
-    },
-});
+            return response.data;
+        },
+    });
 
+export const getPosts = (topicId: string, page: number) =>
+    queryOptions({
+        queryKey: ['posts', topicId, page],
+        queryFn: async () => {
+            const response = await useApi('/t/{topic_id}/posts', 'get', {
+                path: {
+                    topic_id: Number(topicId),
+                },
+                query: {
+                    page,
+                },
+            });
 
-export const getPosts = (topicId: string, page: number) => queryOptions({
-    queryKey: ['posts', topicId, page],
-    queryFn: async () => {
-        const response = await useApi('/t/{topic_id}/posts', 'get', {
-            path: {
-                topic_id: Number(topicId),
-            },
-            query: {
-                page,
-            },
-        });
+            return response.data;
+        },
+    });
 
-        return response.data;
-    },
-});
+export const getPostsInfinite = (topicId: string) =>
+    infiniteQueryOptions({
+        queryKey: ['posts', topicId, 'infinite'],
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: { posts: Post[]; has_more: boolean }, allPages) => {
+            return lastPage.has_more ? allPages.length + 1 : undefined;
+        },
+        queryFn: async ({ pageParam }) => {
+            const response = await useApi('/t/{topic_id}/posts', 'get', {
+                path: {
+                    topic_id: Number(topicId),
+                },
+                query: {
+                    page: pageParam,
+                },
+            });
 
-export const getPostsInfinite = (topicId: string) => infiniteQueryOptions({
-    queryKey: ['posts', topicId, 'infinite'],
-    initialPageParam: 1,
-    getNextPageParam: (lastPage: { posts: Post[], has_more: boolean }, allPages) => {
-        return lastPage.has_more ? allPages.length + 1 : undefined;
-    },
-    queryFn: async ({ pageParam }) => {
-        const response = await useApi('/t/{topic_id}/posts', 'get', {
-            path: {
-                topic_id: Number(topicId),
-            },
-            query: {
-                page: pageParam,
-            },
-        });
-
-        return response.data;
-    },
-});
+            return response.data;
+        },
+    });
 
 export const usePosts = (topicId: string, page: number) => useQuery(getPosts(topicId, page));
 

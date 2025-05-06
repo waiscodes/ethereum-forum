@@ -6,7 +6,7 @@ import { SiEthereum } from 'react-icons/si';
 export const Navbar: FC = () => {
     const data = useMatches();
 
-    const title = findMapReverse(data, m => {
+    const title = findMapReverse(data, (m) => {
         if ('title' in m.context) {
             if (m.context.title) return m.context.title as string;
         }
@@ -19,7 +19,10 @@ export const Navbar: FC = () => {
         <>
             <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-8 z-10">
                 <div className="flex items-stretch gap-2 h-full px-3">
-                    <Link to="/" className="text-primary font-bold text-base hover:underline py-1 flex items-center gap-1">
+                    <Link
+                        to="/"
+                        className="text-primary font-bold text-base hover:underline py-1 flex items-center gap-1"
+                    >
                         <SiEthereum />
                         <span className="hidden lg:block">
                             <span>ethereum</span>
@@ -29,9 +32,11 @@ export const Navbar: FC = () => {
                     </Link>
                 </div>
                 <div
-                    className={
-                        classNames('w-full h-full flex items-center', route.startsWith('/t/') ? 'prose-width' : 'max-w-[1032px]')
-                    }>
+                    className={classNames(
+                        'w-full h-full flex items-center',
+                        route.startsWith('/t/') ? 'prose-width' : 'max-w-[1032px]'
+                    )}
+                >
                     <div className="px-2 truncate only-after-scroll font-bold transition-all duration-300">
                         {title}
                     </div>

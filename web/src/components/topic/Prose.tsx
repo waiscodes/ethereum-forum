@@ -28,7 +28,11 @@ const trackLinkClick = async (url: string, topicId: number, postId: number) => {
     });
 };
 
-export const Prose: FC<{ content: string, topicId: number, postId: number }> = ({ content, topicId, postId }) => {
+export const Prose: FC<{ content: string; topicId: number; postId: number }> = ({
+    content,
+    topicId,
+    postId,
+}) => {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -39,7 +43,7 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
         // grab all links
         const anchors = Array.from(container.querySelectorAll('a'));
         // store handlers so we can clean up
-        const handlers = anchors.map(a => {
+        const handlers = anchors.map((a) => {
             const onClick = (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -49,7 +53,6 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
 
                     window.open(a.href, '_blank', 'noopener,noreferrer');
                 })();
-
             };
 
             // TODO: Replace / ethmag links with https://ethereum-magicians.org/
@@ -62,23 +65,22 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
             return { a, onClick };
         });
 
-
         const code = container.querySelectorAll('code');
 
         for (const c of code) {
-            const langClass = [...c.classList.values()].find(l => l.startsWith('language-'));
+            const langClass = [...c.classList.values()].find((l) => l.startsWith('language-'));
             const lang = langClass?.replace('language-', '');
 
-            console.log(lang);
+            // console.log(lang);
 
             if (lang == 'auto') {
                 // guess the lang and update it
                 const content = c.textContent;
 
-                console.log('detecting lang ', content);
+                // console.log('detecting lang ', content);
 
-                if (['contract', 'uint256', 'address'].some(w => content?.includes(w))) {
-                    console.log('detected solidity');
+                if (['contract', 'uint256', 'address'].some((w) => content?.includes(w))) {
+                    // console.log('detected solidity');
                     c.classList.add('language-solidity');
                     c.classList.remove('language-auto');
                 }
@@ -97,13 +99,9 @@ export const Prose: FC<{ content: string, topicId: number, postId: number }> = (
         }
 
         return () => {
-            handlers.forEach(({ a, onClick }) =>
-                a.removeEventListener('click', onClick)
-            );
+            handlers.forEach(({ a, onClick }) => a.removeEventListener('click', onClick));
         };
     }, [content, ref]);
 
-    return (
-        <div ref={ref} dangerouslySetInnerHTML={{ __html: content }} className="prose" />
-    );
+    return <div ref={ref} dangerouslySetInnerHTML={{ __html: content }} className="prose" />;
 };
