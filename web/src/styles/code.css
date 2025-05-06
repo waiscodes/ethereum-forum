@@ -62,7 +62,7 @@ pre[class*="language-"] {
 .token.prolog,
 .token.doctype,
 .token.cdata {
-	color: #5b5b76;
+	color: var(--theme-text-primary);
 }
 
 .token.punctuation {
@@ -81,7 +81,9 @@ pre[class*="language-"] {
 
 .token.property,
 .token.function {
-	color: #767693;
+	/* color: #767693; */
+	color: var(--theme-text-secondary);
+    text-shadow: 0 0 var(--theme-code-shadow) var(--theme-text-secondary);
 }
 
 .token.tag-id,
@@ -112,8 +114,8 @@ code.language-scss,
 .token.statement,
 .token.regex,
 .token.atrule {
-	color: var(--theme-text-secondary);
-    text-shadow: 0 0 var(--theme-code-shadow) var(--theme-text-secondary);
+    color: #5C6D74;
+    font-weight: 800;
 }
 
 .token.placeholder,
@@ -141,6 +143,10 @@ code.language-scss,
 
 .token.important {
 	color: #aaaaca;
+}
+.token.builtin {
+    color: #89982E;
+    /* font-weight: 800; */
 }
 
 .token.entity {
