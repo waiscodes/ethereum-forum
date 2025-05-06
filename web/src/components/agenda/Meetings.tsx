@@ -30,7 +30,7 @@ export const Meetings: FC<{ data: CalendarEvent[] }> = ({ data }) => {
                                     ))
                                 }
                             </div>
-                            <p className="text-sm text-gray-500 text-end">
+                            <p className="text-sm text-gray-500 text-end flex items-end">
                                 {event.start && <TimeAgo date={parseISO(event.start)} />}
                             </p>
                         </div>

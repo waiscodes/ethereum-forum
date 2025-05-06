@@ -145,6 +145,17 @@ pub fn try_parse_meeting(event: &Event, body: &str) -> Result<(String, Vec<Meeti
         }));
     }
 
+    let zoom_regex = Regex::new(r#"https://us02web.zoom.us/j/(\d+)\?pwd=(\w+)"#).unwrap();
+    if let Some(captures) = zoom_regex.captures(&new_body) {
+        let meeting_id = captures[1].to_string();
+        let passcode = captures[2].to_string();
+        meetings.push(Meeting::Zoom(ZoomMeetingData {
+            link: format!("https://us02web.zoom.us/j/{}/?pwd={}", meeting_id, passcode),
+            meeting_id: Some(meeting_id),
+            passcode: Some(passcode),
+        }));
+    }
+
     if new_body.contains("Deelnemen via") {
         warn!("deelnemen via google found {}", new_body);
         let link = regex::Regex::new(r#"https://meet.google.com/[a-zA-Z0-9_\-]+"#).unwrap();
