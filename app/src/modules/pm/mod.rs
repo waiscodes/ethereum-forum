@@ -1,4 +1,7 @@
-use crate::{models::pm::PMData, state::AppState};
+use crate::{
+    models::pm::{PMData, PMMeetingData},
+    state::AppState,
+};
 use anyhow::Error;
 use chrono::{DateTime, Utc};
 use reqwest::ClientBuilder;
@@ -41,6 +44,23 @@ impl PMModule {
             }
         };
         Ok(x)
+    }
+
+    pub async fn get_by_issue_id(&self, issue_id: u32) -> Result<PMMeetingData, Error> {
+        let pm_data = self.get_pm_data().await?;
+        let meeting_data = pm_data.values().find(|meeting| {
+            let x = meeting.issue_numbers();
+            x.contains(&issue_id)
+        });
+
+        if let Some(meeting_data) = meeting_data {
+            Ok(meeting_data.clone())
+        } else {
+            Err(anyhow::anyhow!(
+                "No meeting data found for issue id: {}",
+                issue_id
+            ))
+        }
     }
 }
 

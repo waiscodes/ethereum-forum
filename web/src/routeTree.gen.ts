@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
 import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index'
+import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
 import { Route as CChannelIdIndexImport } from './routes/c/$channelId/index'
 
 // Create/Update Routes
@@ -26,6 +27,12 @@ const IndexRoute = IndexImport.update({
 const TTopicIdIndexRoute = TTopicIdIndexImport.update({
   id: '/t/$topicId/',
   path: '/t/$topicId/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PmIssueIdIndexRoute = PmIssueIdIndexImport.update({
+  id: '/pm/$issueId/',
+  path: '/pm/$issueId/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,6 +60,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CChannelIdIndexImport
       parentRoute: typeof rootRoute
     }
+    '/pm/$issueId/': {
+      id: '/pm/$issueId/'
+      path: '/pm/$issueId'
+      fullPath: '/pm/$issueId'
+      preLoaderRoute: typeof PmIssueIdIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/t/$topicId/': {
       id: '/t/$topicId/'
       path: '/t/$topicId'
@@ -68,12 +82,14 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/c/$channelId': typeof CChannelIdIndexRoute
+  '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/c/$channelId': typeof CChannelIdIndexRoute
+  '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
 }
 
@@ -81,27 +97,30 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/c/$channelId/': typeof CChannelIdIndexRoute
+  '/pm/$issueId/': typeof PmIssueIdIndexRoute
   '/t/$topicId/': typeof TTopicIdIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/c/$channelId' | '/t/$topicId'
+  fullPaths: '/' | '/c/$channelId' | '/pm/$issueId' | '/t/$topicId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/c/$channelId' | '/t/$topicId'
-  id: '__root__' | '/' | '/c/$channelId/' | '/t/$topicId/'
+  to: '/' | '/c/$channelId' | '/pm/$issueId' | '/t/$topicId'
+  id: '__root__' | '/' | '/c/$channelId/' | '/pm/$issueId/' | '/t/$topicId/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CChannelIdIndexRoute: typeof CChannelIdIndexRoute
+  PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
   TTopicIdIndexRoute: typeof TTopicIdIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CChannelIdIndexRoute: CChannelIdIndexRoute,
+  PmIssueIdIndexRoute: PmIssueIdIndexRoute,
   TTopicIdIndexRoute: TTopicIdIndexRoute,
 }
 
@@ -117,6 +136,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/c/$channelId/",
+        "/pm/$issueId/",
         "/t/$topicId/"
       ]
     },
@@ -125,6 +145,9 @@ export const routeTree = rootRoute
     },
     "/c/$channelId/": {
       "filePath": "c/$channelId/index.tsx"
+    },
+    "/pm/$issueId/": {
+      "filePath": "pm/$issueId/index.tsx"
     },
     "/t/$topicId/": {
       "filePath": "t/$topicId/index.tsx"

@@ -1,8 +1,9 @@
 // https://raw.githubusercontent.com/ethereum/pm/refs/heads/master/.github/ACDbot/meeting_topic_mapping.json
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Days, Duration, Utc};
 use poem_openapi::{Object, Union};
 use serde::{Deserialize, Deserializer, Serialize};
+use tracing::debug;
 use std::collections::HashMap;
 
 pub type PMData = HashMap<String, PMMeetingData>;
@@ -12,6 +13,53 @@ pub type PMData = HashMap<String, PMMeetingData>;
 pub enum PMMeetingData {
     Recurring(PMRecurringMeeting),
     OneOff(PMOneOffMeeting),
+}
+
+impl PMMeetingData {
+    pub fn issue_number(&self, date: DateTime<Utc>) -> Option<u32> {
+        match self {
+            // if recurring find the first occurance on the same day
+            PMMeetingData::Recurring(recurring) => {
+                recurring
+                    .occurrences
+                    .as_ref()
+                    .and_then(|occurrences| {
+                        occurrences
+                            .iter()
+                            .find(|occurrence| {
+                                let start_time = occurrence.start_time.unwrap_or(date);
+
+                                // if start_time is on same day as date, return the issue number
+                                debug!("start_time: {:?}, event found", start_time);
+                                if start_time.date_naive() == date.date_naive() {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            })
+                            .map(|occurrence| occurrence.issue_number)
+                    })
+                    .flatten()
+            }
+            PMMeetingData::OneOff(one_off) => one_off.issue_number,
+        }
+    }
+
+    pub fn issue_numbers(&self) -> Vec<u32> {
+        match self {
+            PMMeetingData::Recurring(recurring) => recurring
+                .occurrences
+                .as_ref()
+                .map(|occurrences| {
+                    occurrences
+                        .iter()
+                        .flat_map(|occurrence| occurrence.issue_number)
+                        .collect::<Vec<u32>>()
+                })
+                .unwrap_or(vec![]),
+            PMMeetingData::OneOff(one_off) => vec![one_off.issue_number.unwrap()],
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Object)]

@@ -239,6 +239,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pm/{issue_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /pm
+         * @description Get PM data
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issue_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["PMMeetingData"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -382,6 +422,8 @@ export interface components {
             occurance: components["schemas"]["EventOccurrence"];
             meetings: components["schemas"]["Meeting"][];
             pm_data?: components["schemas"]["PMMeetingData"];
+            /** Format: uint32 */
+            pm_number?: number;
         };
         /** Topic */
         Topic: {
