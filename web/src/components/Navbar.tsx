@@ -38,7 +38,7 @@ export const Navbar: FC = () => {
                 </div>
                 <div className="items-center h-full gap-2 flex-1 justify-end px-2 text-sm hidden 2xl:flex">
                     {/* <UserProfile /> */}
-                    Last refreshed 2 min ago
+                    {/* Last refreshed 2 min ago */}
                 </div>
             </div>
             <div className="h-8 w-full" />

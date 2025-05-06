@@ -12,7 +12,7 @@ use async_std::{
     channel::{Receiver, Sender},
     sync::Mutex,
 };
-use chrono::{DurationRound, TimeDelta, Utc};
+use chrono::{DateTime, DurationRound, TimeDelta, Utc};
 use tracing::{error, info};
 
 pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
@@ -67,20 +67,31 @@ impl DiscourseService {
 
             if let Ok(topic) = fetch_topic(request.topic_id, request.page).await {
                 let existing_topic = Topic::get_by_topic_id(topic.id, &state).await.ok();
-                let worth_fetching_more = existing_topic.is_none() || {
+                let existing_messages = if let Some(existing) = &existing_topic {
+                    Post::count_by_topic_id(existing.topic_id, &state).await.unwrap_or(0)
+                } else {
+                    0
+                };
+
+                let worth_fetching_more = existing_messages != topic.posts_count || {
                     let existing = existing_topic.unwrap();
+                    let zero = DateTime::<Utc>::MIN_UTC;
+                    let existing_time = existing.last_post_at.unwrap_or(zero);
+
                     existing.post_count != topic.posts_count
-                        || existing.last_post_at.unwrap_or_default() < topic.last_posted_at
-                        || existing.topic_id == 23997
+                        || existing_time < topic.last_posted_at
+                        || existing_messages < topic.posts_count
                 };
 
                 if !worth_fetching_more {
-                    info!("Topic {:?} is up to date, skipping", topic.id);
+                    info!("Topic {:?} is up to date ({} -> {}) skipping", topic.id, existing_messages, topic.posts_count);
                     self.topic_lock
                         .lock()
                         .await
                         .remove(&(request.topic_id, request.page));
                     continue;
+                } else {
+                    info!("Topic {:?} ({} -> {}) is worth fetching more, fetching", topic.id, existing_messages, topic.posts_count);
                 }
 
                 if !topic.post_stream.posts.is_empty() {

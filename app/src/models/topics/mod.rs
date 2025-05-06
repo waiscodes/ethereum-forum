@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use poem_openapi::Object;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, query, query_as};
+use sqlx::{prelude::FromRow, query, query_as, query_scalar};
 use tracing::info;
 
 use crate::state::AppState;
@@ -94,7 +94,7 @@ impl Post {
             Self,
             "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT $2 OFFSET $3",
             topic_id,
-            size as i64,
+            (size + 1) as i64,
             offset as i64
         )
         .fetch_all(&state.database.pool)
@@ -104,6 +104,17 @@ impl Post {
         let posts = posts.into_iter().take(size as usize).collect();
 
         Ok((posts, has_more))
+    }
+
+    pub async fn count_by_topic_id(topic_id: i32, state: &AppState) -> Result<i32, sqlx::Error> {
+        let count = query_scalar!(
+            "SELECT COUNT(*) FROM posts WHERE topic_id = $1",
+            topic_id
+        )
+        .fetch_one(&state.database.pool)
+        .await?;
+
+        Ok(count.unwrap_or_default() as i32)
     }
 }
 
