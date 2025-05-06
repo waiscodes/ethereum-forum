@@ -188,7 +188,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": components["schemas"]["CalendarEvent"][];
+                        "application/json; charset=utf-8": components["schemas"]["RichCalendarEvent"][];
                     };
                 };
             };
@@ -226,7 +226,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": components["schemas"]["CalendarEvent"][];
+                        "application/json; charset=utf-8": components["schemas"]["RichCalendarEvent"][];
                     };
                 };
             };
@@ -243,20 +243,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** CalendarEvent */
-        CalendarEvent: {
-            summary?: string;
-            description?: string;
-            uid?: string;
-            /** Format: date-time */
-            last_modified?: string;
-            /** Format: date-time */
-            created?: string;
-            /** Format: date-time */
-            start?: string;
-            occurance: components["schemas"]["EventOccurrence"];
-            meetings: components["schemas"]["Meeting"][];
-        };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
         /** GoogleMeetingData */
@@ -285,6 +271,80 @@ export interface components {
              */
             type: "Zoom";
         } & components["schemas"]["ZoomMeetingData"];
+        PMMeetingData: components["schemas"]["PMRecurringMeeting"] | components["schemas"]["PMOneOffMeeting"];
+        /** PMOccurrence */
+        PMOccurrence: {
+            /** Format: uint32 */
+            occurrence_number: number;
+            /** Format: uint32 */
+            issue_number?: number;
+            issue_title?: string;
+            discourse_topic_id?: string;
+            /** Format: date-time */
+            start_time?: string;
+            /** Format: uint32 */
+            duration?: number;
+            skip_youtube_upload?: boolean;
+            youtube_upload_processed?: boolean;
+            transcript_processed?: boolean;
+            /** Format: uint32 */
+            upload_attempt_count?: number;
+            /** Format: uint32 */
+            transcript_attempt_count?: number;
+            /** Format: uint32 */
+            telegram_message_id?: number;
+            youtube_streams_posted_to_discourse?: boolean;
+            youtube_streams?: components["schemas"]["PMYoutubeStream"][];
+            extra: {
+                [key: string]: unknown;
+            };
+        };
+        /** PMOneOffMeeting */
+        PMOneOffMeeting: {
+            discourse_topic_id?: string;
+            issue_title?: string;
+            /** Format: date-time */
+            start_time?: string;
+            /** Format: uint32 */
+            duration?: number;
+            /** Format: uint32 */
+            issue_number?: number;
+            meeting_id: string;
+            youtube_upload_processed?: boolean;
+            transcript_processed?: boolean;
+            /** Format: uint32 */
+            upload_attempt_count?: number;
+            /** Format: uint32 */
+            transcript_attempt_count?: number;
+            calendar_event_id?: string;
+            /** Format: uint32 */
+            telegram_message_id?: number;
+            extra: {
+                [key: string]: unknown;
+            };
+        };
+        /** PMRecurringMeeting */
+        PMRecurringMeeting: {
+            meeting_id: string;
+            is_recurring: boolean;
+            occurrence_rate?: string;
+            call_series?: string;
+            zoom_link?: string;
+            calendar_event_id?: string;
+            occurrences?: components["schemas"]["PMOccurrence"][];
+            extra: {
+                [key: string]: unknown;
+            };
+        };
+        /** PMYoutubeStream */
+        PMYoutubeStream: {
+            stream_url?: string;
+            /** Format: date-time */
+            scheduled_time?: string;
+            extra: {
+                [key: string]: unknown;
+            };
+        };
         /** Post */
         Post: {
             /** Format: int32 */
@@ -307,6 +367,21 @@ export interface components {
         PostsResponse: {
             posts: components["schemas"]["Post"][];
             has_more: boolean;
+        };
+        /** RichCalendarEvent */
+        RichCalendarEvent: {
+            summary?: string;
+            description?: string;
+            uid?: string;
+            /** Format: date-time */
+            last_modified?: string;
+            /** Format: date-time */
+            created?: string;
+            /** Format: date-time */
+            start?: string;
+            occurance: components["schemas"]["EventOccurrence"];
+            meetings: components["schemas"]["Meeting"][];
+            pm_data?: components["schemas"]["PMMeetingData"];
         };
         /** Topic */
         Topic: {

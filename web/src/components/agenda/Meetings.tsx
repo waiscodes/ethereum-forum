@@ -9,7 +9,7 @@ import { TimeAgo } from '../TimeAgo';
 
 export const Meetings: FC<{ data: CalendarEvent[] }> = ({ data }) => {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
             {data?.map((event) => (
                 <div key={event.uid + event.start?.toString()} className="card flex flex-col gap-2">
                     <div className="flex items-center gap-2 justify-between">
@@ -22,6 +22,7 @@ export const Meetings: FC<{ data: CalendarEvent[] }> = ({ data }) => {
                         dangerouslySetInnerHTML={{ __html: event.description ?? '' }}
                         className="grow max-h-40 overflow-y-auto"
                     />
+                    {event.pm_data && <DebugRichData event={event.pm_data} />}
                     <div className="flex justify-between flex-wrap">
                         <div className="flex flex-wrap gap-2">
                             {event.meetings.map((meeting) => (
@@ -55,5 +56,13 @@ export const MeetingLink = ({ meeting }: { meeting: Meeting }) => {
             {platformToIcon[meeting.type]}
             <span className="text-sm">{meeting.type}</span>
         </a>
+    );
+};
+
+export const DebugRichData = ({ event }: { event: unknown }) => {
+    return (
+        <div className="border border-primary px-1 whitespace-pre-wrap">
+            {JSON.stringify(event, null, 2)}
+        </div>
     );
 };

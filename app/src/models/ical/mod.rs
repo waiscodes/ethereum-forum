@@ -6,6 +6,7 @@ use rrule::RRuleSet;
 use serde::{Deserialize, Serialize};
 
 pub mod meetings;
+pub mod rich;
 
 #[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct CalendarEvent {

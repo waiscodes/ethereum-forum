@@ -1,4 +1,4 @@
-use crate::{database::Database, modules::{discourse::DiscourseService, ical::{self, ICalConfig}}, tmp::CacheService};
+use crate::{database::Database, modules::{discourse::DiscourseService, ical::{self, ICalConfig}, pm::PMModule}, tmp::CacheService};
 use figment::{providers::Env, Figment};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -14,6 +14,7 @@ pub struct AppStateInner {
     pub database: Database,
     pub ical: Option<ICalConfig>,
     pub discourse: DiscourseService,
+    pub pm: PMModule,
 
     //
     pub cache: CacheService,
@@ -35,11 +36,14 @@ impl AppStateInner {
 
         let discourse = DiscourseService::default();
 
+        let pm = PMModule::default();
+
         Self {
             database,
             ical,
             cache,
             discourse,
+            pm,
         }
     }
 }

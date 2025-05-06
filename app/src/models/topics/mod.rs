@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use chrono::{DateTime, Utc};
 use poem_openapi::Object;
 use regex::Regex;

@@ -3,7 +3,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useApi } from './api';
 import { components } from './schema.gen';
 
-export type CalendarEvent = components['schemas']['CalendarEvent'];
+export type CalendarEvent = components['schemas']['RichCalendarEvent'];
 export type Meeting = components['schemas']['Meeting'];
 
 export const getEvents = () =>
