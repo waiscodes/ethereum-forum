@@ -1,30 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Command } from 'cmdk';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { LuArrowRight } from 'react-icons/lu';
 
-const menuItems = [
-  {
-    group: 'Suggestions',
-    items: [
-      { value: 'Home', label: 'Home', keywords: ['home', 'main'], onSelect: () => alert('Home selected') },
-      { value: 'Profile', label: 'Profile', keywords: ['profile', 'user'], onSelect: () => alert('Profile selected') },
-      { value: 'Settings', label: 'Settings', keywords: ['settings', 'preferences'], onSelect: () => alert('Settings selected') },
-    ],
-  },
-  {
-    group: 'General',
-    items: [
-      { value: 'Home', label: 'Home', keywords: ['home', 'main'], onSelect: () => alert('Home selected') },
-      { value: 'Profile', label: 'Profile', keywords: ['profile', 'user'], onSelect: () => alert('Profile selected') },
-      { value: 'Settings', label: 'Settings', keywords: ['settings', 'preferences'], onSelect: () => alert('Settings selected') },
-    ],
-  },
+const navItems = [
+  { value: 'Home', label: 'Home', keywords: ['home', 'main'], to: '/' },
+  { value: 'Improvement Proposals', label: 'Improvement Proposals', keywords: ['eip', 'eips', 'improvement'], to: '/c/eips', short: 'EIPs' },
+  { value: 'Request for Comment', label: 'Request for Comment', keywords: ['erc', 'ercs', 'comment'], to: '/c/ercs', short: 'ERCs' },
+  { value: 'Working Groups', label: 'Working Groups', keywords: ['wg', 'wgs', 'working'], to: '/c/wgs' },
+  { value: 'Protocol Agenda', label: 'Protocol Agenda', keywords: ['agenda', 'protocol'], to: '/c/agenda' },
 ];
 
 export default function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(navItems[0].value);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function listener(e: KeyboardEvent) {
@@ -42,14 +35,49 @@ export default function CommandMenu() {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
+      setSelected(navItems[0].value); // Auto-select top option
+      setSearch('');
     }
   }, [open]);
+
+  // Update selected when search changes and filtered list changes
+  useEffect(() => {
+    if (!open) return;
+    const filtered = navItems.filter((item) =>
+      item.label.toLowerCase().includes(search.toLowerCase()) ||
+      (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(search.toLowerCase())))
+    );
+    if (filtered.length > 0) {
+      setSelected(filtered[0].value);
+    }
+  }, [search, open]);
+
+  const handleValueChange = (value: string) => {
+    setSelected(value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const item = navItems.find((i) => i.value === selected);
+      
+      if (item) {
+        setOpen(false);
+        navigate({ to: item.to });
+      }
+    }
+  };
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-      <Command className="raycast w-full max-w-xl rounded-xl bg-primary shadow-2xl border border-primary p-0 overflow-hidden">
+      <Command
+        className="raycast w-full max-w-xl rounded-xl bg-primary shadow-2xl border border-primary p-0 overflow-hidden"
+        value={selected}
+        onValueChange={handleValueChange}
+        loop
+        label="Command Menu"
+      >
         <div className="h-2 w-full bg-gradient-to-r from-accent/30 to-transparent" />
         <Command.Input
           ref={inputRef}
@@ -58,26 +86,40 @@ export default function CommandMenu() {
           placeholder="Type a command or search..."
           className="w-full px-4 py-3 bg-primary text-primary placeholder:text-secondary border-b border-primary outline-none text-lg"
           autoFocus
+          onKeyDown={handleKeyDown}
         />
         <hr className="border-primary" />
         <Command.List ref={listRef} className="max-h-72 overflow-y-auto">
           <Command.Empty className="text-secondary px-4 py-2">No results found.</Command.Empty>
-          {menuItems.map((group) => (
-            <Command.Group key={group.group} heading={group.group} className="text-secondary px-4 pt-4 pb-1 text-xs">
-              {group.items.map((item) => (
+          <Command.Group heading="Navigation" className="text-secondary px-4 pt-4 pb-1 text-xs">
+            {navItems
+              .filter((item) =>
+                item.label.toLowerCase().includes(search.toLowerCase()) ||
+                (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(search.toLowerCase())))
+              )
+              .map((item) => (
                 <Command.Item
                   key={item.value}
                   value={item.value}
                   keywords={item.keywords}
-                  onSelect={item.onSelect}
-                  className="flex items-center gap-2 px-4 py-2 text-primary hover:bg-secondary rounded cursor-pointer transition-colors"
+                  onSelect={() => {
+                    setOpen(false);
+                    navigate({ to: item.to });
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 text-primary rounded cursor-pointer transition-colors w-full h-full ${selected === item.value ? 'bg-secondary' : ''} hover:bg-secondary`}
                 >
-                  {item.label}
-                  <span className="ml-auto text-xs text-secondary">Application</span>
+                  <span className="flex-1 flex items-center gap-2 w-full h-full">
+                    {item.label}
+                    {item.short && (
+                      <span className="ml-2 text-xs text-secondary">{item.short}</span>
+                    )}
+                  </span>
+                  <span className="ml-auto text-xs text-secondary">
+                    <LuArrowRight />
+                  </span>
                 </Command.Item>
               ))}
-            </Command.Group>
-          ))}
+          </Command.Group>
         </Command.List>
         <div className="flex items-center justify-between px-4 py-2 bg-secondary border-t border-primary text-secondary text-xs">
           <span>Press <kbd className="bg-secondary px-1 rounded">⌘</kbd> <kbd className="bg-secondary px-1 rounded">K</kbd> to toggle</span>
