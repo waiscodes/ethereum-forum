@@ -2,6 +2,7 @@ import { Link, useMatches } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { FC, useEffect, useState } from 'react';
 import { SiEthereum } from 'react-icons/si';
+import CommandMenu from './CommandMenu';
 
 export const Navbar: FC = () => {
     const data = useMatches();
@@ -17,6 +18,7 @@ export const Navbar: FC = () => {
 
     return (
         <>
+            <CommandMenu />
             <div className="w-full bg-secondary fixed top-0 grid grid-cols-[1fr_auto_1fr] h-8 z-10">
                 <div className="flex items-stretch gap-2 h-full px-3">
                     <Link

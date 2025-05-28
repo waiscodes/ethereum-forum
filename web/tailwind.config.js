@@ -21,6 +21,9 @@ export default {
                 secondary: 'var(--theme-border-secondary)',
             },
             colors: {
+                accent: 'var(--theme-accent)',
+                'accent-hover': 'var(--theme-accent-hover)',
+                overlay: 'var(--theme-overlay)',
                 // background: 'var(--theme-bg-color)',
                 // text: 'var(--theme-text-color)',
                 // hint: 'var(--theme-hint-color)',
