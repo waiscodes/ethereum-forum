@@ -17,6 +17,8 @@ export default function CommandMenu() {
   const [selected, setSelected] = useState(navItems[0].value);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,6 +54,33 @@ export default function CommandMenu() {
     }
   }, [search, open]);
 
+  // Close on ESC and outside click
+  useEffect(() => {
+    if (!open) return;
+
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setOpen(false);
+      }
+    }
+    function handleClick(e: MouseEvent) {
+      if (
+        overlayRef.current &&
+        menuRef.current &&
+        overlayRef.current.contains(e.target as Node) &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    window.addEventListener('keydown', handleEsc);
+    window.addEventListener('mousedown', handleClick);
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+      window.removeEventListener('mousedown', handleClick);
+    };
+  }, [open]);
+
   const handleValueChange = (value: string) => {
     setSelected(value);
   };
@@ -70,8 +99,9 @@ export default function CommandMenu() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
       <Command
+        ref={menuRef}
         className="raycast w-full max-w-xl rounded-xl bg-primary shadow-2xl border border-primary p-0 overflow-hidden"
         value={selected}
         onValueChange={handleValueChange}
