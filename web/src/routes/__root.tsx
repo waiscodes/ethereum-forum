@@ -1,17 +1,35 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { Toaster } from 'sonner';
+import { useState, useCallback, useEffect } from 'react';
 
 import { Navbar } from '@/components/Navbar';
 import { Sidebar } from '@/components/Sidebar';
 import { AppWrapper } from '@/hooks/context';
+import { CommandMenu } from '@/components/command/CommandMenu';
 
 export const Route = createRootRoute({
     component: RootComponent,
 });
 
 function RootComponent() {
+    const [commandOpen, setCommandOpen] = useState(false);
+
+    // Command+K or Ctrl+K handler
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            setCommandOpen((open) => !open);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleKeyDown]);
+
     return (
         <AppWrapper>
+            <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
             <Navbar />
             <div className="flex flex-col gap-1 pb-16 max-w-screen">
                 <Sidebar />

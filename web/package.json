@@ -41,6 +41,7 @@
         "@xstate/store": "^3.3.0",
         "autoprefixer": "^10.4.20",
         "classnames": "^2.5.1",
+        "cmdk": "^1.1.1",
         "cx": "^25.3.1",
         "date-fns": "^4.1.0",
         "eslint-config-prettier": "^10.1.2",
