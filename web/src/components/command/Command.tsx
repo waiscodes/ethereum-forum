@@ -1,13 +1,17 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
-import { type DialogProps, Root, Portal, Overlay, Content, Close } from "@radix-ui/react-dialog"
+import { type DialogProps, Root, Portal, Overlay, Content, Close, Title as DialogTitle } from "@radix-ui/react-dialog"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 const CommandDialog = ({ children, ...props }: DialogProps) => {
   return (
     <Root {...props}>
       <Portal>
         <Overlay className="fixed inset-0 z-50 bg-primary/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 bg-primary p-0 shadow-lg duration-200 outline outline-2 outline-primary rounded-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
+        <Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 bg-primary p-0 shadow-lg duration-200 outline outline-2 outline-primary rounded-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
+          <VisuallyHidden asChild>
+            <DialogTitle>Command Menu</DialogTitle>
+          </VisuallyHidden>
           <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
             {children}
           </Command>
@@ -27,7 +31,7 @@ const Command = React.forwardRef<
 >((props, ref) => (
   <CommandPrimitive
     ref={ref}
-    className="raycast-cmdk flex h-full w-full flex-col overflow-hidden rounded-2xl bg-primary text-primary shadow-2xl border border-primary max-w-xl mx-auto my-8"
+    className="raycast-cmdk flex h-full w-full flex-col overflow-hidden rounded-2xl bg-primary text-primary shadow-2xl border border-primary max-w-2xl mx-auto my-8"
     {...props}
   />
 ))

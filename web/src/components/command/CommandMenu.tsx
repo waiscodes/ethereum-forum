@@ -7,7 +7,7 @@ import {
   CommandGroup,
   CommandItem,
   CommandSeparator,
-} from './command';
+} from './Command';
 import { useNavigate } from '@tanstack/react-router';
 
 // Navigation items from Sidebar
@@ -53,6 +53,14 @@ export const CommandMenu: React.FC<{
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Suggested">
+          {suggestedItems.map((item) => (
+            <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
+              {item.title}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+        <CommandSeparator />
         <CommandGroup heading="Navigation">
           {navItems.map((item) => (
             <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
@@ -60,14 +68,6 @@ export const CommandMenu: React.FC<{
               {item.short && (
                 <span className="ml-2 text-xs text-muted-foreground">{item.short}</span>
               )}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-        <CommandSeparator />
-        <CommandGroup heading="Suggested">
-          {suggestedItems.map((item) => (
-            <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
-              {item.title}
             </CommandItem>
           ))}
         </CommandGroup>
