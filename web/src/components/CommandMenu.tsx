@@ -109,18 +109,42 @@ export default function CommandMenu() {
         label="Command Menu"
       >
         <div className="h-2 w-full bg-gradient-to-r from-accent/30 to-transparent" />
-        <Command.Input
-          ref={inputRef}
-          value={search}
-          onValueChange={setSearch}
-          placeholder="Type a command or search..."
-          className="w-full px-4 py-3 bg-primary text-primary placeholder:text-secondary border-b border-primary outline-none text-lg"
-          autoFocus
-          onKeyDown={handleKeyDown}
-        />
+        <div className="relative w-full">
+          <Command.Input
+            ref={inputRef}
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Type a command or search..."
+            className="w-full px-4 py-3 bg-primary text-primary placeholder:text-secondary border-b border-primary outline-none text-lg pr-40"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const item = navItems.find((i) => i.value === selected);
+                if (item) {
+                  setOpen(false);
+                  navigate({ to: item.to });
+                }
+              } else if (e.key === 'Tab') {
+                e.preventDefault();
+                setOpen(false);
+                window.location.href = `/chat?search=${encodeURIComponent(search)}`;
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-accent text-primary rounded px-3 py-1 text-sm shadow hover:bg-accent-hover transition-colors"
+            onClick={() => {
+              setOpen(false);
+              window.location.href = `/chat?search=${encodeURIComponent(search)}`;
+            }}
+            tabIndex={0}
+          >
+            Workshop Idea <span className="bg-secondary px-1 rounded text-xs ml-1">Tab</span>
+          </button>
+        </div>
         <hr className="border-primary" />
         <Command.List ref={listRef} className="max-h-72 overflow-y-auto">
-          <Command.Empty className="text-secondary px-4 py-2">No results found.</Command.Empty>
           <Command.Group heading="Navigation" className="text-secondary px-4 pt-4 pb-1 text-xs">
             {navItems
               .filter((item) =>
