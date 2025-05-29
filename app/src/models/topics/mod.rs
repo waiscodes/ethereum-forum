@@ -27,6 +27,15 @@ pub struct Topic {
     pub extra: Option<serde_json::Value>,
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow, Object)]
+pub struct TopicSummary {
+    pub summary_id: i32,
+    pub topic_id: i32,
+    pub based_on: DateTime<Utc>,
+    pub summary_text: String,
+    pub created_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub user_id: i32,
@@ -105,12 +114,9 @@ impl Post {
     }
 
     pub async fn count_by_topic_id(topic_id: i32, state: &AppState) -> Result<i32, sqlx::Error> {
-        let count = query_scalar!(
-            "SELECT COUNT(*) FROM posts WHERE topic_id = $1",
-            topic_id
-        )
-        .fetch_one(&state.database.pool)
-        .await?;
+        let count = query_scalar!("SELECT COUNT(*) FROM posts WHERE topic_id = $1", topic_id)
+            .fetch_one(&state.database.pool)
+            .await?;
 
         Ok(count.unwrap_or_default() as i32)
     }
@@ -212,6 +218,77 @@ impl Topic {
         .fetch_one(&state.database.pool)
         .await?;
         Ok(post)
+    }
+
+    pub async fn get_summary_by_topic_id(
+        topic_id: i32,
+        state: &AppState,
+    ) -> Result<TopicSummary, sqlx::Error> {
+        let summary = query_as!(
+            TopicSummary,
+            "SELECT * FROM topic_summaries WHERE topic_id = $1 ORDER BY based_on DESC LIMIT 1",
+            topic_id
+        )
+        .fetch_optional(&state.database.pool)
+        .await?;
+
+        let topic = match Topic::get_by_topic_id(topic_id, state).await {
+            Ok(topic) => topic,
+            Err(_) => {
+                return Err(sqlx::Error::RowNotFound);
+            }
+        };
+
+        let summary = match summary {
+            Some(s) => s,
+            None => {
+                return Self::create_new_summary(topic_id, state, &topic).await;
+            }
+        };
+
+        let based_on = topic
+            .last_post_at
+            .map(|dt| dt.timestamp())
+            .unwrap_or_else(|| Utc::now().timestamp());
+
+        if summary.based_on.timestamp() == based_on as i64 {
+            return Ok(summary);
+        }
+
+        Self::create_new_summary(topic_id, state, &topic).await
+    }
+
+    async fn create_new_summary(
+        topic_id: i32,
+        state: &AppState,
+        topic: &Topic,
+    ) -> Result<TopicSummary, sqlx::Error> {
+        let summary = "This is a mock summary".to_string();
+
+        let based_on = topic
+            .last_post_at
+            .map(|dt| dt.timestamp())
+            .unwrap_or_else(|| Utc::now().timestamp());
+
+        let based_on_datetime =
+            DateTime::from_timestamp(based_on as i64, 0).unwrap_or_else(|| Utc::now());
+
+        let summary = query_as!(
+            TopicSummary,
+            "INSERT INTO topic_summaries (topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *",
+            topic_id,
+            based_on_datetime,
+            summary
+            )
+            .fetch_one(&state.database.pool)
+            .await?;
+
+        info!(
+            "Created new summary for topic_id: {} with summary_id: {}",
+            topic_id, summary.summary_id
+        );
+
+        Ok(summary)
     }
 }
 
