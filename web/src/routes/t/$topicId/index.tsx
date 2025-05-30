@@ -1,3 +1,4 @@
+import * as Dialog from '@radix-ui/react-dialog';
 import { createFileRoute } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { parseISO } from 'date-fns';
@@ -13,12 +14,20 @@ import {
     LuNotebook,
     LuPaperclip,
     LuRefreshCcw,
+    LuX,
     LuYoutube,
 } from 'react-icons/lu';
 import { PiReceipt } from 'react-icons/pi';
 import { SiEthereum, SiOpenai, SiReddit } from 'react-icons/si';
+import Markdown from 'react-markdown';
 
-import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
+import {
+    getTopic,
+    usePostsInfinite,
+    useTopic,
+    useTopicRefresh,
+    useTopicSummary,
+} from '@/api/topics';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
@@ -150,6 +159,40 @@ function RouteComponent() {
                         </li>
                     </ul>
                 </div>
+                {topic?.topic_id && (
+                    <div className="space-y-1.5">
+                        <div className="px-1.5">
+                            <h3 className="font-bold w-full border-b border-b-primary pb-1">
+                                Summary
+                            </h3>
+                        </div>
+                        <Dialog.Root>
+                            <Dialog.Trigger
+                                className="text-sm text-primary hover:bg-secondary p-1.5 w-full text-left"
+                                asChild
+                            >
+                                <button className="w-full text-left flex items-center gap-2">
+                                    View Summary
+                                </button>
+                            </Dialog.Trigger>
+                            <Dialog.Portal>
+                                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+                                <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-6 rounded-lg">
+                                    <div className="w-full max-w-3xl p-6 relative bg-secondary">
+                                        <Dialog.Title className="text-xl font-bold mb-4">
+                                            Topic Summary
+                                        </Dialog.Title>
+                                        <Summary topicId={topic.topic_id} />
+                                        <Dialog.Close className="absolute top-2 right-2">
+                                            <LuX className="size-5" />
+                                        </Dialog.Close>
+                                    </div>
+                                </Dialog.Content>
+                            </Dialog.Portal>
+                        </Dialog.Root>
+                    </div>
+                )}
+                {/* Links */}
                 {standards_links.length > 0 && (
                     <ExpandableList title="Standards Links" maxItems={4}>
                         {standards_links.map((link) => (
@@ -243,6 +286,43 @@ function RouteComponent() {
         </>
     );
 }
+
+const Summary = ({ topicId }: { topicId: number }) => {
+    const { data: summary, isPending } = useTopicSummary(topicId);
+
+    if (isPending) {
+        return (
+            <div className="flex items-center gap-2 py-3 px-1.5">
+                <div className="animate-spin">
+                    <LuRefreshCcw className="size-4" />
+                </div>
+                <span className="text-sm">Generating summary...</span>
+            </div>
+        );
+    }
+
+    if (!summary) {
+        return (
+            <div className="text-primary text-sm py-2 px-1.5 italic">
+                No summary available for this topic
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div className="text-sm leading-relaxed text-primary prose">
+                <div className='max-h-[80vh] overflow-scroll'>
+                <Markdown>{summary.summary_text.replace(/\\n/g, '\n')}</Markdown>
+                </div>
+            </div>
+            <Dialog.Close>
+                <button className="button">Close</button>
+            </Dialog.Close>
+            <button className="button">Open in chat</button>
+        </>
+    );
+};
 
 const RelevantLink = ({ link }: { link: RelevantLink }) => {
     let icon = undefined;
