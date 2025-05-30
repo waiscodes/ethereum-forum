@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as, query_scalar};
 use tracing::info;
 
-use crate::modules::workbench::Workbench;
+use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
 
 use super::discourse::topic::{DiscourseTopicPost, DiscourseTopicResponse};
@@ -265,7 +265,7 @@ impl Topic {
         state: &AppState,
         topic: &Topic,
     ) -> Result<TopicSummary, HttpError> {
-        let summary = Workbench::create_workshop_summary(topic, &state).await?;
+        let summary = WorkshopService::create_workshop_summary(topic, &state).await?;
 
         let based_on = topic
             .last_post_at

@@ -3,15 +3,11 @@ use crate::{
     modules::{
         discourse::DiscourseService,
         ical::{self, ICalConfig},
-        pm::PMModule,
+        pm::PMModule, workshop::WorkshopService,
     },
     tmp::CacheService,
 };
 use figment::{Figment, providers::Env};
-use openai::{
-    Credentials,
-    chat::{ChatCompletionMessage, ChatCompletionMessageRole},
-};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -22,20 +18,12 @@ pub struct DatabaseConfig {
     pub url: String,
 }
 
-pub struct WorkshopPrompts {
-    pub summerize: ChatCompletionMessage,
-}
-pub struct WorkshopState {
-    pub crendentials: Credentials,
-    pub prompts: WorkshopPrompts,
-}
-
 pub struct AppStateInner {
     pub database: Database,
     pub ical: Option<ICalConfig>,
     pub discourse: DiscourseService,
     pub pm: PMModule,
-    pub workshop: WorkshopState,
+    pub workshop: WorkshopService,
     pub cache: CacheService,
 }
 
@@ -52,25 +40,7 @@ impl AppStateInner {
 
         let database = Database::init(&database_config).await;
 
-        let workshop = WorkshopState {
-            crendentials: Credentials::new(
-                Env::var("WORKSHOP_INTELLIGENCE_KEY").expect("WORKSHOP_INTELLIGENCE_API_KEY not set"),
-                Env::var("WORKSHOP_INTELLIGENCE_BASE_URL").expect("WORKSHOP_INTELLIGENCE_BASE_URL not set"),
-            ),
-            prompts: WorkshopPrompts {
-                summerize: ChatCompletionMessage {
-                    role: ChatCompletionMessageRole::System,
-                    content: Some("You are an expert ethereum magician and are tasked with summarizing threads on the ethereum magicians forum. You will be provided with a thread and you will summarize the thread in a way that is easy to understand for a layman. You will also provide an overview of the stances of the top conversers in the thread, sorted by their stance (pro, against, other). You will also provide a summary of each person's stance.
-When evaluating a heated argument ensure to capture all sides and create an overview at the end of our output showcasing the stances of the top conversers. So those who are pro, those who are against, and potentially those with alternative solutions.
-Ensure to output the list sorted by overal stance (pro, against, other), and then by person, with a small summary of that persons stance.
-Return valid markdown, without any images. You may use simple code snippets.".to_string()),
-                    name: None,
-                    function_call: None,
-                    tool_call_id: None,
-                    tool_calls: None,
-                },
-            },
-        };
+        let workshop = WorkshopService::init().await;
 
         let cache = CacheService::default();
 
