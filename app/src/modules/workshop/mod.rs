@@ -40,9 +40,11 @@ Return valid markdown, without any images. You may use simple code snippets.".to
 
 impl WorkshopService {
     pub async fn init() -> Self {
+        let base_url = Env::var_or("WORKSHOP_INTELLIGENCE_BASE_URL", "https://openrouter.ai/api/v1");
+
         let credentials = Credentials::new(
-            Env::var("WORKSHOP_INTELLIGENCE_KEY").expect("WORKSHOP_INTELLIGENCE_API_KEY not set"),
-            Env::var("WORKSHOP_INTELLIGENCE_BASE_URL").expect("WORKSHOP_INTELLIGENCE_BASE_URL not set"),
+            Env::var("WORKSHOP_INTELLIGENCE_KEY").expect("WORKSHOP_INTELLIGENCE_KEY not set"),
+            base_url,
         );
 
         Self {

@@ -16,7 +16,7 @@ use topic::TopicApi;
 use tracing::info;
 use user::UserApi;
 
-use crate::state::AppState;
+use crate::{server::workshop::WorkshopApi, state::AppState};
 // use tracing_mw::TraceId;
 
 pub mod events;
@@ -25,6 +25,7 @@ pub mod ratelimit;
 pub mod topic;
 pub mod user;
 pub mod pm;
+pub mod workshop;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -34,10 +35,12 @@ pub enum ApiTags {
     User,
     /// Events Related Operations
     Events,
+    /// Workshop Related Operations
+    Workshop,
 }
 
 fn get_api(_state: AppState) -> impl OpenApi {
-    (TopicApi, UserApi, EventsApi, PMApi)
+    (TopicApi, UserApi, EventsApi, PMApi, WorkshopApi)
 }
 
 pub async fn start_http(state: AppState) {

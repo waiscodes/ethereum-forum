@@ -1,9 +1,11 @@
 use crate::state::AppState;
 use chrono::{DateTime, Utc};
+use poem_openapi::Object;
+use serde::{Deserialize, Serialize};
 use sqlx::query_as;
 use uuid::Uuid;
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
 pub struct WorkshopMessage {
     pub message_id: Uuid,
     pub chat_id: Uuid,
@@ -13,7 +15,7 @@ pub struct WorkshopMessage {
     pub parent_message_id: Option<Uuid>,
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
 pub struct WorkshopChat {
     pub chat_id: Uuid,
     pub user_id: i32,
