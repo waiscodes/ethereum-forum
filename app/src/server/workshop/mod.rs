@@ -1,6 +1,6 @@
 use poem::web::Data;
 use poem::Result;
-use poem_openapi::param::Path;
+use poem_openapi::param::{Path, Query};
 use poem_openapi::payload::Json;
 use poem_openapi::{Object, OpenApi};
 use reqwest::StatusCode;
@@ -47,5 +47,35 @@ impl WorkshopApi {
         })?;
 
         Ok(Json(messages))
+    }
+
+    /// /ws/chat/:chat_id
+    ///
+    /// Send a message
+    /// Specify parent_message as query param to send a reply
+    #[oai(path = "/ws/chat/:chat_id", method = "post", tag = "ApiTags::Workshop")]
+    async fn send_message(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] chat_id: Path<String>,
+        #[oai(style = "simple")] parent_message: Query<Option<Uuid>>,
+    ) -> Result<Json<WorkshopMessage>> {
+        let user_id = 1;
+        let message = "hello world";
+
+        let chat_id = if chat_id.eq("new") {
+            None
+        } else {
+            Some(Uuid::parse_str(&chat_id).map_err(|e| {
+                tracing::error!("Error parsing chat id: {:?}", e);
+                poem::Error::from_status(StatusCode::BAD_REQUEST)
+            })?)
+        };
+        let message = WorkshopMessage::create_user_message(chat_id, *parent_message, user_id, message.to_string(), &state.0).await.map_err(|e| {
+            tracing::error!("Error sending message: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(message))
     }
 }
