@@ -49,6 +49,14 @@ impl WorkshopChat {
             .fetch_one(&state.database.pool)
             .await
     }
+
+    pub async fn update_last_message(chat_id: &Uuid, message_id: &Uuid, state: &AppState) -> Result<Self, sqlx::Error> {
+        query_as("UPDATE workshop_chats SET last_message_id = $1 WHERE chat_id = $2 RETURNING *")
+            .bind(message_id)
+            .bind(chat_id)
+            .fetch_one(&state.database.pool)
+            .await
+    }
 }
 
 impl WorkshopMessage {

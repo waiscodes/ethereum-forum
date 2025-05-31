@@ -76,6 +76,11 @@ impl WorkshopApi {
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
+        WorkshopChat::update_last_message(&message.chat_id, &message.message_id, &state.0).await.map_err(|e| {
+            tracing::error!("Error updating chat: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
         Ok(Json(message))
     }
 }
