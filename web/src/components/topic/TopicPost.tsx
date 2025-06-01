@@ -28,6 +28,8 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const isModerator = extra?.['moderator'] as boolean;
     const isAdmin = extra?.['admin'] as boolean;
 
+    const actionCode = extra?.['action_code'] as string;
+
     return (
         <div
             key={post.post_id}
@@ -80,7 +82,12 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     {post.updated_at ? <TimeAgo date={parseISO(post.updated_at)} /> : ''}
                 </div>
             </div>
-            <Prose content={post.cooked ?? ''} topicId={post.topic_id} postId={post.post_id} />
+            {post.cooked && (
+                <Prose content={post.cooked} topicId={post.topic_id} postId={post.post_id} />
+            )}
+            {actionCode && (
+                <div className="text-sm border border-primary p-2">ACTION CODE: {actionCode}</div>
+            )}
             <div className="flex items-center gap-2 justify-end">
                 <div className="text-sm text-gray-500 flex items-center gap-1">
                     <div className="flex items-center gap-1">

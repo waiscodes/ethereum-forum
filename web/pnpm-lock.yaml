@@ -131,6 +131,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
+      ts-pattern:
+        specifier: ^5.7.1
+        version: 5.7.1
       typescript:
         specifier: ^5.7.3
         version: 5.8.3
@@ -3075,6 +3078,9 @@ packages:
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
+
+  ts-pattern@5.7.1:
+    resolution: {integrity: sha512-EGs8PguQqAAUIcQfK4E9xdXxB6s2GK4sJfT/vcc9V1ELIvC4LH/zXu2t/5fajtv6oiRCxdv7BgtVK3vWgROxag==}
 
   tsconfck@3.1.5:
     resolution: {integrity: sha512-CLDfGgUp7XPswWnezWwsCRxNmgQjhYq3VXHM0/XIRxhVrKw0M1if9agzryh1QS3nxjCROvV+xWxoJO1YctzzWg==}
@@ -6572,6 +6578,8 @@ snapshots:
       typescript: 5.8.3
 
   ts-interface-checker@0.1.13: {}
+
+  ts-pattern@5.7.1: {}
 
   tsconfck@3.1.5(typescript@5.8.3):
     optionalDependencies:
