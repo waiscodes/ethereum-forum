@@ -143,8 +143,6 @@ impl TopicApi {
                 poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
             })?;
 
-        println!("Summary for topic {}: {:?}", topic_id, summary);
-
         Ok(Json(summary))
     }
 }

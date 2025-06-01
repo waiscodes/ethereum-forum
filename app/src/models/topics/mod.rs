@@ -247,24 +247,25 @@ impl Topic {
                 return Self::create_new_summary(topic_id, state, &topic).await;
             }
         };
-
+        
         let based_on = topic
-            .last_post_at
-            .map(|dt| dt.timestamp())
-            .unwrap_or_else(|| Utc::now().timestamp());
-
-        if summary.based_on.timestamp() == based_on as i64 {
-            return Ok(summary);
-        }
-
-        Self::create_new_summary(topic_id, state, &topic).await
+        .last_post_at
+        .map(|dt| dt.timestamp())
+        .unwrap_or_else(|| Utc::now().timestamp());
+    
+    if summary.based_on.timestamp() == based_on as i64 {
+        return Ok(summary);
     }
+    
+    Self::create_new_summary(topic_id, state, &topic).await
+}
 
-    async fn create_new_summary(
-        topic_id: i32,
-        state: &AppState,
-        topic: &Topic,
-    ) -> Result<TopicSummary, HttpError> {
+async fn create_new_summary(
+    topic_id: i32,
+    state: &AppState,
+    topic: &Topic,
+) -> Result<TopicSummary, HttpError> {
+        info!("Generating new summary for topic {}", topic_id);
         let summary = WorkshopService::create_workshop_summary(topic, &state).await?;
 
         let based_on = topic

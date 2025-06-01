@@ -3,7 +3,7 @@ use chrono::{Duration, Utc};
 use figment::{Figment, providers::Env};
 use icalendar::{Calendar, CalendarComponent};
 use serde::Deserialize;
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{models::ical::CalendarEvent, state::AppState};
 
@@ -40,7 +40,7 @@ impl ICalConfig {
                 let parsed_events = match CalendarEvent::from_event(event) {
                     Ok(events) => events,
                     Err(e) => {
-                        println!("Error parsing event: {}", e);
+                        error!("Error parsing event: {}", e);
                         continue;
                     }
                 };
@@ -67,7 +67,7 @@ impl ICalConfig {
         {
             Ok(x) => x,
             Err(e) => {
-                println!("Error fetching cached ical: {}", e);
+                error!("Error fetching cached ical: {}", e);
                 return Err(anyhow::anyhow!("Error fetching cached ical: {}", e));
             }
         };

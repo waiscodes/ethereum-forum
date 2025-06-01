@@ -1,5 +1,6 @@
 use poem::web::Data;
 use poem::Result;
+use poem_openapi::param::Path;
 use poem_openapi::payload::Json;
 use poem_openapi::{Object, OpenApi};
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,18 @@ impl UserApi {
         //     id: party.party_id,
         //     created_at: party.created_at.to_rfc3339(),
         // }))
+        Ok(Json(serde_json::Value::Null))
+    }
+
+    /// /user/sso/:sso_id/login
+    /// 
+    /// Login with SSO
+    #[oai(path = "/user/sso/:sso_id/login", method = "get", tag = "ApiTags::User")]
+    async fn login(
+        &self,
+        _state: Data<&AppState>,
+        #[oai(style = "simple")] sso_id: Path<String>,
+    ) -> Result<Json<serde_json::Value>> {
         Ok(Json(serde_json::Value::Null))
     }
 }

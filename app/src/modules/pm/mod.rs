@@ -5,6 +5,7 @@ use crate::{
 use anyhow::Error;
 use chrono::{DateTime, Utc};
 use reqwest::ClientBuilder;
+use tracing::error;
 
 #[derive(Debug, Clone, Default)]
 pub struct PMModule;
@@ -39,7 +40,7 @@ impl PMModule {
         {
             Ok(x) => x,
             Err(e) => {
-                println!("Error fetching cached pm data: {}", e);
+                error!("Error fetching cached pm data: {}", e);
                 return Err(anyhow::anyhow!("Error fetching cached pm data: {}", e));
             }
         };
