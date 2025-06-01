@@ -178,8 +178,8 @@ function RouteComponent() {
                             <Dialog.Portal>
                                 <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
                                 <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-6 rounded-lg">
-                                    <div className="w-full max-w-3xl p-6 relative bg-secondary">
-                                        <Dialog.Title className="text-xl font-bold mb-4">
+                                    <div className="w-full max-w-3xl p-6 relative bg-secondary space-y-4">
+                                        <Dialog.Title className="text-xl font-bold">
                                             Topic Summary
                                         </Dialog.Title>
                                         <Summary topicId={topic.topic_id} />
