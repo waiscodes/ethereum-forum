@@ -70,7 +70,7 @@ export default {
             },
 
             screens: {
-                '3xl': '1780px',
+                '3xl': '1699px',
             },
         },
     },
