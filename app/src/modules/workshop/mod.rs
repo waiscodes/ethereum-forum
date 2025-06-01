@@ -78,7 +78,7 @@ impl WorkshopService {
         ];
 
         let chat_completion =
-            ChatCompletion::builder("meta-llama/llama-3.3-8b-instruct:free", messages.clone())
+            ChatCompletion::builder("deepseek/deepseek-r1-0528-qwen3-8b:free", messages.clone())
                 .credentials(state.workshop.credentials.clone())
                 .create()
                 .await?;
