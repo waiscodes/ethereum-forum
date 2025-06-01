@@ -47,6 +47,8 @@ export default {
                 'pulse-ring': 'pulseRing 1.5s linear infinite',
                 'pulse-ring-delay-1': 'pulseRing 1.5s linear infinite 0.5s',
                 'pulse-ring-delay-2': 'pulseRing 1.5s linear infinite 1s',
+                overlayShow: 'overlayShow 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                contentShow: 'contentShow 250ms cubic-bezier(0.16, 1, 0.3, 1)',
             },
             keyframes: {
                 pulseRing: {
@@ -54,7 +56,19 @@ export default {
                     '70%': { transform: 'scale(1.8)', opacity: 0 },
                     '100%': { transform: 'scale(2)', opacity: 0 },
                 },
+                overlayShow: {
+                    from: { opacity: '0' },
+                    to: { opacity: '1' },
+                },
+                contentShow: {
+                    from: {
+                        opacity: '0',
+                        transform: 'translate(0, -4%) scale(0.96)',
+                    },
+                    to: { opacity: '1', transform: 'translate(0, 0) scale(1)' },
+                },
             },
+
             screens: {
                 '3xl': '1780px',
             },

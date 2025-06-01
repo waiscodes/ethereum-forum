@@ -14,6 +14,7 @@ import {
     LuNotebook,
     LuPaperclip,
     LuRefreshCcw,
+    LuWandSparkles,
     LuX,
     LuYoutube,
 } from 'react-icons/lu';
@@ -163,31 +164,28 @@ function RouteComponent() {
                     <div className="space-y-1.5">
                         <div className="px-1.5">
                             <h3 className="font-bold w-full border-b border-b-primary pb-1">
-                                Summary
+                                Tools
                             </h3>
                         </div>
                         <Dialog.Root>
-                            <Dialog.Trigger
-                                className="text-sm text-primary hover:bg-secondary p-1.5 w-full text-left"
-                                asChild
-                            >
-                                <button className="w-full text-left flex items-center gap-2">
+                            <Dialog.Trigger asChild>
+                                <button className="w-full text-left flex items-center gap-2 button">
+                                    <LuWandSparkles />
                                     View Summary
                                 </button>
                             </Dialog.Trigger>
                             <Dialog.Portal>
-                                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-                                <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-6 rounded-lg">
-                                    <div className="w-full max-w-3xl p-6 relative bg-secondary space-y-4">
+                                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40 data-[state=open]:animate-overlayShow overflow-y-scroll grid place-items-center">
+                                    <Dialog.Content className="z-50 relative my-10 max-w-3xl shadow-[var(--shadow-6)] focus:outline-none data-[state=open]:animate-contentShow mx-auto w-full p-6 bg-primary space-y-4">
                                         <Dialog.Title className="text-xl font-bold">
                                             Topic Summary
                                         </Dialog.Title>
                                         <Summary topicId={topic.topic_id} />
-                                        <Dialog.Close className="absolute top-2 right-2">
+                                        <Dialog.Close className="absolute top-2 right-2 -translate-y-1/2 hover:bg-secondary rounded-full p-1">
                                             <LuX className="size-5" />
                                         </Dialog.Close>
-                                    </div>
-                                </Dialog.Content>
+                                    </Dialog.Content>
+                                </Dialog.Overlay>
                             </Dialog.Portal>
                         </Dialog.Root>
                     </div>
@@ -275,8 +273,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                          ? 'Load More'
-                                          : 'No more posts'}
+                                            ? 'Load More'
+                                            : 'No more posts'}
                                 </button>
                             </div>
                         </>
@@ -311,15 +309,15 @@ const Summary = ({ topicId }: { topicId: number }) => {
 
     return (
         <>
-            <div className="text-sm leading-relaxed text-primary prose">
-                <div className='max-h-[80vh] overflow-scroll'>
+            <div className="prose text-base leading-relaxed">
                 <Markdown>{summary.summary_text.replace(/\\n/g, '\n')}</Markdown>
-                </div>
             </div>
-            <Dialog.Close>
-                <button className="button">Close</button>
-            </Dialog.Close>
-            <button className="button">Open in chat</button>
+            <div className="flex items-center justify-end gap-2">
+                <Dialog.Close>
+                    <button className="button">Close</button>
+                </Dialog.Close>
+                <button className="button">Open in chat</button>
+            </div>
         </>
     );
 };
