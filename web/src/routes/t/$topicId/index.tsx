@@ -14,6 +14,11 @@ import {
     LuNotebook,
     LuPaperclip,
     LuRefreshCcw,
+    LuSignal,
+    LuSignalHigh,
+    LuSignalLow,
+    LuSignalMedium,
+    LuSignalZero,
     LuWandSparkles,
     LuX,
     LuYoutube,
@@ -136,14 +141,15 @@ function RouteComponent() {
                                 {topic?.created_at && <TimeAgo date={parseISO(topic.created_at)} />}
                             </div>
                         </li>
-                        <li className="flex items-center gap-1 px-1.5 justify-between">
-                            <div className="text-base">Last Post</div>
-                            <div className="text-base">
-                                {topic?.last_post_at && (
+                        {topic?.last_post_at && (
+                            <li className="flex items-center gap-1 px-1.5 justify-between">
+                                <div className="text-base">Last Post</div>
+                                <div className="text-base flex items-center gap-1">
                                     <TimeAgo date={parseISO(topic.last_post_at)} />
-                                )}
-                            </div>
-                        </li>
+                                    <SignalIndicator date={parseISO(topic.last_post_at)} />
+                                </div>
+                            </li>
+                        )}
                         <li className="flex items-center gap-1 px-1.5 justify-between">
                             <div className="text-base">Source</div>
                             <div className="text-base flex items-center">
@@ -403,6 +409,30 @@ const UpDownScroller = () => {
                 >
                     <LuArrowDown />
                 </button>
+            </div>
+        </div>
+    );
+};
+
+export const SignalIndicator = ({ date }: { date: Date }) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const diffHours = diff / (1000 * 60 * 60);
+
+    return (
+        <div className="text-lg text-primary/30 flex items-center relative w-fit">
+            <LuSignal />
+            <div className="absolute inset-0 text-primary flex items-center justify-center">
+                {/* indicator */}
+                {diffHours < 24 * 3 ? (
+                    <LuSignalHigh />
+                ) : diffHours < 24 * 7 ? (
+                    <LuSignalMedium />
+                ) : diffHours < 24 * 30 ? (
+                    <LuSignalLow />
+                ) : (
+                    <LuSignalZero />
+                )}
             </div>
         </div>
     );
