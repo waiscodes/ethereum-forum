@@ -69,12 +69,12 @@ html.dark {
 
 html {
     .prose-width {
-        @apply max-w-[690px] px-5 md:px-0;
+        @apply max-w-[690px] px-5 xl:px-0;
     }
 }
 html.prose-wide {
     .prose-width {
-        @apply max-w-[1032px] px-5 md:px-0;
+        @apply max-w-[1032px] px-5 xl:px-0;
     }
 }
 
