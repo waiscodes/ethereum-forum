@@ -6,6 +6,7 @@ use poem_openapi::{Object, OpenApi};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use crate::models::discourse::user::{DiscourseUserProfile, DiscourseUserSummaryResponse};
+use crate::modules::discourse::LResult;
 use crate::state::AppState;
 use crate::server::ApiTags;
 
@@ -43,10 +44,13 @@ impl UserApi {
         state: Data<&AppState>,
         #[oai(style = "simple")] username: Path<String>,
     ) -> Result<Json<DiscourseUserProfile>> {
-        let user = state.discourse.fetch_discourse_user(&username).await.map_err(|e| {
-            tracing::error!("Error fetching user: {:?}", e);
-            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-        })?;
+        let user = match state.discourse.fetch_discourse_user_cached(&username).await {
+            LResult::Success(user) => user,
+            LResult::Failed(e) => {
+                tracing::error!("Error fetching user: {:?}", e);
+                return Err(poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
+            }
+        };
 
         Ok(Json(user))
     }
@@ -60,10 +64,13 @@ impl UserApi {
         state: Data<&AppState>,
         #[oai(style = "simple")] username: Path<String>,
     ) -> Result<Json<DiscourseUserSummaryResponse>> {
-        let summary = state.discourse.fetch_discourse_user_summary(&username).await.map_err(|e| {
-            tracing::error!("Error fetching user summary: {:?}", e);
-            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-        })?;
+        let summary = match state.discourse.fetch_discourse_user_summary_cached(&username).await {
+            LResult::Success(summary) => summary,
+            LResult::Failed(e) => {
+                tracing::error!("Error fetching user summary: {:?}", e);
+                return Err(poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
+            }
+        };
 
         Ok(Json(summary))
     }

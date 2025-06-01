@@ -2,7 +2,7 @@ use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUser {
     // i32 because system user is `-1`
     id: i32,
@@ -16,7 +16,7 @@ pub struct DiscourseUser {
     extra: serde_json::Value, // unknown
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserSummary {
     likes_given: u32,
     likes_received: u32,
@@ -39,7 +39,7 @@ pub struct DiscourseUserSummary {
     top_categories: Vec<DiscourseTopCategory>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserBadge {
     id: u32,
     granted_at: String, // ISO datetime
@@ -50,7 +50,7 @@ pub struct DiscourseUserBadge {
     granted_by_id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseBadge {
     id: u32,
     name: String,
@@ -70,14 +70,14 @@ pub struct DiscourseBadge {
     badge_type_id: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseBadgeType {
     id: u32,
     name: String,
     sort_order: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseDetailedUser {
     id: i32,
     username: String,
@@ -126,7 +126,7 @@ pub struct DiscourseDetailedUser {
     groups: Vec<serde_json::Value>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserProfile {
     user_badges: Vec<DiscourseUserBadge>,
     badges: Vec<DiscourseBadge>,
@@ -135,7 +135,7 @@ pub struct DiscourseUserProfile {
     user: DiscourseDetailedUser,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseTopic {
     id: u32,
     title: String,
@@ -147,7 +147,7 @@ pub struct DiscourseTopic {
     created_at: String, // ISO datetime
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseReply {
     post_number: u32,
     like_count: u32,
@@ -155,7 +155,7 @@ pub struct DiscourseReply {
     topic_id: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseLink {
     url: String,
     title: String,
@@ -164,7 +164,7 @@ pub struct DiscourseLink {
     topic_id: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserStats {
     id: i32,
     username: String,
@@ -181,7 +181,7 @@ pub struct DiscourseUserStats {
     primary_group_name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseTopCategory {
     topic_count: u32,
     post_count: u32,
@@ -194,7 +194,7 @@ pub struct DiscourseTopCategory {
     parent_category_id: Option<u32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserSummaryResponse {
     topics: Vec<DiscourseTopic>,
     badges: Vec<DiscourseBadge>,

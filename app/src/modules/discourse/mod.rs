@@ -2,7 +2,11 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
     models::{
-        discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse, user::{DiscourseUserProfile, DiscourseUserSummary, DiscourseUserSummaryResponse}},
+        discourse::{
+            latest::DiscourseLatestResponse,
+            topic::DiscourseTopicResponse,
+            user::{DiscourseUserProfile, DiscourseUserSummaryResponse},
+        },
         topics::{Post, Topic},
     },
     state::AppState,
@@ -13,6 +17,8 @@ use async_std::{
     sync::Mutex,
 };
 use chrono::{DateTime, DurationRound, TimeDelta, Utc};
+use moka::future::Cache;
+use poem_openapi::types::{ParseFromJSON, ToJSON, Type};
 use tracing::{error, info};
 
 pub async fn fetch_latest_topics() -> Result<DiscourseLatestResponse, Error> {
@@ -42,10 +48,18 @@ pub struct DiscourseTopicIndexRequest {
     pub page: u32,
 }
 
+#[derive(Debug, Clone, poem_openapi::Union)]
+pub enum LResult<T: Send + Sync + Type + ToJSON + ParseFromJSON> {
+    Failed(String),
+    Success(T),
+}
+
 pub struct DiscourseService {
     topic_tx: Sender<DiscourseTopicIndexRequest>,
     topic_lock: Arc<Mutex<HashSet<(TopicId, u32)>>>,
     topic_rx: Receiver<DiscourseTopicIndexRequest>,
+    user_profile_cache: Cache<String, LResult<DiscourseUserProfile>>,
+    user_summary_cache: Cache<String, LResult<DiscourseUserSummaryResponse>>,
 }
 
 impl Default for DiscourseService {
@@ -55,6 +69,14 @@ impl Default for DiscourseService {
             topic_tx,
             topic_lock: Arc::new(Mutex::new(HashSet::new())),
             topic_rx,
+            user_profile_cache: Cache::builder()
+                .max_capacity(1000)
+                .time_to_live(Duration::from_secs(60 * 60)) // 1 hour TTL
+                .build(),
+            user_summary_cache: Cache::builder()
+                .max_capacity(1000)
+                .time_to_live(Duration::from_secs(60 * 60)) // 1 hour TTL
+                .build(),
         }
     }
 }
@@ -68,7 +90,9 @@ impl DiscourseService {
             if let Ok(topic) = fetch_topic(request.topic_id, request.page).await {
                 let existing_topic = Topic::get_by_topic_id(topic.id, &state).await.ok();
                 let existing_messages = if let Some(existing) = &existing_topic {
-                    Post::count_by_topic_id(existing.topic_id, &state).await.unwrap_or(0)
+                    Post::count_by_topic_id(existing.topic_id, &state)
+                        .await
+                        .unwrap_or(0)
                 } else {
                     0
                 };
@@ -84,14 +108,20 @@ impl DiscourseService {
                 };
 
                 if !worth_fetching_more {
-                    info!("Topic {:?} is up to date ({} -> {}) skipping", topic.id, existing_messages, topic.posts_count);
+                    info!(
+                        "Topic {:?} is up to date ({} -> {}) skipping",
+                        topic.id, existing_messages, topic.posts_count
+                    );
                     self.topic_lock
                         .lock()
                         .await
                         .remove(&(request.topic_id, request.page));
                     continue;
                 } else {
-                    info!("Topic {:?} ({} -> {}) is worth fetching more, fetching", topic.id, existing_messages, topic.posts_count);
+                    info!(
+                        "Topic {:?} ({} -> {}) is worth fetching more, fetching",
+                        topic.id, existing_messages, topic.posts_count
+                    );
                 }
 
                 if !topic.post_stream.posts.is_empty() {
@@ -182,7 +212,7 @@ impl DiscourseService {
 }
 
 impl DiscourseService {
-    pub async fn fetch_discourse_user(&self, username: &str) -> Result<DiscourseUserProfile> {
+    pub async fn fetch_discourse_user(username: &str) -> anyhow::Result<DiscourseUserProfile> {
         let url = format!("https://ethereum-magicians.org/u/{}.json", username);
         let response = reqwest::get(url).await?;
         let body = response.text().await?;
@@ -190,12 +220,44 @@ impl DiscourseService {
         Ok(parsed)
     }
 
-    pub async fn fetch_discourse_user_summary(&self, username: &str) -> Result<DiscourseUserSummaryResponse> {
+    pub async fn fetch_discourse_user_cached(
+        &self,
+        username: &str,
+    ) -> LResult<DiscourseUserProfile> {
+        let username = username.to_string();
+        self.user_profile_cache
+            .get_with(username.clone(), async move {
+                match DiscourseService::fetch_discourse_user(&username).await {
+                    Ok(user) => LResult::Success(user),
+                    Err(e) => LResult::Failed(e.to_string()),
+                }
+            })
+            .await
+    }
+
+    pub async fn fetch_discourse_user_summary(
+        username: &str,
+    ) -> Result<DiscourseUserSummaryResponse> {
         let url = format!("https://ethereum-magicians.org/u/{}/summary.json", username);
         let response = reqwest::get(url).await?;
         let body = response.text().await?;
         let parsed: DiscourseUserSummaryResponse = serde_json::from_str(&body)?;
         Ok(parsed)
+    }
+
+    pub async fn fetch_discourse_user_summary_cached(
+        &self,
+        username: &str,
+    ) -> LResult<DiscourseUserSummaryResponse> {
+        let username = username.to_string();
+        self.user_summary_cache
+            .get_with(username.clone(), async move {
+                match DiscourseService::fetch_discourse_user_summary(&username).await {
+                    Ok(user) => LResult::Success(user),
+                    Err(e) => LResult::Failed(e.to_string()),
+                }
+            })
+            .await
     }
 }
 
