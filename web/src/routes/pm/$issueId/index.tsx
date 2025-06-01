@@ -40,16 +40,19 @@ const RouteComponent = () => {
     const { data: discoursePosts } = usePosts(occurence?.discourse_topic_id || '', 1);
     const { data: githubPosts } = useGithubIssueComments(parseInt(issueId) || 0);
 
-    const posts = [
-        ...(githubPosts || []).map((post) => ({
-            type: 'github' as const,
-            post,
-        })),
-        ...(discoursePosts?.posts || []).map((post) => ({
+    const ghPosts = (Array.isArray(githubPosts) ? githubPosts : []).map((post) => ({
+        type: 'github' as const,
+        post,
+    }));
+
+    const dsPosts = (Array.isArray(discoursePosts?.posts) ? discoursePosts.posts : []).map(
+        (post) => ({
             type: 'discourse' as const,
             post,
-        })),
-    ];
+        })
+    );
+
+    const posts = [...(ghPosts ?? []), ...(dsPosts ?? [])];
 
     posts.forEach((post) => {
         const youtubeLinks =

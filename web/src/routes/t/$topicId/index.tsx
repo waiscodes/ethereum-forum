@@ -158,38 +158,33 @@ function RouteComponent() {
                                 <RefreshTopicButton topicId={topicId} />
                             </div>
                         </li>
+                        {topic?.topic_id && (
+                            <li className="space-y-1.5">
+                                <Dialog.Root>
+                                    <Dialog.Trigger asChild>
+                                        <button className="w-full text-left flex items-center gap-2 button">
+                                            <LuWandSparkles />
+                                            View Summary
+                                        </button>
+                                    </Dialog.Trigger>
+                                    <Dialog.Portal>
+                                        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40 data-[state=open]:animate-overlayShow overflow-y-scroll grid place-items-center">
+                                            <Dialog.Content className="z-50 relative my-10 max-w-3xl shadow-[var(--shadow-6)] focus:outline-none data-[state=open]:animate-contentShow mx-auto w-full p-6 bg-primary space-y-4">
+                                                <Dialog.Title className="text-xl font-bold">
+                                                    Topic Summary
+                                                </Dialog.Title>
+                                                <Summary topicId={topic.topic_id} />
+                                                <Dialog.Close className="absolute top-2 right-2 -translate-y-1/2 hover:bg-secondary rounded-full p-1">
+                                                    <LuX className="size-5" />
+                                                </Dialog.Close>
+                                            </Dialog.Content>
+                                        </Dialog.Overlay>
+                                    </Dialog.Portal>
+                                </Dialog.Root>
+                            </li>
+                        )}
                     </ul>
                 </div>
-                {topic?.topic_id && (
-                    <div className="space-y-1.5">
-                        <div className="px-1.5">
-                            <h3 className="font-bold w-full border-b border-b-primary pb-1">
-                                Tools
-                            </h3>
-                        </div>
-                        <Dialog.Root>
-                            <Dialog.Trigger asChild>
-                                <button className="w-full text-left flex items-center gap-2 button">
-                                    <LuWandSparkles />
-                                    View Summary
-                                </button>
-                            </Dialog.Trigger>
-                            <Dialog.Portal>
-                                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40 data-[state=open]:animate-overlayShow overflow-y-scroll grid place-items-center">
-                                    <Dialog.Content className="z-50 relative my-10 max-w-3xl shadow-[var(--shadow-6)] focus:outline-none data-[state=open]:animate-contentShow mx-auto w-full p-6 bg-primary space-y-4">
-                                        <Dialog.Title className="text-xl font-bold">
-                                            Topic Summary
-                                        </Dialog.Title>
-                                        <Summary topicId={topic.topic_id} />
-                                        <Dialog.Close className="absolute top-2 right-2 -translate-y-1/2 hover:bg-secondary rounded-full p-1">
-                                            <LuX className="size-5" />
-                                        </Dialog.Close>
-                                    </Dialog.Content>
-                                </Dialog.Overlay>
-                            </Dialog.Portal>
-                        </Dialog.Root>
-                    </div>
-                )}
                 {/* Links */}
                 {standards_links.length > 0 && (
                     <ExpandableList title="Standards Links" maxItems={4}>
@@ -273,8 +268,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                            ? 'Load More'
-                                            : 'No more posts'}
+                                          ? 'Load More'
+                                          : 'No more posts'}
                                 </button>
                             </div>
                         </>

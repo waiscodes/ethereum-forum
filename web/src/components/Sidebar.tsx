@@ -1,4 +1,6 @@
 import { Link } from '@tanstack/react-router';
+import { GrWorkshop } from 'react-icons/gr';
+import { SiOpenai } from 'react-icons/si';
 
 import { ProseWidthSwitcher } from './preferences/ProseWidthSwitcher';
 import { ThemeSwitcher } from './preferences/ThemeSwitcher';
@@ -13,37 +15,46 @@ export const Sidebar = () => {
                             Navigation
                         </p>
                     </div>
-                    <ul>
+                    <ul className="overflow-hidden">
                         {[
                             {
                                 title: 'Index',
                                 href: '/',
+                                short: 'Everything',
                             },
-                            {
-                                title: 'Improvement Proposals',
-                                short: 'EIPs',
-                                href: '/c/eips',
-                            },
-                            {
-                                title: 'Request for Comment',
-                                short: 'ERCs',
-                                href: '/c/ercs',
-                            },
-                            {
-                                title: 'Working Groups',
-                                href: '/c/wgs',
-                            },
+                            // {
+                            //     title: 'Improvement Proposals',
+                            //     short: 'EIPs',
+                            //     href: '/c/eips',
+                            // },
+                            // {
+                            //     title: 'Request for Comment',
+                            //     short: 'ERCs',
+                            //     href: '/c/ercs',
+                            // },
+                            // {
+                            //     title: 'Working Groups',
+                            //     href: '/c/wgs',
+                            // },
                             {
                                 title: 'Protocol Agenda',
                                 href: '/c/agenda',
+                                short: 'Calendar',
+                            },
+                            {
+                                title: 'Workshop',
+                                href: '/chat/new',
                             },
                         ].map((item) => (
                             <li key={item.href}>
                                 <Link
                                     to={item.href}
-                                    className="flex justify-between hover:bg-secondary px-1.5"
+                                    className="flex justify-between items-center hover:bg-secondary px-1.5 py-0.5 relative"
                                 >
-                                    <span>{item.title}</span>
+                                    <div>
+                                        <div className="absolute top-0 left-2 w-2 h-full border-l-2 border-primary border-b-2 -translate-y-1/2"></div>
+                                        <span className="pl-4">{item.title}</span>
+                                    </div>
                                     {item.short && (
                                         <span className="text-sm text-secondary text-right">
                                             {item.short}
@@ -56,15 +67,24 @@ export const Sidebar = () => {
                 </nav>
                 <div className="py-4 px-6 space-y-0.5">
                     <div className="flex items-center justify-between gap-1">
-                        <span className="text-sm">ChatGPT Assist</span>
-                        <a
-                            href="https://chatgpt.com/g/g-68104906afb88191ae3f52c2aff36737-ethereum-forum-assistant"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm button"
-                        >
-                            Open in ChatGPT
-                        </a>
+                        <span className="text-sm">Explore</span>
+                        <div className="flex items-center gap-1">
+                            <a
+                                href="/chat/new"
+                                className="text-sm button flex items-center justify-center gap-1"
+                            >
+                                <GrWorkshop />
+                                Open Workshop
+                            </a>
+                            <a
+                                href="https://chatgpt.com/g/g-68104906afb88191ae3f52c2aff36737-ethereum-forum-assistant"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm button aspect-square size-7 flex items-center justify-center"
+                            >
+                                <SiOpenai />
+                            </a>
+                        </div>
                     </div>
                     <div className="flex items-center justify-between gap-1">
                         <span className="text-sm">Theme</span>

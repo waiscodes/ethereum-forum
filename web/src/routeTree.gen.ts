@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
+import { Route as ChatChatIdImport } from './routes/chat/$chatId'
 import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index'
 import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
 import { Route as CChannelIdIndexImport } from './routes/c/$channelId/index'
@@ -21,6 +22,12 @@ import { Route as CChannelIdIndexImport } from './routes/c/$channelId/index'
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChatChatIdRoute = ChatChatIdImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,6 +60,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdImport
+      parentRoute: typeof rootRoute
+    }
     '/c/$channelId/': {
       id: '/c/$channelId/'
       path: '/c/$channelId'
@@ -81,6 +95,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
   '/c/$channelId': typeof CChannelIdIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
@@ -88,6 +103,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
   '/c/$channelId': typeof CChannelIdIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
@@ -96,6 +112,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
   '/c/$channelId/': typeof CChannelIdIndexRoute
   '/pm/$issueId/': typeof PmIssueIdIndexRoute
   '/t/$topicId/': typeof TTopicIdIndexRoute
@@ -103,15 +120,27 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/c/$channelId' | '/pm/$issueId' | '/t/$topicId'
+  fullPaths:
+    | '/'
+    | '/chat/$chatId'
+    | '/c/$channelId'
+    | '/pm/$issueId'
+    | '/t/$topicId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/c/$channelId' | '/pm/$issueId' | '/t/$topicId'
-  id: '__root__' | '/' | '/c/$channelId/' | '/pm/$issueId/' | '/t/$topicId/'
+  to: '/' | '/chat/$chatId' | '/c/$channelId' | '/pm/$issueId' | '/t/$topicId'
+  id:
+    | '__root__'
+    | '/'
+    | '/chat/$chatId'
+    | '/c/$channelId/'
+    | '/pm/$issueId/'
+    | '/t/$topicId/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChatChatIdRoute: typeof ChatChatIdRoute
   CChannelIdIndexRoute: typeof CChannelIdIndexRoute
   PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
   TTopicIdIndexRoute: typeof TTopicIdIndexRoute
@@ -119,6 +148,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChatChatIdRoute: ChatChatIdRoute,
   CChannelIdIndexRoute: CChannelIdIndexRoute,
   PmIssueIdIndexRoute: PmIssueIdIndexRoute,
   TTopicIdIndexRoute: TTopicIdIndexRoute,
@@ -135,6 +165,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/chat/$chatId",
         "/c/$channelId/",
         "/pm/$issueId/",
         "/t/$topicId/"
@@ -142,6 +173,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/chat/$chatId": {
+      "filePath": "chat/$chatId.tsx"
     },
     "/c/$channelId/": {
       "filePath": "c/$channelId/index.tsx"

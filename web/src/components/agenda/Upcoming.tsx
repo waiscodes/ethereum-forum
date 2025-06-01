@@ -17,12 +17,14 @@ type CalendarEvent = {
     color?: string;
 };
 
+const hours = 12;
+
 export const ProtocolAgendaUpcoming = () => {
     const { data } = useEventsUpcoming();
 
-    // Separate events within next 24 hours and beyond
+    // Separate events within next 12 hours and beyond
     const now = new Date();
-    const twelveHoursLater = addHours(now, 24);
+    const twelveHoursLater = addHours(now, hours);
 
     const upcomingEvents = data?.filter((event) => {
         const startDate = event.start ? parseISO(event.start) : null;
@@ -65,8 +67,8 @@ export const ProtocolAgendaUpcoming = () => {
                     <div className="flex h-[420px] overflow-y-auto">
                         {/* Time column */}
                         <div className="w-16 flex-shrink-0 border-r border-primary bg-secondary h-fit">
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const hour = (i + now.getHours()) % 24;
+                            {Array.from({ length: hours }, (_, i) => {
+                                const hour = (i + now.getHours()) % hours;
 
                                 return (
                                     <div
@@ -83,7 +85,7 @@ export const ProtocolAgendaUpcoming = () => {
 
                         {/* Events column */}
                         <div className="flex-1 relative">
-                            {Array.from({ length: 24 }, (_, i) => (
+                            {Array.from({ length: hours }, (_, i) => (
                                 <div key={i} className="h-16 border-b border-secondary" />
                             ))}
 
@@ -95,7 +97,7 @@ export const ProtocolAgendaUpcoming = () => {
                                 const currentHour = now.getHours();
 
                                 // Calculate position relative to current time
-                                const hoursFromNow = (startHour - currentHour + 24) % 24;
+                                const hoursFromNow = (startHour - currentHour + hours) % hours;
                                 const startFromTop = (hoursFromNow * 60 + startMinute) * (64 / 60); // 64px per hour
                                 const height = Math.max(32, event.duration * (64 / 60)); // Minimum height
 
@@ -131,7 +133,7 @@ export const ProtocolAgendaUpcoming = () => {
             )}
 
             <ul>
-                {laterEvents?.map((event) => {
+                {laterEvents?.slice(0, 10).map((event) => {
                     const issueId = event.pm_number;
 
                     return (
