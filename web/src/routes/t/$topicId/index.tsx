@@ -26,6 +26,7 @@ import {
 import { PiReceipt } from 'react-icons/pi';
 import { SiEthereum, SiOpenai, SiReddit } from 'react-icons/si';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import {
     getTopic,
@@ -311,7 +312,9 @@ const Summary = ({ topicId }: { topicId: number }) => {
     return (
         <>
             <div className="prose text-base leading-relaxed">
-                <Markdown>{summary.summary_text.replace(/\\n/g, '\n')}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>
+                    {summary.summary_text.replace(/\\n/g, '\n')}
+                </Markdown>
             </div>
             <div className="flex items-center justify-end gap-2">
                 <Dialog.Close>

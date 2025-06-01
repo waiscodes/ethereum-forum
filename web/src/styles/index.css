@@ -378,20 +378,24 @@ html.prose-page {
         @apply overflow-x-auto;
         table {
             @apply w-screen max-w-fit;
-            thead {
-                @apply border-b-2 text-left border-b-primary;
-                th {
-                    @apply px-1.5;
-                }
+        }
+    }
+
+    table {
+        @apply w-screen max-w-full;
+        thead {
+            @apply border-b-2 text-left border-b-primary;
+            th {
+                @apply px-1.5;
             }
-            tr {
-                @apply border-b border-b-primary/50;
-            }
-            td {
-                @apply whitespace-pre-wrap px-1 py-1;
-                img {
-                    @apply inline-block;
-                }
+        }
+        tr {
+            @apply border-b border-b-primary/50;
+        }
+        td {
+            @apply whitespace-pre-wrap px-1 py-1;
+            img {
+                @apply inline-block;
             }
         }
     }
