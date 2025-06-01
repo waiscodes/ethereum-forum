@@ -1,5 +1,6 @@
-use crate::models::discourse::DiscourseUser;
 use serde::{Deserialize, Serialize};
+
+use crate::models::discourse::user::DiscourseUser;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiscourseLatestResponse {

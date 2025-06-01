@@ -2,12 +2,12 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
     models::{
-        discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse},
+        discourse::{latest::DiscourseLatestResponse, topic::DiscourseTopicResponse, user::{DiscourseUserProfile, DiscourseUserSummary, DiscourseUserSummaryResponse}},
         topics::{Post, Topic},
     },
     state::AppState,
 };
-use anyhow::Error;
+use anyhow::{Error, Result};
 use async_std::{
     channel::{Receiver, Sender},
     sync::Mutex,
@@ -178,6 +178,24 @@ impl DiscourseService {
             let duration = next.signed_duration_since(now);
             async_std::task::sleep(Duration::from_secs(duration.num_seconds() as u64)).await;
         }
+    }
+}
+
+impl DiscourseService {
+    pub async fn fetch_discourse_user(&self, username: &str) -> Result<DiscourseUserProfile> {
+        let url = format!("https://ethereum-magicians.org/u/{}.json", username);
+        let response = reqwest::get(url).await?;
+        let body = response.text().await?;
+        let parsed: DiscourseUserProfile = serde_json::from_str(&body)?;
+        Ok(parsed)
+    }
+
+    pub async fn fetch_discourse_user_summary(&self, username: &str) -> Result<DiscourseUserSummaryResponse> {
+        let url = format!("https://ethereum-magicians.org/u/{}/summary.json", username);
+        let response = reqwest::get(url).await?;
+        let body = response.text().await?;
+        let parsed: DiscourseUserSummaryResponse = serde_json::from_str(&body)?;
+        Ok(parsed)
     }
 }
 

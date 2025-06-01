@@ -3,7 +3,9 @@ use poem::Result;
 use poem_openapi::param::Path;
 use poem_openapi::payload::Json;
 use poem_openapi::{Object, OpenApi};
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use crate::models::discourse::user::{DiscourseUserProfile, DiscourseUserSummaryResponse};
 use crate::state::AppState;
 use crate::server::ApiTags;
 
@@ -30,6 +32,40 @@ impl UserApi {
         //     created_at: party.created_at.to_rfc3339(),
         // }))
         Ok(Json(serde_json::Value::Null))
+    }
+
+    /// /user/:username
+    ///
+    /// Get user profile
+    #[oai(path = "/user/:username", method = "get", tag = "ApiTags::User")]
+    async fn get_user(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] username: Path<String>,
+    ) -> Result<Json<DiscourseUserProfile>> {
+        let user = state.discourse.fetch_discourse_user(&username).await.map_err(|e| {
+            tracing::error!("Error fetching user: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(user))
+    }
+
+    /// /user/:username/summary
+    ///
+    /// Get user summary
+    #[oai(path = "/user/:username/summary", method = "get", tag = "ApiTags::User")]
+    async fn get_user_summary(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] username: Path<String>,
+    ) -> Result<Json<DiscourseUserSummaryResponse>> {
+        let summary = state.discourse.fetch_discourse_user_summary(&username).await.map_err(|e| {
+            tracing::error!("Error fetching user summary: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(summary))
     }
 
     /// /user/sso/:sso_id/login
