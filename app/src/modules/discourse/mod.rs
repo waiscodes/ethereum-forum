@@ -83,6 +83,12 @@ impl Default for DiscourseService {
 
 impl DiscourseService {
     pub async fn run(&self, state: AppState) {
+        // spawn task fetch periodically
+        let state2 = state.clone();
+        let _ = async_std::task::spawn(async move {
+            state2.discourse.fetch_periodically().await;
+        });
+
         while let Ok(request) = self.topic_rx.recv().await {
             // self.topic_lock.lock().await.insert(request.topic_id);
             info!("Received request: {:?}", request);
