@@ -1,16 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/chat/$chatId')({
+import { EIPsContent } from '@/components/eips/EIPsContent';
+
+export const Route = createFileRoute('/s/')({
     component: RouteComponent,
     context: () => ({
-        title: 'Workshop',
+        title: 'Standards',
     }),
 });
 
 function RouteComponent() {
     return (
         <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
-            <div>Welcome to the workshop!</div>
+            <h1 className="">
+                standards/<b>overview</b>
+            </h1>
+            <EIPsContent />
         </div>
     );
 }

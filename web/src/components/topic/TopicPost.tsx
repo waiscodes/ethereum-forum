@@ -8,7 +8,7 @@ import { SiEthereum } from 'react-icons/si';
 import { Post } from '@/api/topics';
 
 import { TimeAgo } from '../TimeAgo';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../tooltip/Tooltip';
 import { TrustLevel } from '../TrustLevel';
 import { Prose } from './Prose';
 
