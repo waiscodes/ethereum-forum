@@ -391,6 +391,14 @@ html.prose-page {
                 }
             }
         }
+        &.onebox.githubpullrequest {
+            .excerpt {
+
+            }
+            .hidden {
+                display: none;
+            }
+        }
     }
     pre {
         @apply bg-secondary border border-primary p-4 overflow-x-auto;
