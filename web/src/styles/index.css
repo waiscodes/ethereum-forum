@@ -224,7 +224,7 @@ html.prose-page {
 .prose {
     @apply whitespace-normal space-y-4 break-words block;
 
-    img {
+    > img, :not(.onebox) img {
         @apply inline-block;
         &.emoji {
             @apply size-4 -mt-1;
@@ -307,11 +307,32 @@ html.prose-page {
         }
         .onebox-body {
             @apply p-2;
-            .thumbnail {
-                @apply w-16 h-16 float-left mr-2 mb-2;
+            :not(.aspect-image) {
+                .thumbnail {
+                    @apply w-16 h-16 float-left mr-2 mb-2;
+                }
+            }
+            .aspect-image {
+                aspect-ratio: var(--aspect-ratio);
             }
             h3 {
                 @apply font-bold text-secondary;
+            }
+            .title-wrapper {
+                .topic-category {
+                    @apply flex items-center gap-2;
+                    .badge-wrapper.bullet {
+                        @apply bg-primary h-fit px-1;
+                    }
+                    .topic-header-extra {
+                        @apply flex items-center;
+                        .list-tags {
+                            .discourse-tags {
+                                @apply flex items-center gap-1;
+                            }
+                        }
+                    }
+                }
             }
             .github-row {
                 @apply flex items-center gap-2;
@@ -354,6 +375,19 @@ html.prose-page {
                             }
                         }
                     }
+                }
+            }
+            .fa {
+                &.d-icon-tag {
+                    @apply size-4 bg-green-100;
+                }
+            }
+        }
+        &.onebox.discoursetopic {
+            article.onebox-body {
+                @apply flex flex-col gap-2;
+                p:last-child {
+                    @apply flex justify-between items-center;
                 }
             }
         }
