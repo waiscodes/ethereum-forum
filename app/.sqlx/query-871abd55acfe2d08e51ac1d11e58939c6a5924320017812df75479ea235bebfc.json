@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM workshop_messages WHERE chat_id = $1",
+  "query": "SELECT * FROM workshop_messages WHERE chat_id = $1 ORDER BY created_at ASC",
   "describe": {
     "columns": [
       {
@@ -48,5 +48,5 @@
       true
     ]
   },
-  "hash": "791b99a29bdb88620a9f58083290270b440487f4cfb27a236b7a7a0787f9bf4e"
+  "hash": "871abd55acfe2d08e51ac1d11e58939c6a5924320017812df75479ea235bebfc"
 }

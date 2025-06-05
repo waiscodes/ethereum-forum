@@ -1,11 +1,12 @@
 use poem::web::Data;
 use poem::Result;
 use poem_openapi::param::{Path, Query};
-use poem_openapi::payload::Json;
+use poem_openapi::payload::{Json, EventStream};
 use poem_openapi::{Object, OpenApi};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use futures::{StreamExt, stream::BoxStream};
 use crate::models::topics::Topic;
 use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
@@ -25,6 +26,13 @@ pub struct WorkshopChatPayload {
     pub chat_id: Uuid,
     pub chat: WorkshopChat,
     pub messages: Vec<WorkshopMessage>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct StreamingResponse {
+    pub content: String,
+    pub is_complete: bool,
+    pub error: Option<String>,
 }
 
 #[OpenApi]
@@ -137,11 +145,73 @@ impl WorkshopApi {
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        WorkshopService::process_next_message(message.chat_id, message.message_id, &state).await.map_err(|e| {
+        // Start processing the next message (this will create an OngoingPrompt)
+        let (ongoing_prompt, created_message) = WorkshopService::process_next_message(message.chat_id, message.message_id, &state).await.map_err(|e| {
             tracing::error!("Error processing next message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        Ok(Json(message))
+        // Return the system response message that's being generated
+        // Add debug logging to help with troubleshooting
+        tracing::info!("Created system message with ID: {} for chat: {}", created_message.message_id, created_message.chat_id);
+
+        Ok(Json(created_message))
+    }
+
+    /// /ws/chat/:chat_id/:message_id/stream
+    ///
+    /// Get SSE stream for a specific message response
+    #[oai(path = "/ws/chat/:chat_id/:message_id/stream", method = "get", tag = "ApiTags::Workshop")]
+    async fn stream_message_response(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] chat_id: Path<Uuid>,
+        #[oai(style = "simple")] message_id: Path<Uuid>,
+    ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
+        tracing::info!("Stream request for chat: {}, message: {}", *chat_id, *message_id);
+        
+        // List all ongoing prompts for debugging
+        let all_keys = state.workshop.ongoing_prompts.list_keys().await;
+        tracing::info!("Available ongoing prompt keys: {:?}", all_keys);
+        
+        // Try to get the ongoing prompt
+        let ongoing_prompt = state.workshop.get_ongoing_prompt(*chat_id, *message_id).await
+            .ok_or_else(|| {
+                tracing::error!("No ongoing prompt found for chat {} message {}", *chat_id, *message_id);
+                poem::Error::from_status(StatusCode::NOT_FOUND)
+            })?;
+
+        tracing::info!("Found ongoing prompt, starting stream");
+
+        // Get the stream
+        let stream = ongoing_prompt.get_stream().await;
+        
+        // Convert to streaming response events
+        let response_stream = stream.map(|result| {
+            match result {
+                Ok(delta) => {
+                    let content = delta.choices.first()
+                        .and_then(|c| c.delta.content.as_ref())
+                        .cloned()
+                        .unwrap_or_default();
+                    
+                    StreamingResponse {
+                        content,
+                        is_complete: false,
+                        error: None,
+                    }
+                }
+                Err(err) => {
+                    tracing::error!("Stream error: {}", err);
+                    StreamingResponse {
+                        content: String::new(),
+                        is_complete: true,
+                        error: Some(err),
+                    }
+                }
+            }
+        }).boxed();
+
+        Ok(EventStream::new(response_stream))
     }
 }

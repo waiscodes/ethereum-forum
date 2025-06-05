@@ -3,9 +3,9 @@ import { LuArrowDown, LuArrowUp } from 'react-icons/lu';
 export const UpDownScroller = () => {
     // only visible when if the document body is scrollable at all
 
-    const isScrollable = document.documentElement.scrollHeight > window.innerHeight;
+    // const isScrollable = document.documentElement.scrollHeight > window.innerHeight;
 
-    if (!isScrollable) return null;
+    // if (!isScrollable) return null;
 
     return (
         <div className="items-center gap-2 absolute right-0 top-28 hidden md:flex">

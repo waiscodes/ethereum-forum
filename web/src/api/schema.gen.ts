@@ -568,6 +568,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/chat/{chat_id}/{message_id}/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/chat/:chat_id/:message_id/stream
+         * @description Get SSE stream for a specific message response
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chat_id: string;
+                    message_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": components["schemas"]["StreamingResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -950,6 +991,12 @@ export interface components {
             pm_data?: components["schemas"]["PMMeetingData"];
             /** Format: uint32 */
             pm_number?: number;
+        };
+        /** StreamingResponse */
+        StreamingResponse: {
+            content: string;
+            is_complete: boolean;
+            error?: string;
         };
         /** Topic */
         Topic: {

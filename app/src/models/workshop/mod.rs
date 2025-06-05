@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::query_as;
 use uuid::Uuid;
 
-#[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize, Object)]
 pub struct WorkshopMessage {
     pub message_id: Uuid,
     pub chat_id: Uuid,
@@ -38,7 +38,7 @@ pub struct WorkshopSnapshot {
 
 impl WorkshopChat {
     pub async fn find_by_user_id(user_id: i32, state: &AppState) -> Result<Vec<Self>, sqlx::Error> {
-        query_as("SELECT * FROM workshop_chats WHERE user_id = $1")
+        query_as("SELECT * FROM workshop_chats WHERE user_id = $1 ORDER BY created_at DESC")
             .bind(user_id)
             .fetch_all(&state.database.pool)
             .await
@@ -124,7 +124,7 @@ impl WorkshopMessage {
     ) -> Result<Vec<Self>, sqlx::Error> {
         query_as!(
             Self,
-            "SELECT * FROM workshop_messages WHERE chat_id = $1",
+            "SELECT * FROM workshop_messages WHERE chat_id = $1 ORDER BY created_at ASC",
             chat_id
         )
         .fetch_all(&state.database.pool)
