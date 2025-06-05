@@ -183,6 +183,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /user/:username
+         * @description Get user profile
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["DiscourseUserProfile"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/{username}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /user/:username/summary
+         * @description Get user summary
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["DiscourseUserSummaryResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/sso/{sso_id}/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /user/sso/:sso_id/login
+         * @description Login with SSO
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sso_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": unknown;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -299,10 +419,352 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/chat
+         * @description Get all chats
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopChat"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ws/chat/{chat_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/chat/:chat_id
+         * @description Get a chat
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    chat_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopMessage"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * /ws/chat/:chat_id
+         * @description Send a message
+         *     Specify parent_message as query param to send a reply
+         */
+        post: {
+            parameters: {
+                query?: {
+                    parent_message?: string;
+                };
+                header?: never;
+                path: {
+                    chat_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopMessage"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** DiscourseBadge */
+        DiscourseBadge: {
+            /** Format: uint32 */
+            id: number;
+            name: string;
+            description: string;
+            /** Format: uint32 */
+            grant_count: number;
+            allow_title: boolean;
+            multiple_grant: boolean;
+            icon: string;
+            image_url?: string;
+            listable: boolean;
+            enabled: boolean;
+            /** Format: uint32 */
+            badge_grouping_id: number;
+            system: boolean;
+            slug: string;
+            manually_grantable: boolean;
+            show_in_post_header: boolean;
+            /** Format: uint32 */
+            badge_type_id: number;
+        };
+        /** DiscourseBadgeType */
+        DiscourseBadgeType: {
+            /** Format: uint32 */
+            id: number;
+            name: string;
+            /** Format: uint32 */
+            sort_order: number;
+        };
+        /** DiscourseDetailedUser */
+        DiscourseDetailedUser: {
+            /** Format: int32 */
+            id: number;
+            username: string;
+            name?: string;
+            avatar_template: string;
+            last_posted_at?: string;
+            last_seen_at?: string;
+            created_at: string;
+            ignored: boolean;
+            muted: boolean;
+            can_ignore_user: boolean;
+            can_mute_user: boolean;
+            can_send_private_messages: boolean;
+            can_send_private_message_to_user: boolean;
+            /** Format: uint32 */
+            trust_level: number;
+            moderator: boolean;
+            admin: boolean;
+            title?: string;
+            /** Format: uint32 */
+            badge_count: number;
+            custom_fields: unknown;
+            /** Format: uint32 */
+            time_read: number;
+            /** Format: uint32 */
+            recent_time_read: number;
+            /** Format: uint32 */
+            primary_group_id?: number;
+            primary_group_name?: string;
+            /** Format: uint32 */
+            flair_group_id?: number;
+            flair_name?: string;
+            flair_url?: string;
+            flair_bg_color?: string;
+            flair_color?: string;
+            featured_topic?: unknown;
+            can_edit: boolean;
+            can_edit_username: boolean;
+            can_edit_email: boolean;
+            can_edit_name: boolean;
+            /** Format: uint32 */
+            uploaded_avatar_id?: number;
+            /** Format: uint32 */
+            pending_count: number;
+            /** Format: uint32 */
+            profile_view_count: number;
+            can_upload_profile_header: boolean;
+            can_upload_user_card_background: boolean;
+            /** Format: uint32 */
+            gravatar_avatar_upload_id?: number;
+            gravatar_avatar_template?: string;
+            /** Format: uint32 */
+            custom_avatar_upload_id?: number;
+            custom_avatar_template?: string;
+            featured_user_badge_ids: number[];
+            invited_by?: unknown;
+            groups: unknown[];
+        };
+        /** DiscourseLink */
+        DiscourseLink: {
+            url: string;
+            title: string;
+            /** Format: uint32 */
+            clicks: number;
+            /** Format: uint32 */
+            post_number: number;
+            /** Format: uint32 */
+            topic_id: number;
+        };
+        /** DiscourseReply */
+        DiscourseReply: {
+            /** Format: uint32 */
+            post_number: number;
+            /** Format: uint32 */
+            like_count: number;
+            created_at: string;
+            /** Format: uint32 */
+            topic_id: number;
+        };
+        /** DiscourseTopCategory */
+        DiscourseTopCategory: {
+            /** Format: uint32 */
+            topic_count: number;
+            /** Format: uint32 */
+            post_count: number;
+            /** Format: uint32 */
+            id: number;
+            name: string;
+            color: string;
+            text_color: string;
+            slug: string;
+            read_restricted: boolean;
+            /** Format: uint32 */
+            parent_category_id?: number;
+        };
+        /** DiscourseTopic */
+        DiscourseTopic: {
+            /** Format: uint32 */
+            id: number;
+            title: string;
+            fancy_title: string;
+            slug: string;
+            /** Format: uint32 */
+            posts_count: number;
+            /** Format: uint32 */
+            category_id: number;
+            /** Format: uint32 */
+            like_count: number;
+            created_at: string;
+        };
+        /** DiscourseUser */
+        DiscourseUser: {
+            /** Format: int32 */
+            id: number;
+            username: string;
+            name?: string;
+            avatar_template?: string;
+            admin?: boolean;
+            moderator?: boolean;
+            /** Format: uint32 */
+            trust_level?: number;
+            extra: unknown;
+        };
+        /** DiscourseUserBadge */
+        DiscourseUserBadge: {
+            /** Format: uint32 */
+            id: number;
+            granted_at: string;
+            created_at: string;
+            /** Format: uint32 */
+            count: number;
+            /** Format: uint32 */
+            badge_id: number;
+            /** Format: int32 */
+            user_id: number;
+            /** Format: int32 */
+            granted_by_id: number;
+        };
+        /** DiscourseUserProfile */
+        DiscourseUserProfile: {
+            user_badges: components["schemas"]["DiscourseUserBadge"][];
+            badges: components["schemas"]["DiscourseBadge"][];
+            badge_types: components["schemas"]["DiscourseBadgeType"][];
+            users: components["schemas"]["DiscourseUser"][];
+            user: components["schemas"]["DiscourseDetailedUser"];
+        };
+        /** DiscourseUserStats */
+        DiscourseUserStats: {
+            /** Format: int32 */
+            id: number;
+            username: string;
+            name?: string;
+            /** Format: uint32 */
+            count: number;
+            avatar_template: string;
+            admin: boolean;
+            moderator: boolean;
+            /** Format: uint32 */
+            trust_level: number;
+            flair_name?: string;
+            flair_url?: string;
+            flair_bg_color?: string;
+            flair_color?: string;
+            primary_group_name?: string;
+        };
+        /** DiscourseUserSummary */
+        DiscourseUserSummary: {
+            /** Format: uint32 */
+            likes_given: number;
+            /** Format: uint32 */
+            likes_received: number;
+            /** Format: uint32 */
+            topics_entered: number;
+            /** Format: uint32 */
+            posts_read_count: number;
+            /** Format: uint32 */
+            days_visited: number;
+            /** Format: uint32 */
+            topic_count: number;
+            /** Format: uint32 */
+            post_count: number;
+            /** Format: uint32 */
+            time_read: number;
+            /** Format: uint32 */
+            recent_time_read: number;
+            can_see_summary_stats: boolean;
+            can_see_user_actions: boolean;
+            topic_ids: number[];
+            replies: components["schemas"]["DiscourseReply"][];
+            links: components["schemas"]["DiscourseLink"][];
+            most_liked_by_users: components["schemas"]["DiscourseUserStats"][];
+            most_liked_users: components["schemas"]["DiscourseUserStats"][];
+            most_replied_to_users: components["schemas"]["DiscourseUserStats"][];
+            badges: components["schemas"]["DiscourseUserBadge"][];
+            top_categories: components["schemas"]["DiscourseTopCategory"][];
+        };
+        /** DiscourseUserSummaryResponse */
+        DiscourseUserSummaryResponse: {
+            topics: components["schemas"]["DiscourseTopic"][];
+            badges: components["schemas"]["DiscourseBadge"][];
+            badge_types: components["schemas"]["DiscourseBadgeType"][];
+            users: components["schemas"]["DiscourseUser"][];
+            user_summary: components["schemas"]["DiscourseUserSummary"];
+        };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
         /** GoogleMeetingData */
@@ -479,6 +941,35 @@ export interface components {
             summary_text: string;
             /** Format: date-time */
             created_at: string;
+        };
+        /** WorkshopChat */
+        WorkshopChat: {
+            /** Format: uuid */
+            chat_id: string;
+            /** Format: int32 */
+            user_id: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            deleted_at?: string;
+            summary?: string;
+            /** Format: uuid */
+            last_message_id?: string;
+        };
+        /** WorkshopMessage */
+        WorkshopMessage: {
+            /** Format: uuid */
+            message_id: string;
+            /** Format: uuid */
+            chat_id: string;
+            sender_role: string;
+            message: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            parent_message_id?: string;
         };
         /** YoutubeMeetingData */
         YoutubeMeetingData: {

@@ -1,11 +1,14 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useMatchRoute, useRouter, useRouterState } from '@tanstack/react-router';
 import { GrWorkshop } from 'react-icons/gr';
 import { SiOpenai } from 'react-icons/si';
 
 import { ProseWidthSwitcher } from './preferences/ProseWidthSwitcher';
 import { ThemeSwitcher } from './preferences/ThemeSwitcher';
+import { WorkshopChatsNav } from './workshop/WorkshopChatsNav';
 
 export const Sidebar = () => {
+    const { pathname } = useRouterState({ select: (s) => s.location });
+
     return (
         <div className="left-bar space-y-2">
             <div className="flex flex-col justify-between h-full">
@@ -56,13 +59,14 @@ export const Sidebar = () => {
                                 href: '/chat/new',
                             },
                         ].map((item) => (
-                            <li key={item.href}>
+                            <li key={item.href} className="group">
                                 <Link
                                     to={item.href}
                                     className="flex justify-between items-center hover:bg-secondary px-1.5 py-0.5 relative"
                                 >
                                     <div>
-                                        <div className="absolute top-0 left-2 w-2 h-full border-l-2 border-primary border-b-2 -translate-y-1/2"></div>
+                                        <div className="absolute top-0 left-2 w-2 h-full border-l-2 border-primary group-last:h-1/2"></div>
+                                        <div className="absolute top-0 left-2 w-2 h-full border-primary border-b-2 -translate-y-1/2"></div>
                                         <span className="pl-4">{item.title}</span>
                                     </div>
                                     {item.short && (
@@ -71,6 +75,11 @@ export const Sidebar = () => {
                                         </span>
                                     )}
                                 </Link>
+                                {item.href === '/chat/new' && pathname.startsWith('/chat') && (
+                                    <div className="pl-4">
+                                        <WorkshopChatsNav />
+                                    </div>
+                                )}
                             </li>
                         ))}
                     </ul>
