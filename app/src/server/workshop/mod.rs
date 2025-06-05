@@ -13,6 +13,11 @@ use crate::models::workshop::{WorkshopChat, WorkshopMessage};
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct WorkshopApi;
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct WorkshopChatInput {
+    pub message: String,
+}
+
 #[OpenApi]
 impl WorkshopApi {
     /// /ws/chat
@@ -57,11 +62,12 @@ impl WorkshopApi {
     async fn send_message(
         &self,
         state: Data<&AppState>,
+        payload: Json<WorkshopChatInput>,
         #[oai(style = "simple")] chat_id: Path<String>,
         #[oai(style = "simple")] parent_message: Query<Option<Uuid>>,
     ) -> Result<Json<WorkshopMessage>> {
         let user_id = 1;
-        let message = "hello world";
+        let message = payload.message.clone();
 
         let chat_id = if chat_id.eq("new") {
             None
@@ -71,12 +77,12 @@ impl WorkshopApi {
                 poem::Error::from_status(StatusCode::BAD_REQUEST)
             })?)
         };
-        let message = WorkshopMessage::create_user_message(chat_id, *parent_message, user_id, message.to_string(), &state.0).await.map_err(|e| {
+        let message = WorkshopMessage::create_user_message(chat_id, *parent_message, user_id, message.to_string(), &state).await.map_err(|e| {
             tracing::error!("Error sending message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        WorkshopChat::update_last_message(&message.chat_id, &message.message_id, &state.0).await.map_err(|e| {
+        WorkshopChat::update_last_message(&message.chat_id, &message.message_id, &state).await.map_err(|e| {
             tracing::error!("Error updating chat: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;

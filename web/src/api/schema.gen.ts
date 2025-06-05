@@ -506,7 +506,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["WorkshopChatInput"];
+                };
+            };
             responses: {
                 200: {
                     headers: {
@@ -957,6 +961,10 @@ export interface components {
             summary?: string;
             /** Format: uuid */
             last_message_id?: string;
+        };
+        /** WorkshopChatInput */
+        WorkshopChatInput: {
+            message: string;
         };
         /** WorkshopMessage */
         WorkshopMessage: {
