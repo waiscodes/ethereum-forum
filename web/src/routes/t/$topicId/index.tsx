@@ -35,6 +35,7 @@ import {
     useTopicRefresh,
     useTopicSummary,
 } from '@/api/topics';
+import { CategoryTag } from '@/components/CategoryTag';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
@@ -224,18 +225,25 @@ function RouteComponent() {
             <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4 relative">
                 <UpDownScroller />
                 <div>
-                    <h1 className="text-2xl">
-                        <b>{topic?.title}</b>
-                    </h1>
-                    <div className="flex items-center gap-2">
-                        {tags?.map((tag) => (
-                            <div
-                                key={tag}
-                                className="text-sm text-gray-500 bg-primary px-1 border border-primary"
-                            >
-                                {tag}
+                    <div className="flex items-top justify-between gap-2">
+                        <div>
+                            <h1 className="text-2xl">
+                                <b>{topic?.title}</b>
+                            </h1>
+                            <div className="flex items-center gap-2">
+                                {tags?.map((tag) => <CategoryTag key={tag} tag={tag} />)}
                             </div>
-                        ))}
+                        </div>
+                        <div>
+                            <a
+                                href={`https://ethereum-magicians.org/t/${topic?.topic_id}`}
+                                className="button aspect-square flex gap-1 items-center"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <LuMessageCircle />
+                            </a>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
                         <div className="flex items-center gap-1">

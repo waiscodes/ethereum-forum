@@ -37,14 +37,14 @@ export const Sidebar = () => {
                             //     href: '/c/wgs',
                             // },
                             {
-                                title: 'Standards',
-                                href: '/s',
-                                short: 'EIPs & ERCs',
-                            },
-                            {
                                 title: 'Roadmap',
                                 href: '/r',
                                 short: 'Hardforks',
+                            },
+                            {
+                                title: 'Standards',
+                                href: '/s',
+                                short: 'EIPs & ERCs',
                             },
                             {
                                 title: 'Protocol Agenda',

@@ -1,13 +1,15 @@
 import classNames from 'classnames';
 import { FC, useState } from 'react';
 import { LuCalendar } from 'react-icons/lu';
+import { match } from 'ts-pattern';
 
 import { useEventsRecent, useEventsUpcoming } from '@/api/events';
 
 import { Meetings } from './Meetings';
+import { AgendaVideos } from './Videos';
 
 export const AgendaContent: FC = () => {
-    const [tab, setTab] = useState<'upcoming' | 'recent'>('upcoming');
+    const [tab, setTab] = useState<'upcoming' | 'recent' | 'videos'>('upcoming');
     const { data: upcoming } = useEventsUpcoming();
     const { data: recent } = useEventsRecent();
 
@@ -59,12 +61,18 @@ export const AgendaContent: FC = () => {
                 >
                     Recent
                 </button>
+                <button
+                    className={classNames('tab button', tab === 'recent' && 'active')}
+                    onClick={() => setTab('videos')}
+                >
+                    Videos
+                </button>
             </div>
-            {tab === 'upcoming' ? (
-                <Meetings data={upcoming ?? []} key="upcoming" />
-            ) : (
-                <Meetings data={recent ?? []} key="recent" />
-            )}
+            {match(tab)
+                .with('upcoming', () => <Meetings data={upcoming ?? []} key="upcoming" />)
+                .with('recent', () => <Meetings data={recent ?? []} key="recent" />)
+                .with('videos', () => <AgendaVideos />)
+                .exhaustive()}
         </>
     );
 };
