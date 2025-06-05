@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { LuArrowRight } from 'react-icons/lu';
+import { LuArrowRight, LuCopy, LuPencil, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
 import { useWorkshopChatMessages, useWorkshopSendMessage } from '@/api/workshop';
+import { UpDownScroller } from '@/components/UpDown';
+import classNames from 'classnames';
 
 const suggestions = [
     // eslint-disable-next-line quotes
@@ -90,38 +92,80 @@ const Chat = ({ chatId }: { chatId: string }) => {
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-              ? 'Good Afternoon'
-              : 'Good Evening';
+                ? 'Good Afternoon'
+                : 'Good Evening';
 
     return (
         <div className="w-full h-full relative py-1">
-            <div className="w-full absolute inset-0">
-                <div className="relative">
-                    <div className="space-y-2 pb-80">
-                        {messages?.map((message) => (
-                            <div
-                                key={message.message_id}
-                                className="border p-4 border-primary/50 rounded-md"
-                            >
-                                {message.message}
-                            </div>
-                        ))}
-                    </div>
+            <div className="w-full">
+                <div className="relative h-fit">
                     {match(messages?.length)
                         .with(P.number.gt(0), () => (
-                            <div className="w-full fixed max-w-screen-lg bottom-0 inset-x-0 mx-auto">
-                                <InputBox
-                                    input={input}
-                                    setInput={setInput}
-                                    onSend={onMessageSend}
-                                />
-                                <div className="text-center text-sm py-1">
-                                    This is a demo. Check important info.
+                            <>
+                                <UpDownScroller />
+                                <div className="flex w-full justify-end items-center mb-4 text-xs">
+                                    <button className="button flex items-center gap-2">
+                                        <LuShare />
+                                        Share
+                                    </button>
                                 </div>
-                            </div>
+                                <div className="space-y-2 pb-80 relative">
+                                    {messages?.map((message) => (
+                                        <div
+                                            className={classNames(
+                                                'flex flex-col gap-2',
+                                                message.sender_role === 'user' && 'ml-auto w-fit'
+                                            )}
+                                            key={message.message_id}
+                                        >
+                                            {match(message.sender_role)
+                                                .with('user', () => (
+                                                    <div className="text-sm text-primary/50">
+                                                        You
+                                                    </div>
+                                                ))
+                                                .with('assistant', () => (
+                                                    <div className="text-sm text-primary/50">
+                                                        Assistant
+                                                    </div>
+                                                ))
+                                                .otherwise(() => null)}
+
+                                            <div
+                                                key={message.message_id}
+                                                className="border p-4 border-primary/50 rounded-md pr-6"
+                                            >
+                                                {message.message}
+                                            </div>
+                                            {match(message.sender_role)
+                                                .with('user', () => (
+                                                    <div className="text-sm text-primary/50 flex justify-end gap-2">
+                                                        <button className="button gap-2 aspect-square size-8 flex justify-center items-center">
+                                                            <LuCopy />
+                                                        </button>
+                                                        <button className="button flex items-center gap-2">
+                                                            <LuPencil />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                                .otherwise(() => null)}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="w-full fixed max-w-screen-lg bottom-0 inset-x-0 mx-auto">
+                                    <InputBox
+                                        input={input}
+                                        setInput={setInput}
+                                        onSend={onMessageSend}
+                                    />
+                                    <div className="text-center text-sm py-1">
+                                        This is a demo. Check important info.
+                                    </div>
+                                </div>
+                            </>
                         ))
                         .otherwise(() => (
-                            <div className="w-full fixed inset-x-0">
+                            <div className="w-full h-fit pt-8 md:py-64">
                                 <div className="w-full max-w-screen-md mx-auto space-y-4">
                                     <h2 className="text-center text-2xl font-bold">
                                         {greeting}, Ready to research?

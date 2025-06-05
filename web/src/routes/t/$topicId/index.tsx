@@ -409,37 +409,6 @@ const RefreshTopicButton = ({ topicId }: { topicId: string }) => {
     );
 };
 
-const UpDownScroller = () => {
-    return (
-        <div className="items-center gap-2 absolute right-0 top-28 hidden md:flex">
-            <div className="fixed flex flex-col gap-2 items-center translate-x-full ">
-                <button
-                    className="text-sm hover:bg-secondary p-1 group border border-primary rounded-md"
-                    onClick={() => {
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth',
-                        });
-                    }}
-                >
-                    <LuArrowUp />
-                </button>
-                <button
-                    className="text-sm hover:bg-secondary p-1 group border border-primary rounded-md"
-                    onClick={() => {
-                        window.scrollTo({
-                            top: document.body.scrollHeight,
-                            behavior: 'smooth',
-                        });
-                    }}
-                >
-                    <LuArrowDown />
-                </button>
-            </div>
-        </div>
-    );
-};
-
 export const SignalIndicator = ({ date }: { date: Date }) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();

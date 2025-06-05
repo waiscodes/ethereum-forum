@@ -49,6 +49,10 @@ export const useWorkshopSendMessage = <T>(chatId: string, options?: T) => {
 
             queryClient.invalidateQueries({ queryKey: ['workshop', 'chat', chatId] });
 
+            if (parent_message === undefined) {
+                queryClient.invalidateQueries({ queryKey: ['workshop', 'chats'] });
+            }
+
             return response.data;
         },
         ...(options ?? {}),
