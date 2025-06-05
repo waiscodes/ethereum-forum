@@ -29,6 +29,21 @@ export const getWorkshopChat = (chatId: string) =>
 
             return response.data;
         },
+        refetchInterval(query) {
+            const messages = query.state.data?.messages;
+
+            if (Array.isArray(messages) && messages.length > 0) {
+                const lastMessage = messages[messages.length - 1];
+
+                if (
+                    lastMessage?.sender_role === 'assistant' &&
+                    typeof lastMessage.message === 'string' &&
+                    lastMessage.message.length === 0
+                ) {
+                    return 1000;
+                }
+            }
+        },
     });
 
 export const useWorkshopChat = (chatId: string) => useQuery(getWorkshopChat(chatId));

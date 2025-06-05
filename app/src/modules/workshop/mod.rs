@@ -1,3 +1,4 @@
+use async_std::task;
 use figment::providers::Env;
 use openai::{
     chat::{self, ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole}, Credentials
@@ -118,25 +119,35 @@ impl WorkshopService {
             .create_stream()
             .await
             .unwrap();
-
-        let mut data = String::new();
-
-        while let Some(chunk) = chat_completion.recv().await {
-            info!("Chunk: {:?}", chunk);
-            data.push_str(&chunk.choices.first().unwrap().delta.content.clone().unwrap_or_default());
-        }
-
-        info!("Chat completion: {:?}", data);
-
-        let message = WorkshopMessage::create_system_response(&chat_id, Some(message_id), data, state).await.map_err(|e| {
+        
+        // create empty message
+        let message = WorkshopMessage::create_system_response(&chat_id, Some(message_id), "".to_string(), state).await.map_err(|e| {
             tracing::error!("Error creating message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         }).unwrap();
+    
+        let statex = state.clone();
+        
+        task::spawn(async move {
+            let mut data = String::new();
 
-        WorkshopChat::update_last_message(&message.chat_id, &message.message_id, state).await.map_err(|e| {
-            tracing::error!("Error updating chat: {:?}", e);
-            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-        }).unwrap();
+            while let Some(chunk) = chat_completion.recv().await {
+            info!("Chunk: {:?}", chunk);
+                data.push_str(&chunk.choices.first().unwrap().delta.content.clone().unwrap_or_default());
+            }
+
+            info!("Chat completion: {:?}", data);
+
+            WorkshopMessage::update_message_content(&message.message_id, &data, &statex).await.map_err(|e| {
+                tracing::error!("Error updating message: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            }).unwrap();
+
+            WorkshopChat::update_last_message(&message.chat_id, &message.message_id, &statex).await.map_err(|e| {
+                tracing::error!("Error updating chat: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            }).unwrap();    
+        });
 
         Ok(())
     }

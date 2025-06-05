@@ -109,6 +109,15 @@ impl WorkshopMessage {
             .await
     }
 
+    pub async fn update_message_content(message_id: &Uuid, content: &str, state: &AppState) -> Result<Self, sqlx::Error> {
+        query_as!(Self, "UPDATE workshop_messages SET message = $1 WHERE message_id = $2 RETURNING *",
+            content,
+            message_id
+        )
+            .fetch_one(&state.database.pool)
+            .await
+    }
+
     pub async fn get_messages_by_chat_id(
         chat_id: &Uuid,
         state: &AppState,
