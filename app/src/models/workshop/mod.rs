@@ -1,5 +1,6 @@
 use crate::state::AppState;
 use chrono::{DateTime, Utc};
+use openai::chat::{ChatCompletionMessage, ChatCompletionMessageRole};
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
@@ -93,7 +94,7 @@ impl WorkshopMessage {
     }
 
     pub async fn create_system_response(
-        chat_id: Uuid,
+        chat_id: &Uuid,
         parent_message_id: Option<Uuid>,
         message: String,
         state: &AppState,
@@ -109,7 +110,7 @@ impl WorkshopMessage {
     }
 
     pub async fn get_messages_by_chat_id(
-        chat_id: Uuid,
+        chat_id: &Uuid,
         state: &AppState,
     ) -> Result<Vec<Self>, sqlx::Error> {
         query_as!(
@@ -125,7 +126,7 @@ impl WorkshopMessage {
     /// As such only returning the singular branch up until parent_message_id = NULL
     /// Starts querying at chat_id message_id and works its way up to the root message
     pub async fn get_messages_upwards(
-        snapshot: &WorkshopSnapshot,
+        message_id: &Uuid,
         state: &AppState,
     ) -> Result<Vec<Self>, sqlx::Error> {
         query_as(
@@ -135,10 +136,32 @@ impl WorkshopMessage {
             SELECT m.* FROM workshop_messages m
             INNER JOIN message_tree mt ON m.message_id = mt.parent_message_id
         )
-        SELECT * FROM message_tree"#,
+        SELECT * FROM message_tree
+        ORDER BY created_at ASC"#,
         )
-        .bind(snapshot.message_id)
+        .bind(message_id)
         .fetch_all(&state.database.pool)
         .await
+    }
+}
+
+impl Into<ChatCompletionMessage> for WorkshopMessage {
+    fn into(self) -> ChatCompletionMessage {
+        ChatCompletionMessage {
+            role: match self.sender_role.as_str() {
+                "user" => ChatCompletionMessageRole::User,
+                "assistant" => ChatCompletionMessageRole::Assistant,
+                "system" => ChatCompletionMessageRole::System,
+                "tool" => ChatCompletionMessageRole::Tool,
+                "function" => ChatCompletionMessageRole::Function,
+                "developer" => ChatCompletionMessageRole::Developer,
+                _ => ChatCompletionMessageRole::User,
+            },
+            content: Some(self.message),
+            name: None,
+            function_call: None,
+            tool_call_id: None,
+            tool_calls: None,
+        }
     }
 }

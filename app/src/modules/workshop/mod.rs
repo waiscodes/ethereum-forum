@@ -1,13 +1,18 @@
-use figment::{providers::Env};
+use figment::providers::Env;
 use openai::{
-    Credentials,
-    chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
+    chat::{self, ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole}, Credentials
 };
 use opentelemetry_http::HttpError;
+use reqwest::StatusCode;
 use serde_json::json;
+use tracing::info;
+use uuid::Uuid;
 
 use crate::{
-    models::topics::{Post, Topic},
+    models::{
+        topics::{Post, Topic},
+        workshop::{WorkshopChat, WorkshopMessage},
+    },
     state::AppState,
 };
 
@@ -32,14 +37,17 @@ impl Default for WorkshopPrompts {
                 function_call: None,
                 tool_call_id: None,
                 tool_calls: None,
-            }
+            },
         }
     }
 }
 
 impl WorkshopService {
     pub async fn init() -> Self {
-        let base_url = Env::var_or("WORKSHOP_INTELLIGENCE_BASE_URL", "https://openrouter.ai/api/v1");
+        let base_url = Env::var_or(
+            "WORKSHOP_INTELLIGENCE_BASE_URL",
+            "https://openrouter.ai/api/v1",
+        );
 
         let credentials = Credentials::new(
             Env::var("WORKSHOP_INTELLIGENCE_KEY").expect("WORKSHOP_INTELLIGENCE_KEY not set"),
@@ -85,5 +93,51 @@ impl WorkshopService {
         let response = chat_completion.choices.first().unwrap().message.clone();
 
         Ok(response.content.unwrap_or_default())
+    }
+
+    /// Process next message
+    ///
+    /// Fetches the entire chat history from chat_id upwards and processes it with the LLM
+    /// Returns the next message from the LLM
+    pub async fn process_next_message(
+        chat_id: Uuid,
+        message_id: Uuid,
+        state: &AppState,
+    ) -> Result<(), sqlx::Error> {
+        let messages: Vec<ChatCompletionMessage> =
+            WorkshopMessage::get_messages_upwards(&message_id, state)
+                .await?
+                .into_iter()
+                .map(|m| m.into())
+                .collect();
+
+        info!("Messages: {:?}", messages);
+
+        let mut chat_completion = ChatCompletion::builder("deepseek/deepseek-r1-0528-qwen3-8b:free", messages.clone())
+            .credentials(state.workshop.credentials.clone())
+            .create_stream()
+            .await
+            .unwrap();
+
+        let mut data = String::new();
+
+        while let Some(chunk) = chat_completion.recv().await {
+            info!("Chunk: {:?}", chunk);
+            data.push_str(&chunk.choices.first().unwrap().delta.content.clone().unwrap_or_default());
+        }
+
+        info!("Chat completion: {:?}", data);
+
+        let message = WorkshopMessage::create_system_response(&chat_id, Some(message_id), data, state).await.map_err(|e| {
+            tracing::error!("Error creating message: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        }).unwrap();
+
+        WorkshopChat::update_last_message(&message.chat_id, &message.message_id, state).await.map_err(|e| {
+            tracing::error!("Error updating chat: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        }).unwrap();
+
+        Ok(())
     }
 }

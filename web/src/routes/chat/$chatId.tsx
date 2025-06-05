@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { LuArrowRight, LuShare } from 'react-icons/lu';
+import { LuArrowRight, LuLoader, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
 import { getWorkshopChat, useWorkshopChat, useWorkshopSendMessage } from '@/api/workshop';
@@ -89,7 +89,7 @@ const Chat = ({ chatId }: { chatId: string }) => {
     const { data: chat } = useWorkshopChat(chatId);
     const [input, setInput] = useState('');
     const lastChatMessage = chat?.messages?.[chat?.messages.length - 1];
-    const { mutate: sendMessage } = useWorkshopSendMessage(chatId);
+    const { mutate: sendMessage, isPending: sending } = useWorkshopSendMessage(chatId);
     const navigate = useNavigate();
     const onMessageSend = (message: string) => {
         sendMessage(
@@ -142,6 +142,7 @@ const Chat = ({ chatId }: { chatId: string }) => {
                                         input={input}
                                         setInput={setInput}
                                         onSend={onMessageSend}
+                                        sending={sending}
                                     />
                                     <div className="text-center text-sm py-1">
                                         This is a demo. Check important info.
@@ -173,6 +174,7 @@ const Chat = ({ chatId }: { chatId: string }) => {
                                             input={input}
                                             setInput={setInput}
                                             onSend={onMessageSend}
+                                            sending={sending}
                                         />
                                     </div>
                                 </div>
@@ -188,10 +190,12 @@ const InputBox = ({
     input,
     setInput,
     onSend,
+    sending,
 }: {
     input: string;
     setInput: (input: string) => void;
     onSend: (input: string) => void;
+    sending: boolean;
 }) => {
     return (
         <div className="w-full relative">
@@ -211,8 +215,9 @@ const InputBox = ({
             <button
                 className="button button-primary absolute right-3 bottom-4 aspect-square size-8 flex items-center justify-center"
                 onClick={() => onSend(input)}
+                disabled={sending}
             >
-                <LuArrowRight />
+                {sending ? <LuLoader className="animate-spin" /> : <LuArrowRight />}
             </button>
         </div>
     );

@@ -298,8 +298,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                            ? 'Load More'
-                                            : 'No more posts'}
+                                          ? 'Load More'
+                                          : 'No more posts'}
                                 </button>
                             </div>
                         </>
@@ -349,7 +349,7 @@ const Summary = ({ topicId }: { topicId: number }) => {
                     className="button"
                     onClick={() =>
                         createChatFromSummary(
-                            { topicId: topicId.toString() },
+                            { topicId },
                             {
                                 onSuccess: (data) =>
                                     navigate({

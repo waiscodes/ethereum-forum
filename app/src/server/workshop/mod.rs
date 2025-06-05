@@ -7,6 +7,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use crate::models::topics::Topic;
+use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
 use crate::server::ApiTags;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
@@ -52,7 +53,7 @@ impl WorkshopApi {
                 poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
             })?;
 
-        let message2 = WorkshopMessage::create_system_response(message.chat_id, None, summary.summary_text, &state).await.map_err(|e| {
+        let message2 = WorkshopMessage::create_system_response(&message.chat_id, None, summary.summary_text, &state).await.map_err(|e| {
             tracing::error!("Error creating message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
@@ -86,7 +87,7 @@ impl WorkshopApi {
         state: Data<&AppState>,
         #[oai(style = "simple")] chat_id: Path<Uuid>,
     ) -> Result<Json<WorkshopChatPayload>> {
-        let messages = WorkshopMessage::get_messages_by_chat_id(*chat_id, &state).await.map_err(|e| {
+        let messages = WorkshopMessage::get_messages_by_chat_id(&chat_id, &state).await.map_err(|e| {
             tracing::error!("Error finding messages: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
@@ -133,6 +134,11 @@ impl WorkshopApi {
 
         WorkshopChat::update_last_message(&message.chat_id, &message.message_id, &state).await.map_err(|e| {
             tracing::error!("Error updating chat: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        WorkshopService::process_next_message(message.chat_id, message.message_id, &state).await.map_err(|e| {
+            tracing::error!("Error processing next message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 

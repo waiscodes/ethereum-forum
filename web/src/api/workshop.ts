@@ -63,7 +63,7 @@ export const useWorkshopSendMessage = <T>(chatId: string, options?: T) => {
 
 export const useWorkshopCreateChatFromSummary = <K>(options?: K) => {
     return useMutation({
-        mutationFn: async ({ topicId }: { topicId: string }) => {
+        mutationFn: async ({ topicId }: { topicId: number }) => {
             const response = await useApi('/ws/t/{topic_id}/summary/to-chat', 'post', {
                 path: { topic_id: topicId },
             });
