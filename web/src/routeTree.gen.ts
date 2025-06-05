@@ -16,6 +16,7 @@ import { Route as SIndexImport } from './routes/s/index'
 import { Route as RIndexImport } from './routes/r/index'
 import { Route as CIndexImport } from './routes/c/index'
 import { Route as ChatChatIdImport } from './routes/chat/$chatId'
+import { Route as UUserIdIndexImport } from './routes/u/$userId/index'
 import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index'
 import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
 
@@ -48,6 +49,12 @@ const CIndexRoute = CIndexImport.update({
 const ChatChatIdRoute = ChatChatIdImport.update({
   id: '/chat/$chatId',
   path: '/chat/$chatId',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UUserIdIndexRoute = UUserIdIndexImport.update({
+  id: '/u/$userId/',
+  path: '/u/$userId/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -116,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTopicIdIndexImport
       parentRoute: typeof rootRoute
     }
+    '/u/$userId/': {
+      id: '/u/$userId/'
+      path: '/u/$userId'
+      fullPath: '/u/$userId'
+      preLoaderRoute: typeof UUserIdIndexImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -129,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/s': typeof SIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
+  '/u/$userId': typeof UUserIdIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/s': typeof SIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
   '/t/$topicId': typeof TTopicIdIndexRoute
+  '/u/$userId': typeof UUserIdIndexRoute
 }
 
 export interface FileRoutesById {
@@ -150,6 +166,7 @@ export interface FileRoutesById {
   '/s/': typeof SIndexRoute
   '/pm/$issueId/': typeof PmIssueIdIndexRoute
   '/t/$topicId/': typeof TTopicIdIndexRoute
+  '/u/$userId/': typeof UUserIdIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -162,6 +179,7 @@ export interface FileRouteTypes {
     | '/s'
     | '/pm/$issueId'
     | '/t/$topicId'
+    | '/u/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,6 +189,7 @@ export interface FileRouteTypes {
     | '/s'
     | '/pm/$issueId'
     | '/t/$topicId'
+    | '/u/$userId'
   id:
     | '__root__'
     | '/'
@@ -180,6 +199,7 @@ export interface FileRouteTypes {
     | '/s/'
     | '/pm/$issueId/'
     | '/t/$topicId/'
+    | '/u/$userId/'
   fileRoutesById: FileRoutesById
 }
 
@@ -191,6 +211,7 @@ export interface RootRouteChildren {
   SIndexRoute: typeof SIndexRoute
   PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
   TTopicIdIndexRoute: typeof TTopicIdIndexRoute
+  UUserIdIndexRoute: typeof UUserIdIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -201,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   SIndexRoute: SIndexRoute,
   PmIssueIdIndexRoute: PmIssueIdIndexRoute,
   TTopicIdIndexRoute: TTopicIdIndexRoute,
+  UUserIdIndexRoute: UUserIdIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -219,7 +241,8 @@ export const routeTree = rootRoute
         "/r/",
         "/s/",
         "/pm/$issueId/",
-        "/t/$topicId/"
+        "/t/$topicId/",
+        "/u/$userId/"
       ]
     },
     "/": {
@@ -242,6 +265,9 @@ export const routeTree = rootRoute
     },
     "/t/$topicId/": {
       "filePath": "t/$topicId/index.tsx"
+    },
+    "/u/$userId/": {
+      "filePath": "u/$userId/index.tsx"
     }
   }
 }
