@@ -155,7 +155,7 @@ body {
 }
 
 .button-primary {
-    @apply bg-[#70844E] text-primary hover:bg-[#536335] hover:text-primary;
+    @apply bg-secondary text-primary hover:bg-primary hover:text-secondary;
 }
 
 input.input {

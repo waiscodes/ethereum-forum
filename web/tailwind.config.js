@@ -19,6 +19,11 @@ export default {
                 secondary:
                     'rgb(var(--theme-border-secondary) / <alpha-value>) /* rgb(238, 232, 213) */',
             },
+            ringColor: {
+                primary: 'rgb(var(--theme-border) / <alpha-value>) /* rgb(101, 123, 131) */',
+                secondary:
+                    'rgb(var(--theme-border-secondary) / <alpha-value>) /* rgb(238, 232, 213) */',
+            },
             outlineColor: {
                 primary: 'rgb(var(--theme-border) / <alpha-value>) /* rgb(101, 123, 131) */',
                 secondary:

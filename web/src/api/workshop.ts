@@ -13,3 +13,18 @@ export const getWorkshopChats = () =>
     });
 
 export const useWorkshopChats = () => useQuery(getWorkshopChats());
+
+export const getWorkshopChatMessages = (chatId: string) =>
+    queryOptions({
+        queryKey: ['workshop', 'chat', chatId],
+        queryFn: async () => {
+            const response = await useApi('/ws/chat/{chat_id}', 'get', {
+                path: { chat_id: chatId },
+            });
+
+            return response.data;
+        },
+    });
+
+export const useWorkshopChatMessages = (chatId: string) =>
+    useQuery(getWorkshopChatMessages(chatId));

@@ -1,4 +1,4 @@
-import { Link, useMatchRoute, useRouter, useRouterState } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { GrWorkshop } from 'react-icons/gr';
 import { SiOpenai } from 'react-icons/si';
 
@@ -88,13 +88,14 @@ export const Sidebar = () => {
                     <div className="flex items-center justify-between gap-1">
                         <span className="text-sm">Explore</span>
                         <div className="flex items-center gap-1">
-                            <a
-                                href="/chat/new"
+                            <Link
+                                to="/chat/$chatId"
+                                params={{ chatId: 'new' }}
                                 className="text-sm button flex items-center justify-center gap-1"
                             >
                                 <GrWorkshop />
                                 Open Workshop
-                            </a>
+                            </Link>
                             <a
                                 href="https://chatgpt.com/g/g-68104906afb88191ae3f52c2aff36737-ethereum-forum-assistant"
                                 target="_blank"
