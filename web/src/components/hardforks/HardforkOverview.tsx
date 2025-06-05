@@ -5,6 +5,7 @@ type Hardfork = {
     color?: string;
     date?: string;
     description?: string;
+    eips?: Record<number, string>;
 };
 
 const consensusLayer: Hardfork[] = [
@@ -55,14 +56,45 @@ const postMerge: Hardfork[] = [
     {
         name: 'Shapella (Capella / Shanghai)',
         date: '2023-04-12',
+        eips: {
+            3651: 'Warm COINBASE',
+            3855: 'PUSH0',
+            3860: 'Limit initcode',
+            4895: 'Withdrawals',
+            6049: 'Warn SELFDESTRUCT',
+        },
     },
     {
         name: 'Dencun (Deneb / Cancun)',
         date: '2024-03-13',
+        eips: {
+            1153: 'Transient Storage',
+            4788: 'Beacon Root EVM',
+            4844: 'Proto-Danksharding',
+            5656: 'MCOPY',
+            6780: 'Fix SELFDESTRUCT',
+            7044: 'Perp Valid Exits',
+            7045: 'Increase Att Incl Slot',
+            7514: 'Cap Churn Limit',
+            7516: 'BLOBBASEFEE',
+        },
     },
     {
         name: 'Pectra (Electra / Prague)',
         date: '2025-05-07',
+        eips: {
+            2537: 'Precompile for BLS12-381 curve operations',
+            2935: 'Save historical block hashes in state',
+            6110: 'Supply validator deposits on chain',
+            7002: 'Execution layer triggerable exits',
+            7251: 'Increase the MAX_EFFECTIVE_BALANCE',
+            7549: 'Move committee index outside Attestation',
+            7623: 'Increase calldata cost',
+            7685: 'General purpose execution layer requests',
+            7691: 'Blob throughput increase',
+            7702: 'Set EOA account code',
+            7840: 'Add blob schedule to EL config files',
+        },
     },
 ];
 
@@ -70,10 +102,21 @@ const future: Hardfork[] = [
     {
         name: 'Fusaka (Fulu / Osaka)',
         date: 'Q3 2025 - Q1 2026',
+        eips: {
+            7594: 'PeerDAS',
+            7692: 'EOF',
+        },
     },
     {
         name: 'Glamsterdam (Gloas / Amsterdam)',
         date: '2026',
+        eips: {
+            4762: 'Stateless Gas Cost',
+            6800: 'State Verkle Tree',
+            6873: 'Preimage Retention',
+            7545: 'Verkle Precompile',
+            7667: 'Increase Hash Fn Cost',
+        },
     },
 ];
 
@@ -240,6 +283,14 @@ export const HardforkOverview = () => {
                         </div>
                         <div>{hardfork.date}</div>
                         <div>{hardfork.description}</div>
+                        <ul>
+                            {Object.entries(hardfork.eips ?? {}).map(([eip, description]) => (
+                                <li key={eip} className="">
+                                    <span className="font-bold">EIP-{eip}</span>:{' '}
+                                    <span>{description}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 ))}
             </div>
@@ -252,9 +303,20 @@ export const HardforkOverview = () => {
                         </div>
                         <div>{hardfork.date}</div>
                         <div>{hardfork.description}</div>
+                        <ul>
+                            {Object.entries(hardfork.eips ?? {}).map(([eip, description]) => (
+                                <li key={eip} className="">
+                                    <span className="font-bold">EIP-{eip}</span>:{' '}
+                                    <span>{description}</span>
+                                </li>
+                            ))}
+                            <li>
+                                <span className="font-bold">...</span>
+                            </li>
+                        </ul>
                     </div>
                 ))}
-            </div>
+            </div >
         </>
     );
 };
