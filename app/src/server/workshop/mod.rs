@@ -18,6 +18,13 @@ pub struct WorkshopChatInput {
     pub message: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct WorkshopChatPayload {
+    pub chat_id: Uuid,
+    pub chat: WorkshopChat,
+    pub messages: Vec<WorkshopMessage>,
+}
+
 #[OpenApi]
 impl WorkshopApi {
     /// /ws/chat
@@ -45,13 +52,22 @@ impl WorkshopApi {
         &self,
         state: Data<&AppState>,
         #[oai(style = "simple")] chat_id: Path<Uuid>,
-    ) -> Result<Json<Vec<WorkshopMessage>>> {
-        let messages = WorkshopMessage::get_messages_by_chat_id(*chat_id, &state.0).await.map_err(|e| {
+    ) -> Result<Json<WorkshopChatPayload>> {
+        let messages = WorkshopMessage::get_messages_by_chat_id(*chat_id, &state).await.map_err(|e| {
             tracing::error!("Error finding messages: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        Ok(Json(messages))
+        let chat = WorkshopChat::find_by_id(*chat_id, &state).await.map_err(|e| {
+            tracing::error!("Error finding chat: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(WorkshopChatPayload {
+            chat_id: *chat_id,
+            chat,
+            messages,
+        }))
     }
 
     /// /ws/chat/:chat_id

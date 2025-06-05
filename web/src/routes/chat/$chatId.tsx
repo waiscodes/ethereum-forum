@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
+import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { LuArrowRight, LuCopy, LuPencil, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
-import { useWorkshopChatMessages, useWorkshopSendMessage } from '@/api/workshop';
+import { getWorkshopChat, useWorkshopChat, useWorkshopSendMessage } from '@/api/workshop';
 import { UpDownScroller } from '@/components/UpDown';
-import classNames from 'classnames';
+import { queryClient } from '@/util/query';
 
 const suggestions = [
     // eslint-disable-next-line quotes
@@ -14,11 +15,28 @@ const suggestions = [
     'What is currently being talked about?',
 ];
 
+const isUuid = (value: string) => {
+    return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        value
+    );
+};
+
 export const Route = createFileRoute('/chat/$chatId')({
     component: RouteComponent,
     context: () => ({
         title: 'Workshop',
     }),
+    async beforeLoad(ctx) {
+        const { chatId } = ctx.params;
+
+        if (chatId !== 'new' && isUuid(chatId)) {
+            const chat = await queryClient.ensureQueryData(getWorkshopChat(chatId));
+
+            return { title: chat?.chat?.summary ?? 'Untitled conversation' };
+        }
+
+        return { title: 'New chat' };
+    },
 });
 
 function RouteComponent() {
@@ -68,9 +86,9 @@ const Placeholder = () => {
 };
 
 const Chat = ({ chatId }: { chatId: string }) => {
-    const { data: messages } = useWorkshopChatMessages(chatId);
+    const { data: chat } = useWorkshopChat(chatId);
     const [input, setInput] = useState('');
-    const lastChatMessage = messages?.[messages.length - 1];
+    const lastChatMessage = chat?.messages?.[chat?.messages.length - 1];
     const { mutate: sendMessage } = useWorkshopSendMessage(chatId);
     const navigate = useNavigate();
     const onMessageSend = (message: string) => {
@@ -99,18 +117,23 @@ const Chat = ({ chatId }: { chatId: string }) => {
         <div className="w-full h-full relative py-1">
             <div className="w-full">
                 <div className="relative h-fit">
-                    {match(messages?.length)
+                    {match(chat?.messages?.length)
                         .with(P.number.gt(0), () => (
                             <>
                                 <UpDownScroller />
-                                <div className="flex w-full justify-end items-center mb-4 text-xs">
-                                    <button className="button flex items-center gap-2">
-                                        <LuShare />
-                                        Share
-                                    </button>
+                                <div className="flex w-full justify-between items-center mb-4">
+                                    <div>
+                                        <h1 className="text-base">Untitled conversation</h1>
+                                    </div>
+                                    <div className="text-xs flex items-center gap-2">
+                                        <button className="button flex items-center gap-2">
+                                            <LuShare />
+                                            Share
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2 pb-80 relative">
-                                    {messages?.map((message) => (
+                                    {chat?.messages?.map((message) => (
                                         <div
                                             className={classNames(
                                                 'flex flex-col gap-2',

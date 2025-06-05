@@ -43,6 +43,13 @@ impl WorkshopChat {
             .await
     }
 
+    pub async fn find_by_id(chat_id: Uuid, state: &AppState) -> Result<Self, sqlx::Error> {
+        query_as("SELECT * FROM workshop_chats WHERE chat_id = $1")
+            .bind(chat_id)
+            .fetch_one(&state.database.pool)
+            .await
+    }
+
     pub async fn create(user_id: i32, state: &AppState) -> Result<Self, sqlx::Error> {
         query_as("INSERT INTO workshop_chats (user_id) VALUES ($1) RETURNING *")
             .bind(user_id)

@@ -16,7 +16,7 @@ export const getWorkshopChats = () =>
 
 export const useWorkshopChats = () => useQuery(getWorkshopChats());
 
-export const getWorkshopChatMessages = (chatId: string) =>
+export const getWorkshopChat = (chatId: string) =>
     queryOptions({
         queryKey: ['workshop', 'chat', chatId],
         queryFn: async () => {
@@ -28,8 +28,7 @@ export const getWorkshopChatMessages = (chatId: string) =>
         },
     });
 
-export const useWorkshopChatMessages = (chatId: string) =>
-    useQuery(getWorkshopChatMessages(chatId));
+export const useWorkshopChat = (chatId: string) => useQuery(getWorkshopChat(chatId));
 
 export const useWorkshopSendMessage = <T>(chatId: string, options?: T) => {
     return useMutation({

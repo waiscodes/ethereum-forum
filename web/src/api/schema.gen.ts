@@ -484,7 +484,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": components["schemas"]["WorkshopMessage"][];
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopChatPayload"];
                     };
                 };
             };
@@ -965,6 +965,13 @@ export interface components {
         /** WorkshopChatInput */
         WorkshopChatInput: {
             message: string;
+        };
+        /** WorkshopChatPayload */
+        WorkshopChatPayload: {
+            /** Format: uuid */
+            chat_id: string;
+            chat: components["schemas"]["WorkshopChat"];
+            messages: components["schemas"]["WorkshopMessage"][];
         };
         /** WorkshopMessage */
         WorkshopMessage: {

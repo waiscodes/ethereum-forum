@@ -6,8 +6,6 @@ import { useEffect } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 import {
-    LuArrowDown,
-    LuArrowUp,
     LuGithub,
     LuLink,
     LuMessageCircle,
@@ -27,6 +25,7 @@ import { PiReceipt } from 'react-icons/pi';
 import { SiEthereum, SiOpenai, SiReddit } from 'react-icons/si';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { toast } from 'sonner';
 
 import {
     getTopic,
@@ -39,11 +38,11 @@ import { CategoryTag } from '@/components/CategoryTag';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
+import { UpDownScroller } from '@/components/UpDown';
 import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 import { queryClient } from '@/util/query';
-import { toast } from 'sonner';
 
 interface DiscourseUser {
     id: number;
@@ -298,8 +297,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                            ? 'Load More'
-                                            : 'No more posts'}
+                                          ? 'Load More'
+                                          : 'No more posts'}
                                 </button>
                             </div>
                         </>
