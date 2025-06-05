@@ -92,6 +92,22 @@ impl WorkshopMessage {
             .await
     }
 
+    pub async fn create_system_response(
+        chat_id: Uuid,
+        parent_message_id: Option<Uuid>,
+        message: String,
+        state: &AppState,
+    ) -> Result<Self, sqlx::Error> {
+        query_as!(Self, "INSERT INTO workshop_messages (chat_id, sender_role, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING *",
+            chat_id,
+            "assistant",
+            message,
+            parent_message_id
+        )
+            .fetch_one(&state.database.pool)
+            .await
+    }
+
     pub async fn get_messages_by_chat_id(
         chat_id: Uuid,
         state: &AppState,

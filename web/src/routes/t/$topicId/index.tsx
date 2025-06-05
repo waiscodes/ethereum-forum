@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { parseISO } from 'date-fns';
 import { useEffect } from 'react';
@@ -34,6 +34,7 @@ import {
     useTopicRefresh,
     useTopicSummary,
 } from '@/api/topics';
+import { useWorkshopCreateChatFromSummary } from '@/api/workshop';
 import { CategoryTag } from '@/components/CategoryTag';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
@@ -297,8 +298,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                          ? 'Load More'
-                                          : 'No more posts'}
+                                            ? 'Load More'
+                                            : 'No more posts'}
                                 </button>
                             </div>
                         </>
@@ -311,6 +312,8 @@ function RouteComponent() {
 
 const Summary = ({ topicId }: { topicId: number }) => {
     const { data: summary, isPending } = useTopicSummary(topicId);
+    const { mutate: createChatFromSummary } = useWorkshopCreateChatFromSummary();
+    const navigate = useNavigate();
 
     if (isPending) {
         return (
@@ -342,7 +345,24 @@ const Summary = ({ topicId }: { topicId: number }) => {
                 <Dialog.Close>
                     <button className="button">Close</button>
                 </Dialog.Close>
-                <button className="button">Open in chat</button>
+                <button
+                    className="button"
+                    onClick={() =>
+                        createChatFromSummary(
+                            { topicId: topicId.toString() },
+                            {
+                                onSuccess: (data) =>
+                                    navigate({
+                                        to: '/chat/$chatId',
+                                        params: { chatId: data.chat_id },
+                                        hash: data.message_id,
+                                    }),
+                            }
+                        )
+                    }
+                >
+                    Open in chat
+                </button>
             </div>
         </>
     );

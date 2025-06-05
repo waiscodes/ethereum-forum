@@ -419,6 +419,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/t/{topic_id}/summary/to-chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * /ws/t/:topic_id/summary/to-chat
+         * @description Create a new chat from a topic summary
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    topic_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopMessage"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ws/chat": {
         parameters: {
             query?: never;

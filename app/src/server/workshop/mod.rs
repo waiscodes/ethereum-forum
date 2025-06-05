@@ -6,6 +6,7 @@ use poem_openapi::{Object, OpenApi};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::models::topics::Topic;
 use crate::state::AppState;
 use crate::server::ApiTags;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
@@ -27,6 +28,38 @@ pub struct WorkshopChatPayload {
 
 #[OpenApi]
 impl WorkshopApi {
+    /// /ws/t/:topic_id/summary/to-chat
+    ///
+    /// Create a new chat from a topic summary
+    #[oai(path = "/ws/t/:topic_id/summary/to-chat", method = "post", tag = "ApiTags::Workshop")]
+    async fn create_chat_from_summary(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] topic_id: Path<i32>,
+    ) -> Result<Json<WorkshopMessage>> {
+        let user_id = 1;
+        let user_prompt = format!("Summarize ethereum.forum topic #{}", topic_id.0);
+
+        let message = WorkshopMessage::create_user_message(None, None, user_id, user_prompt, &state).await.map_err(|e| {
+            tracing::error!("Error creating message: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        let summary = Topic::get_summary_by_topic_id(topic_id.0, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting topic summary: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        let message2 = WorkshopMessage::create_system_response(message.chat_id, None, summary.summary_text, &state).await.map_err(|e| {
+            tracing::error!("Error creating message: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        Ok(Json(message2))
+    }
+
     /// /ws/chat
     ///
     /// Get all chats

@@ -139,12 +139,8 @@ export const ProtocolAgendaUpcoming = () => {
                     return (
                         <li key={event.uid}>
                             <Link
-                                to={issueId ? '/pm/$issueId' : '/c/$channelId'}
-                                params={
-                                    issueId
-                                        ? { issueId: issueId.toString() }
-                                        : { channelId: 'agenda' }
-                                }
+                                to={issueId ? '/pm/$issueId' : '/c'}
+                                params={issueId ? { issueId: issueId.toString() } : {}}
                                 className="flex justify-between hover:bg-secondary px-1.5 gap-3"
                             >
                                 <div className="flex items-center gap-1 truncate text-base">

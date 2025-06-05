@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
-import classNames from 'classnames';
 import { useEffect, useState } from 'react';
-import { LuArrowRight, LuCopy, LuPencil, LuShare } from 'react-icons/lu';
+import { LuArrowRight, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
 import { getWorkshopChat, useWorkshopChat, useWorkshopSendMessage } from '@/api/workshop';
 import { UpDownScroller } from '@/components/UpDown';
+import { ChatMessage } from '@/components/workshop/ChatMessage';
 import { queryClient } from '@/util/query';
 
 const suggestions = [
@@ -110,8 +110,8 @@ const Chat = ({ chatId }: { chatId: string }) => {
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-                ? 'Good Afternoon'
-                : 'Good Evening';
+              ? 'Good Afternoon'
+              : 'Good Evening';
 
     return (
         <div className="w-full h-full relative py-1">
@@ -134,45 +134,7 @@ const Chat = ({ chatId }: { chatId: string }) => {
                                 </div>
                                 <div className="space-y-2 pb-80 relative">
                                     {chat?.messages?.map((message) => (
-                                        <div
-                                            className={classNames(
-                                                'flex flex-col gap-2',
-                                                message.sender_role === 'user' && 'ml-auto w-fit'
-                                            )}
-                                            key={message.message_id}
-                                        >
-                                            {match(message.sender_role)
-                                                .with('user', () => (
-                                                    <div className="text-sm text-primary/50">
-                                                        You
-                                                    </div>
-                                                ))
-                                                .with('assistant', () => (
-                                                    <div className="text-sm text-primary/50">
-                                                        Assistant
-                                                    </div>
-                                                ))
-                                                .otherwise(() => null)}
-
-                                            <div
-                                                key={message.message_id}
-                                                className="border p-4 border-primary/50 rounded-md pr-6"
-                                            >
-                                                {message.message}
-                                            </div>
-                                            {match(message.sender_role)
-                                                .with('user', () => (
-                                                    <div className="text-sm text-primary/50 flex justify-end gap-2">
-                                                        <button className="button gap-2 aspect-square size-8 flex justify-center items-center">
-                                                            <LuCopy />
-                                                        </button>
-                                                        <button className="button flex items-center gap-2">
-                                                            <LuPencil />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                                .otherwise(() => null)}
-                                        </div>
+                                        <ChatMessage key={message.message_id} message={message} />
                                     ))}
                                 </div>
                                 <div className="w-full fixed max-w-screen-lg bottom-0 inset-x-0 mx-auto">

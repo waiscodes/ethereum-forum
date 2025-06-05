@@ -3,6 +3,9 @@ import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/util/query';
 
 import { useApi } from './api';
+import { components } from './schema.gen';
+
+export type WorkshopMessage = components['schemas']['WorkshopMessage'];
 
 export const getWorkshopChats = () =>
     queryOptions({
@@ -51,6 +54,24 @@ export const useWorkshopSendMessage = <T>(chatId: string, options?: T) => {
             if (parent_message === undefined) {
                 queryClient.invalidateQueries({ queryKey: ['workshop', 'chats'] });
             }
+
+            return response.data;
+        },
+        ...(options ?? {}),
+    });
+};
+
+export const useWorkshopCreateChatFromSummary = <K>(options?: K) => {
+    return useMutation({
+        mutationFn: async ({ topicId }: { topicId: string }) => {
+            const response = await useApi('/ws/t/{topic_id}/summary/to-chat', 'post', {
+                path: { topic_id: topicId },
+            });
+
+            queryClient.invalidateQueries({ queryKey: ['workshop', 'chats'] });
+            queryClient.invalidateQueries({
+                queryKey: ['workshop', 'chat', response.data.chat_id],
+            });
 
             return response.data;
         },
