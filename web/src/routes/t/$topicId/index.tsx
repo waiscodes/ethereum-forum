@@ -43,6 +43,7 @@ import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 import { queryClient } from '@/util/query';
+import { toast } from 'sonner';
 
 interface DiscourseUser {
     id: number;
@@ -234,7 +235,7 @@ function RouteComponent() {
                                 {tags?.map((tag) => <CategoryTag key={tag} tag={tag} />)}
                             </div>
                         </div>
-                        <div>
+                        <div className="flex items-center gap-2">
                             <a
                                 href={`https://ethereum-magicians.org/t/${topic?.topic_id}`}
                                 className="button aspect-square flex gap-1 items-center"
@@ -242,6 +243,20 @@ function RouteComponent() {
                                 rel="noreferrer"
                             >
                                 <LuMessageCircle />
+                            </a>
+                            <a
+                                href={`/t/${topic?.topic_id}`}
+                                className="button aspect-square flex gap-1 items-center"
+                                rel="noreferrer"
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    navigator.clipboard.writeText(
+                                        `https://ethereum.forum/t/${topic?.topic_id}`
+                                    );
+                                    toast.success('Link copied to clipboard');
+                                }}
+                            >
+                                <LuLink />
                             </a>
                         </div>
                     </div>
@@ -283,8 +298,8 @@ function RouteComponent() {
                                     {isFetchingNextPage
                                         ? 'Loading more...'
                                         : hasNextPage
-                                          ? 'Load More'
-                                          : 'No more posts'}
+                                            ? 'Load More'
+                                            : 'No more posts'}
                                 </button>
                             </div>
                         </>

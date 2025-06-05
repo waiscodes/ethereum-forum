@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { HardforkOverview } from '@/components/hardforks/HardforkOverview';
+
 export const Route = createFileRoute('/r/')({
     component: RouteComponent,
     context: () => ({
@@ -13,6 +15,7 @@ function RouteComponent() {
             <h1 className="">
                 roadmap/<b>hardforks</b>
             </h1>
+            <HardforkOverview />
             <div className="card w-full">
                 <div>This page is under construction</div>
             </div>
