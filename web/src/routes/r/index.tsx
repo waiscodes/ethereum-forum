@@ -16,9 +16,6 @@ function RouteComponent() {
                 roadmap/<b>hardforks</b>
             </h1>
             <HardforkOverview />
-            <div className="card w-full">
-                <div>This page is under construction</div>
-            </div>
         </div>
     );
 }
