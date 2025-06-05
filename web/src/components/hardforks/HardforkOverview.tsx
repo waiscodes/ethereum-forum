@@ -2,6 +2,7 @@ import { Tooltip } from '../tooltip/Tooltip';
 
 type Hardfork = {
     name: string;
+    color?: string;
     date?: string;
     description?: string;
 };
@@ -47,8 +48,9 @@ const execLayer: Hardfork[] = [
 
 const postMerge: Hardfork[] = [
     {
-        name: 'Merge (Bellatrix / Paris)',
+        name: 'The Merge (Bellatrix / Paris)',
         date: '2022-09-15',
+        color: '#0496AD',
     },
     {
         name: 'Shapella (Capella / Shanghai)',
@@ -79,10 +81,10 @@ export const HardforkOverview = () => {
     return (
         <>
             <h2 className="font-bold border-b border-primary">Hardfork Overview</h2>
-            <div className="card overflow-x-auto">
+            <div className="card overflow-x-auto flex justify-center items-center">
                 <div className="px-4 w-fit">
                     <div className="flex items-center h-full justify-center w-full">
-                        <div className="w-fit space-y-3.5 py-[18px]">
+                        <div className="w-fit space-y-3.5 h-full">
                             <div className="flex justify-end">
                                 {consensusLayer.map((hardfork) => (
                                     <div
@@ -116,10 +118,10 @@ export const HardforkOverview = () => {
                                 ))}
                             </div>
                         </div>
-                        <div className="h-full flex items-center">
+                        <div className="h-full flex items-center mb-0.5">
                             <svg
                                 width="200"
-                                height="104"
+                                height="102"
                                 viewBox="0 0 200 100"
                                 xmlns="http://www.w3.org/2000/svg"
                                 className="text-yellow-400"
@@ -157,7 +159,12 @@ export const HardforkOverview = () => {
                                     >
                                         <Tooltip
                                             trigger={
-                                                <div className="size-6 bg-[#3C3D42] rounded-sm z-10"></div>
+                                                <div
+                                                    className="size-6 bg-[#3C3D42] rounded-sm z-10"
+                                                    style={{
+                                                        backgroundColor: hardfork.color,
+                                                    }}
+                                                ></div>
                                             }
                                         >
                                             <div className="whitespace-nowrap">{hardfork.name}</div>
@@ -170,13 +177,10 @@ export const HardforkOverview = () => {
                         <div className="h-full justify-self-stretch">
                             <div className="flex items-center">
                                 {future.map((hardfork) => (
-                                    <div
-                                        key={hardfork.name}
-                                        className="px-2 first:pl-0 relative z-10"
-                                    >
+                                    <div key={hardfork.name} className="px-2 relative z-10">
                                         <Tooltip
                                             trigger={
-                                                <div className="size-6 bg-[#3C3D42] rounded-sm z-10"></div>
+                                                <div className="size-6 bg-[#FFD700] rounded-sm z-10"></div>
                                             }
                                         >
                                             <div className="whitespace-nowrap">{hardfork.name}</div>
@@ -217,9 +221,21 @@ export const HardforkOverview = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {postMerge.map((hardfork) => (
-                    <div key={hardfork.name} className="card !border-[#3C3D42] border-2">
+                    <div
+                        key={hardfork.name}
+                        className="border-2 card !border-[var(--border-color)]"
+                        style={{
+                            // @ts-ignore
+                            '--border-color': hardfork.color,
+                        }}
+                    >
                         <div className="flex items-center gap-2">
-                            <div className="size-6 bg-[#3C3D42] rounded-sm"></div>
+                            <div
+                                className="size-6 bg-[#3C3D42] rounded-sm"
+                                style={{
+                                    backgroundColor: hardfork.color,
+                                }}
+                            ></div>
                             <div className="font-bold">{hardfork.name}</div>
                         </div>
                         <div>{hardfork.date}</div>
