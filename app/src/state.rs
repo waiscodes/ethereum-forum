@@ -3,6 +3,7 @@ use crate::{
     modules::{
         discourse::DiscourseService,
         ical::{self, ICalConfig},
+        meili,
         pm::PMModule,
         sso::SSOService,
         workshop::WorkshopService,
@@ -28,6 +29,7 @@ pub struct AppStateInner {
     pub sso: Option<SSOService>,
     pub workshop: WorkshopService,
     pub cache: CacheService,
+    pub meili: Option<meili::Client>,
 }
 
 impl AppStateInner {
@@ -53,13 +55,18 @@ impl AppStateInner {
 
         let pm = PMModule::default();
 
+        let meili = meili::init_meili().await;
+
         let sso = match SSOService::new(Figment::new().merge(Env::raw())).await {
             Ok(service) => {
                 tracing::info!("SSO service initialized successfully");
                 Some(service)
             }
             Err(e) => {
-                tracing::info!("SSO service initialization failed: {}. SSO will be disabled.", e);
+                tracing::info!(
+                    "SSO service initialization failed: {}. SSO will be disabled.",
+                    e
+                );
                 None
             }
         };
@@ -72,6 +79,7 @@ impl AppStateInner {
             pm,
             workshop,
             sso,
+            meili,
         }
     }
 }
