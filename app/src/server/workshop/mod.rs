@@ -307,11 +307,11 @@ impl WorkshopApi {
     /// /ws/t/:topic_id/summary/stream
     ///
     /// Trigger summary generation and start streaming (or coalesce if already running)
+    /// Endpoint does not require authentication
     #[oai(path = "/ws/t/:topic_id/summary/stream", method = "post", tag = "ApiTags::Workshop")]
     async fn start_topic_summary_stream(
         &self,
         state: Data<&AppState>,
-        _auth_user: AuthUser, // Authentication required but user not used for this endpoint
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<Json<serde_json::Value>> {
         let topic = Topic::get_by_topic_id(topic_id.0, &state)
@@ -406,11 +406,11 @@ impl WorkshopApi {
     /// /ws/t/:topic_id/summary/stream
     ///
     /// Get SSE stream for topic summary generation
+    /// Endpoint does not require authentication
     #[oai(path = "/ws/t/:topic_id/summary/stream", method = "get", tag = "ApiTags::Workshop")]
     async fn stream_topic_summary(
         &self,
         state: Data<&AppState>,
-        _auth_user: AuthUser, // Authentication required but user not used for this endpoint
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
         tracing::info!("Summary stream request for topic: {}", topic_id.0);
