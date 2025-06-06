@@ -13,7 +13,7 @@ use super::discourse::topic::{DiscourseTopicPost, DiscourseTopicResponse};
 
 const POSTS_PER_PAGE: usize = 100;
 
-#[derive(Debug, Serialize, Deserialize, FromRow, Object)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Object, Clone)]
 pub struct Topic {
     pub topic_id: i32,
     pub title: String,
@@ -249,24 +249,78 @@ impl Topic {
         };
         
         let based_on = topic
-        .last_post_at
-        .map(|dt| dt.timestamp())
-        .unwrap_or_else(|| Utc::now().timestamp());
+            .last_post_at
+            .map(|dt| dt.timestamp())
+            .unwrap_or_else(|| Utc::now().timestamp());
     
-    if summary.based_on.timestamp() == based_on as i64 {
-        return Ok(summary);
+        // Check if the existing summary is still current
+        if summary.based_on.timestamp() == based_on as i64 {
+            return Ok(summary);
+        }
+        
+        // Check if there's already an ongoing streaming generation for this topic
+        if let Some(_ongoing_prompt) = state.workshop.get_ongoing_summary_prompt(topic_id).await {
+            // There's already a streaming generation in progress, return the old summary for now
+            // The client should check for streaming updates
+            return Ok(summary);
+        }
+    
+        Self::create_new_summary(topic_id, state, &topic).await
     }
-    
-    Self::create_new_summary(topic_id, state, &topic).await
-}
 
-async fn create_new_summary(
-    topic_id: i32,
-    state: &AppState,
-    topic: &Topic,
-) -> Result<TopicSummary, HttpError> {
+    async fn create_new_summary(
+        topic_id: i32,
+        state: &AppState,
+        topic: &Topic,
+    ) -> Result<TopicSummary, HttpError> {
         info!("Generating new summary for topic {}", topic_id);
-        let summary = WorkshopService::create_workshop_summary(topic, &state).await?;
+        
+        // Check if there's already an ongoing streaming generation
+        if let Some(ongoing_prompt) = state.workshop.get_ongoing_summary_prompt(topic_id).await {
+            // Wait for the ongoing prompt to complete
+            match ongoing_prompt.await_completion().await {
+                Ok(summary_text) => {
+                    // The summary should already be saved by the background task, but let's check
+                    if let Ok(existing_summary) = query_as!(
+                        TopicSummary,
+                        "SELECT * FROM topic_summaries WHERE topic_id = $1 ORDER BY based_on DESC LIMIT 1",
+                        topic_id
+                    ).fetch_optional(&state.database.pool).await {
+                        if let Some(summary) = existing_summary {
+                            return Ok(summary);
+                        }
+                    }
+                    
+                    // Fallback: save the summary ourselves if not already saved
+                    let based_on = topic
+                        .last_post_at
+                        .map(|dt| dt.timestamp())
+                        .unwrap_or_else(|| Utc::now().timestamp());
+
+                    let based_on_datetime =
+                        DateTime::from_timestamp(based_on as i64, 0).unwrap_or_else(|| Utc::now());
+
+                    let summary = query_as!(
+                        TopicSummary,
+                        "INSERT INTO topic_summaries (topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *",
+                        topic_id,
+                        based_on_datetime,
+                        summary_text
+                    )
+                    .fetch_one(&state.database.pool)
+                    .await?;
+
+                    return Ok(summary);
+                },
+                Err(e) => {
+                    info!("Ongoing prompt failed, falling back to direct generation: {}", e);
+                    // Fall through to direct generation
+                }
+            }
+        }
+        
+        // No ongoing prompt or it failed, use direct generation (non-streaming)
+        let summary = crate::modules::workshop::WorkshopService::create_workshop_summary(topic, &state).await?;
 
         let based_on = topic
             .last_post_at

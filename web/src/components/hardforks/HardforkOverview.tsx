@@ -316,7 +316,7 @@ export const HardforkOverview = () => {
                         </ul>
                     </div>
                 ))}
-            </div >
+            </div>
         </>
     );
 };

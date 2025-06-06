@@ -1,9 +1,8 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { parseISO } from 'date-fns';
-import { useEffect } from 'react';
-import { Fragment } from 'react/jsx-runtime';
+import { Fragment, useEffect } from 'react';
 import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 import {
     LuGithub,
@@ -23,22 +22,14 @@ import {
 } from 'react-icons/lu';
 import { PiReceipt } from 'react-icons/pi';
 import { SiEthereum, SiOpenai, SiReddit } from 'react-icons/si';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 
-import {
-    getTopic,
-    usePostsInfinite,
-    useTopic,
-    useTopicRefresh,
-    useTopicSummary,
-} from '@/api/topics';
-import { useWorkshopCreateChatFromSummary } from '@/api/workshop';
+import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
 import { CategoryTag } from '@/components/CategoryTag';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { TopicPost } from '@/components/topic/TopicPost';
+import { StreamingSummary } from '@/components/topics/StreamingSummary';
 import { UpDownScroller } from '@/components/UpDown';
 import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
@@ -182,7 +173,7 @@ function RouteComponent() {
                                                 <Dialog.Title className="text-xl font-bold">
                                                     Topic Summary
                                                 </Dialog.Title>
-                                                <Summary topicId={topic.topic_id} />
+                                                <StreamingSummary topicId={topic.topic_id} />
                                                 <Dialog.Close className="absolute top-2 right-2 -translate-y-1/2 hover:bg-secondary rounded-full p-1">
                                                     <LuX className="size-5" />
                                                 </Dialog.Close>
@@ -309,64 +300,6 @@ function RouteComponent() {
         </>
     );
 }
-
-const Summary = ({ topicId }: { topicId: number }) => {
-    const { data: summary, isPending } = useTopicSummary(topicId);
-    const { mutate: createChatFromSummary } = useWorkshopCreateChatFromSummary();
-    const navigate = useNavigate();
-
-    if (isPending) {
-        return (
-            <div className="flex items-center gap-2 py-3 px-1.5">
-                <div className="animate-spin">
-                    <LuRefreshCcw className="size-4" />
-                </div>
-                <span className="text-sm">Generating summary...</span>
-            </div>
-        );
-    }
-
-    if (!summary) {
-        return (
-            <div className="text-primary text-sm py-2 px-1.5 italic">
-                No summary available for this topic
-            </div>
-        );
-    }
-
-    return (
-        <>
-            <div className="prose text-base leading-relaxed">
-                <Markdown remarkPlugins={[remarkGfm]}>
-                    {summary.summary_text.replace(/\\n/g, '\n')}
-                </Markdown>
-            </div>
-            <div className="flex items-center justify-end gap-2">
-                <Dialog.Close>
-                    <button className="button">Close</button>
-                </Dialog.Close>
-                <button
-                    className="button"
-                    onClick={() =>
-                        createChatFromSummary(
-                            { topicId },
-                            {
-                                onSuccess: (data) =>
-                                    navigate({
-                                        to: '/chat/$chatId',
-                                        params: { chatId: data.chat_id },
-                                        hash: data.message_id,
-                                    }),
-                            }
-                        )
-                    }
-                >
-                    Open in chat
-                </button>
-            </div>
-        </>
-    );
-};
 
 const RelevantLink = ({ link }: { link: RelevantLink }) => {
     let icon = undefined;

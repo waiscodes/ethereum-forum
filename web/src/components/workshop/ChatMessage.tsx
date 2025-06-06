@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { LuCopy, LuPencil } from 'react-icons/lu';
+import { LuBrain, LuCopy, LuPencil } from 'react-icons/lu';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { match } from 'ts-pattern';
@@ -51,7 +51,13 @@ export const ChatDataStream = ({ chatId, messageId }: { chatId: string; messageI
         messageId
     );
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading)
+        return (
+            <div className="flex items-center gap-2">
+                <LuBrain />
+                Thinking...
+            </div>
+        );
 
     if (error) return <div>Error: {error}</div>;
 

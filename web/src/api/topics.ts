@@ -5,6 +5,7 @@ import {
     useMutation,
     useQuery,
 } from '@tanstack/react-query';
+import React from 'react';
 
 import { GithubIssueComment } from '@/types/github';
 
@@ -138,3 +139,118 @@ export const usePosts = (topicId: string, page: number) => useQuery(getPosts(top
 export const useTopicSummary = (topicId: number) => useQuery(getTopicSummary(topicId));
 
 export const usePostsInfinite = (topicId: string) => useInfiniteQuery(getPostsInfinite(topicId));
+
+export const useStartTopicSummaryStream = () =>
+    useMutation({
+        mutationFn: async ({ topicId }: { topicId: number }) => {
+            const response = await fetch(`/api/ws/t/${topicId}/summary/stream`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to start summary stream');
+            }
+
+            const data = await response.json();
+
+            return data as {
+                status: 'existing' | 'ongoing' | 'started';
+                topic_id: number;
+                summary?: string;
+            };
+        },
+    });
+
+// Hook for streaming topic summary
+export const useTopicSummaryStream = (topicId: number) => {
+    const [data, setData] = React.useState<components['schemas']['StreamingResponse'][]>([]);
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+    const [isComplete, setIsComplete] = React.useState(false);
+    const [isStreaming, setIsStreaming] = React.useState(false);
+    const hasReceivedDataRef = React.useRef(false);
+
+    const startStream = React.useCallback(() => {
+        if (isStreaming) return;
+
+        // Reset state
+        setData([]);
+        setIsLoading(true);
+        setError(null);
+        setIsComplete(false);
+        setIsStreaming(true);
+        hasReceivedDataRef.current = false;
+
+        const eventSource = new EventSource(`/api/ws/t/${topicId}/summary/stream`);
+
+        eventSource.onopen = () => {
+            console.log('Summary EventSource connection opened');
+            setIsLoading(false);
+        };
+
+        eventSource.onmessage = (event) => {
+            try {
+                const response: components['schemas']['StreamingResponse'] = JSON.parse(event.data);
+
+                hasReceivedDataRef.current = true;
+                setData((prev) => [...prev, response]);
+
+                // Check if the response indicates completion or error
+                if (response.is_complete) {
+                    setIsComplete(true);
+                    setIsStreaming(false);
+                    eventSource.close();
+                } else if (response.error) {
+                    setIsComplete(true);
+                    setError(response.error);
+                    setIsStreaming(false);
+                    eventSource.close();
+                }
+            } catch (parseError) {
+                console.error('Failed to parse summary EventSource message:', parseError);
+                setError('Failed to parse server response');
+                setIsComplete(true);
+                setIsStreaming(false);
+                eventSource.close();
+            }
+        };
+
+        eventSource.onerror = (event) => {
+            console.error('Summary EventSource error:', event);
+
+            // Only show error if we haven't received any data yet
+            if (!hasReceivedDataRef.current) {
+                setError('Connection error occurred');
+            }
+
+            setIsLoading(false);
+            setIsComplete(true);
+            setIsStreaming(false);
+            eventSource.close();
+        };
+
+        // Store event source for cleanup
+        return () => {
+            eventSource.close();
+            setIsStreaming(false);
+        };
+    }, [topicId, isStreaming]);
+
+    // Combine all content from the responses
+    const combinedContent = React.useMemo(() => {
+        return data.map((response) => response.content).join('');
+    }, [data]);
+
+    return {
+        data,
+        combinedContent,
+        isLoading,
+        error,
+        isComplete,
+        isStreaming,
+        startStream,
+    };
+};

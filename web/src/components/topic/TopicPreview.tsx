@@ -7,8 +7,8 @@ import { Topic } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
 import { formatBigNumber } from '@/util/numbers';
 
-import { TimeAgo } from '../TimeAgo';
 import { CategoryTag } from '../CategoryTag';
+import { TimeAgo } from '../TimeAgo';
 
 type Participant = {
     id: number;

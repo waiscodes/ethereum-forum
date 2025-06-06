@@ -12,6 +12,7 @@ use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
 use crate::server::ApiTags;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
+use async_std::task;
 
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct WorkshopApi;
@@ -203,6 +204,156 @@ impl WorkshopApi {
                 }
                 Err(err) => {
                     tracing::error!("Stream error: {}", err);
+                    StreamingResponse {
+                        content: String::new(),
+                        is_complete: true,
+                        error: Some(err),
+                    }
+                }
+            }
+        }).boxed();
+
+        Ok(EventStream::new(response_stream))
+    }
+
+    /// /ws/t/:topic_id/summary/stream
+    ///
+    /// Trigger summary generation and start streaming (or coalesce if already running)
+    #[oai(path = "/ws/t/:topic_id/summary/stream", method = "post", tag = "ApiTags::Workshop")]
+    async fn start_topic_summary_stream(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] topic_id: Path<i32>,
+    ) -> Result<Json<serde_json::Value>> {
+        let topic = Topic::get_by_topic_id(topic_id.0, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting topic: {:?}", e);
+                poem::Error::from_status(StatusCode::NOT_FOUND)
+            })?;
+
+        // First check if we already have a recent summary
+        if let Ok(existing_summary) = sqlx::query_as!(
+            crate::models::topics::TopicSummary,
+            "SELECT * FROM topic_summaries WHERE topic_id = $1 ORDER BY based_on DESC LIMIT 1",
+            topic_id.0
+        ).fetch_optional(&state.database.pool).await {
+            if let Some(summary) = existing_summary {
+                let based_on = topic
+                    .last_post_at
+                    .map(|dt| dt.timestamp())
+                    .unwrap_or_else(|| chrono::Utc::now().timestamp());
+                
+                // If summary is current, return existing
+                if summary.based_on.timestamp() == based_on as i64 {
+                    return Ok(Json(serde_json::json!({
+                        "status": "existing",
+                        "topic_id": topic_id.0,
+                        "summary": summary.summary_text
+                    })));
+                }
+            }
+        }
+
+        // Check if there's already an ongoing stream
+        if let Some(_existing_prompt) = state.workshop.get_ongoing_summary_prompt(topic_id.0).await {
+            return Ok(Json(serde_json::json!({
+                "status": "ongoing",
+                "topic_id": topic_id.0
+            })));
+        }
+
+        // Start the summary generation (or get existing ongoing prompt)
+        let _ongoing_prompt = WorkshopService::create_workshop_summary_streaming(&topic, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error starting summary generation: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        // Spawn a task to handle completion and update the topic summary
+        let topic_clone = topic.clone();
+        let state_clone = state.clone();
+        
+        task::spawn(async move {
+            if let Some(ongoing_prompt) = state_clone.workshop.get_ongoing_summary_prompt(topic_clone.topic_id).await {
+                match ongoing_prompt.await_completion().await {
+                    Ok(content) => {
+                        // Update the topic summary in the database
+                        let based_on = topic_clone
+                            .last_post_at
+                            .map(|dt| dt.timestamp())
+                            .unwrap_or_else(|| chrono::Utc::now().timestamp());
+
+                        let based_on_datetime = chrono::DateTime::from_timestamp(based_on as i64, 0)
+                            .unwrap_or_else(|| chrono::Utc::now());
+
+                        if let Err(e) = sqlx::query!(
+                            "INSERT INTO topic_summaries (topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, NOW())",
+                            topic_clone.topic_id,
+                            based_on_datetime,
+                            content
+                        )
+                        .execute(&state_clone.database.pool)
+                        .await {
+                            tracing::error!("Error saving topic summary: {:?}", e);
+                        } else {
+                            tracing::info!("Saved new summary for topic_id: {}", topic_clone.topic_id);
+                        }
+                    },
+                    Err(e) => {
+                        tracing::error!("Error in summary completion: {:?}", e);
+                    }
+                }
+            }
+        });
+
+        Ok(Json(serde_json::json!({
+            "status": "started",
+            "topic_id": topic_id.0
+        })))
+    }
+
+    /// /ws/t/:topic_id/summary/stream
+    ///
+    /// Get SSE stream for topic summary generation
+    #[oai(path = "/ws/t/:topic_id/summary/stream", method = "get", tag = "ApiTags::Workshop")]
+    async fn stream_topic_summary(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] topic_id: Path<i32>,
+    ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
+        tracing::info!("Summary stream request for topic: {}", topic_id.0);
+        
+        // Try to get the ongoing summary prompt
+        let ongoing_prompt = state.workshop.get_ongoing_summary_prompt(topic_id.0).await
+            .ok_or_else(|| {
+                tracing::error!("No ongoing summary prompt found for topic {}", topic_id.0);
+                poem::Error::from_status(StatusCode::NOT_FOUND)
+            })?;
+
+        tracing::info!("Found ongoing summary prompt, starting stream");
+
+        // Get the stream
+        let stream = ongoing_prompt.get_stream().await;
+        
+        // Convert to streaming response events
+        let response_stream = stream.map(|result| {
+            match result {
+                Ok(delta) => {
+                    let content = delta.choices.first()
+                        .and_then(|c| c.delta.content.as_ref())
+                        .cloned()
+                        .unwrap_or_default();
+                    
+                    StreamingResponse {
+                        content,
+                        is_complete: false,
+                        error: None,
+                    }
+                }
+                Err(err) => {
+                    tracing::error!("Summary stream error: {}", err);
                     StreamingResponse {
                         content: String::new(),
                         is_complete: true,

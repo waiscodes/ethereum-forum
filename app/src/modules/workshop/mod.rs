@@ -185,4 +185,48 @@ impl WorkshopService {
         info!("Getting ongoing prompt for key: {}", key);
         self.ongoing_prompts.get(&key).await
     }
+
+    /// Create workshop summary using streaming with request coalescing
+    /// Returns an OngoingPrompt that can be used for streaming the summary generation
+    pub async fn create_workshop_summary_streaming(
+        topic: &Topic,
+        state: &AppState,
+    ) -> Result<OngoingPrompt, Box<dyn std::error::Error + Send + Sync>> {
+        let posts = Post::find_by_topic_id(topic.topic_id, 1, Some(512), state);
+
+        let messages = vec![
+            state.workshop.prompts.summerize.clone(),
+            ChatCompletionMessage {
+                role: ChatCompletionMessageRole::User,
+                content: Some(
+                    serde_json::to_string(&json!({
+                        "topic_info": topic,
+                        "posts": posts.await.map(|(posts, _)| posts).unwrap_or_else(|_| vec![]),
+                    }))
+                    .unwrap(),
+                ),
+                name: None,
+                function_call: None,
+                tool_call_id: None,
+                tool_calls: None,
+            },
+        ];
+
+        // Use topic_id as the coalescing key for summaries
+        let key = format!("summary-{}", topic.topic_id);
+        
+        // Get or create the ongoing prompt
+        let ongoing_prompt = state.workshop.ongoing_prompts
+            .get_or_create(key, state, messages)
+            .await?;
+
+        Ok(ongoing_prompt)
+    }
+
+    /// Get an ongoing summary prompt for streaming (if it exists)
+    pub async fn get_ongoing_summary_prompt(&self, topic_id: i32) -> Option<OngoingPrompt> {
+        let key = format!("summary-{}", topic_id);
+        info!("Getting ongoing summary prompt for key: {}", key);
+        self.ongoing_prompts.get(&key).await
+    }
 }

@@ -40,50 +40,14 @@ export const Route = createFileRoute('/chat/$chatId')({
 });
 
 function RouteComponent() {
-    const [placeholder, setPlaceholder] = useState(true);
     const { chatId } = useParams({ from: '/chat/$chatId' });
-
-    // if the user types "unlock", set the placeholder to false
-    useEffect(() => {
-        let lastKeys = '';
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key) {
-                lastKeys += e.key;
-                lastKeys = lastKeys.slice(-6);
-
-                if (lastKeys === 'unlock') {
-                    setPlaceholder(false);
-                    document.removeEventListener('keydown', handleKeyDown);
-                }
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
 
     return (
         <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
-            {placeholder && <Placeholder />}
-            {!placeholder && <Chat chatId={chatId} />}
+            <Chat chatId={chatId} />
         </div>
     );
 }
-
-const Placeholder = () => {
-    return (
-        <>
-            <div>Welcome to the workshop!</div>
-            <div className="card space-y-2">
-                <p>The workshop is currently in beta and not publicly accessible yet.</p>
-                <p>Please check back later.</p>
-            </div>
-        </>
-    );
-};
 
 const Chat = ({ chatId }: { chatId: string }) => {
     const { data: chat } = useWorkshopChat(chatId);
@@ -110,8 +74,8 @@ const Chat = ({ chatId }: { chatId: string }) => {
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-              ? 'Good Afternoon'
-              : 'Good Evening';
+                ? 'Good Afternoon'
+                : 'Good Evening';
 
     return (
         <div className="w-full h-full relative py-1">
