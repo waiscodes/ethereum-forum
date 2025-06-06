@@ -22,6 +22,30 @@ impl ForumTools {
     pub fn new(state: AppState) -> Self {
         Self { state }
     }
+
+    /// Create a standardized error response for Meilisearch operations
+    fn create_error_document(
+        error_message: String,
+        topic_id: Option<i32>,
+        user_id: Option<i32>,
+        username: Option<String>,
+    ) -> ForumSearchDocument {
+        ForumSearchDocument {
+            entity_type: "error".to_string(),
+            topic_id,
+            post_id: None,
+            post_number: None,
+            user_id,
+            username,
+            title: None,
+            slug: None,
+            pm_issue: None,
+            cooked: Some(error_message),
+            entity_id: "error".to_string(),
+        }
+    }
+
+
 }
 
 #[Tools]
@@ -65,53 +89,39 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                None,
+                None,
+                None,
+            )]);
+        };
 
-            match forum
-                .search()
-                .with_query(&query)
-                .with_limit(limit)
-                .with_offset(offset)
-                .execute::<ForumSearchDocument>()
-                .await
-            {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: None,
-                        post_id: None,
-                        post_number: None,
-                        user_id: None,
-                        username: None,
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
+
+        match forum
+            .search()
+            .with_query(&query)
+            .with_limit(limit)
+            .with_offset(offset)
+            .execute::<ForumSearchDocument>()
+            .await
+        {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
             }
-        } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: None,
-                post_id: None,
-                post_number: None,
-                user_id: None,
-                username: None,
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    None,
+                    None,
+                    None,
+                )])
+            }
         }
     }
 
@@ -122,54 +132,40 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                None,
+                None,
+                None,
+            )]);
+        };
 
-            match forum
-                .search()
-                .with_query(&query)
-                .with_filter("entity_type = topic")
-                .with_limit(limit)
-                .with_offset(offset)
-                .execute::<ForumSearchDocument>()
-                .await
-            {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: None,
-                        post_id: None,
-                        post_number: None,
-                        user_id: None,
-                        username: None,
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
+
+        match forum
+            .search()
+            .with_query(&query)
+            .with_filter("entity_type = topic")
+            .with_limit(limit)
+            .with_offset(offset)
+            .execute::<ForumSearchDocument>()
+            .await
+        {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
             }
-        } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: None,
-                post_id: None,
-                post_number: None,
-                user_id: None,
-                username: None,
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    None,
+                    None,
+                    None,
+                )])
+            }
         }
     }
 
@@ -180,54 +176,40 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                None,
+                None,
+                None,
+            )]);
+        };
 
-            match forum
-                .search()
-                .with_query(&query)
-                .with_filter("entity_type = post")
-                .with_limit(limit)
-                .with_offset(offset)
-                .execute::<ForumSearchDocument>()
-                .await
-            {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: None,
-                        post_id: None,
-                        post_number: None,
-                        user_id: None,
-                        username: None,
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
+
+        match forum
+            .search()
+            .with_query(&query)
+            .with_filter("entity_type = post")
+            .with_limit(limit)
+            .with_offset(offset)
+            .execute::<ForumSearchDocument>()
+            .await
+        {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
             }
-        } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: None,
-                post_id: None,
-                post_number: None,
-                user_id: None,
-                username: None,
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    None,
+                    None,
+                    None,
+                )])
+            }
         }
     }
 
@@ -239,56 +221,42 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                Some(topic_id),
+                None,
+                None,
+            )]);
+        };
 
-            let filter = format!("entity_type = post AND topic_id = {}", topic_id);
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
 
-            match forum
-                .search()
-                .with_query(&query)
-                .with_filter(&filter)
-                .with_limit(limit)
-                .with_offset(offset)
-                .execute::<ForumSearchDocument>()
-                .await
-            {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: Some(topic_id),
-                        post_id: None,
-                        post_number: None,
-                        user_id: None,
-                        username: None,
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
+        let filter = format!("entity_type = post AND topic_id = {}", topic_id);
+
+        match forum
+            .search()
+            .with_query(&query)
+            .with_filter(&filter)
+            .with_limit(limit)
+            .with_offset(offset)
+            .execute::<ForumSearchDocument>()
+            .await
+        {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
             }
-        } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: Some(topic_id),
-                post_id: None,
-                post_number: None,
-                user_id: None,
-                username: None,
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    Some(topic_id),
+                    None,
+                    None,
+                )])
+            }
         }
     }
 
@@ -300,67 +268,53 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                None,
+                Some(user_id),
+                None,
+            )]);
+        };
 
-            let filter = format!("user_id = {}", user_id);
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
 
-            let result = if let Some(q) = query {
-                forum
-                    .search()
-                    .with_filter(&filter)
-                    .with_limit(limit)
-                    .with_offset(offset)
-                    .with_query(&q)
-                    .execute::<ForumSearchDocument>()
-                    .await
-            } else {
-                forum
-                    .search()
-                    .with_filter(&filter)
-                    .with_limit(limit)
-                    .with_offset(offset)
-                    .execute::<ForumSearchDocument>()
-                    .await
-            };
+        let filter = format!("user_id = {}", user_id);
 
-            match result {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: None,
-                        post_id: None,
-                        post_number: None,
-                        user_id: Some(user_id),
-                        username: None,
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
-            }
+        let result = if let Some(q) = query {
+            forum
+                .search()
+                .with_filter(&filter)
+                .with_limit(limit)
+                .with_offset(offset)
+                .with_query(&q)
+                .execute::<ForumSearchDocument>()
+                .await
         } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: None,
-                post_id: None,
-                post_number: None,
-                user_id: Some(user_id),
-                username: None,
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            forum
+                .search()
+                .with_filter(&filter)
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+        };
+
+        match result {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
+            }
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    None,
+                    Some(user_id),
+                    None,
+                )])
+            }
         }
     }
 
@@ -396,67 +350,53 @@ impl ForumTools {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
-        if let Some(meili) = &self.state.meili {
-            let forum = meili.index("forum");
-            let limit = limit.unwrap_or(20);
-            let offset = offset.unwrap_or(0);
+        let Some(meili) = &self.state.meili else {
+            return Json(vec![Self::create_error_document(
+                "Meilisearch is not configured".to_string(),
+                None,
+                None,
+                Some(username),
+            )]);
+        };
 
-            let filter = format!("username = \"{}\"", username);
+        let forum = meili.index("forum");
+        let limit = limit.unwrap_or(20);
+        let offset = offset.unwrap_or(0);
 
-            let result = if let Some(q) = query {
-                forum
-                    .search()
-                    .with_filter(&filter)
-                    .with_limit(limit)
-                    .with_offset(offset)
-                    .with_query(&q)
-                    .execute::<ForumSearchDocument>()
-                    .await
-            } else {
-                forum
-                    .search()
-                    .with_filter(&filter)
-                    .with_limit(limit)
-                    .with_offset(offset)
-                    .execute::<ForumSearchDocument>()
-                    .await
-            };
+        let filter = format!("username = \"{}\"", username);
 
-            match result {
-                Ok(results) => {
-                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
-                    Json(documents)
-                }
-                Err(err) => {
-                    Json(vec![ForumSearchDocument {
-                        entity_type: "error".to_string(),
-                        topic_id: None,
-                        post_id: None,
-                        post_number: None,
-                        user_id: None,
-                        username: Some(username.clone()),
-                        title: None,
-                        slug: None,
-                        pm_issue: None,
-                        cooked: Some(format!("search error: {err}")),
-                        entity_id: "error".to_string(),
-                    }])
-                }
-            }
+        let result = if let Some(q) = query {
+            forum
+                .search()
+                .with_filter(&filter)
+                .with_limit(limit)
+                .with_offset(offset)
+                .with_query(&q)
+                .execute::<ForumSearchDocument>()
+                .await
         } else {
-            Json(vec![ForumSearchDocument {
-                entity_type: "error".to_string(),
-                topic_id: None,
-                post_id: None,
-                post_number: None,
-                user_id: None,
-                username: Some(username),
-                title: None,
-                slug: None,
-                pm_issue: None,
-                cooked: Some("Meilisearch is not configured".to_string()),
-                entity_id: "error".to_string(),
-            }])
+            forum
+                .search()
+                .with_filter(&filter)
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+        };
+
+        match result {
+            Ok(results) => {
+                let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                Json(documents)
+            }
+            Err(err) => {
+                Json(vec![Self::create_error_document(
+                    format!("search error: {err}"),
+                    None,
+                    None,
+                    Some(username),
+                )])
+            }
         }
     }
 

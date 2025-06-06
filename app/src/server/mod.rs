@@ -2,6 +2,7 @@ use events::EventsApi;
 use governor::Quota;
 use opengraph::OpenGraph;
 use pm::PMApi;
+use admin::AdminApi;
 use poem::{
     EndpointExt, Route, Server,
     endpoint::StaticFilesEndpoint,
@@ -28,6 +29,7 @@ pub mod pm;
 pub mod workshop;
 pub mod auth;
 pub mod mcp;
+pub mod admin;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -39,10 +41,12 @@ pub enum ApiTags {
     Events,
     /// Workshop Related Operations
     Workshop,
+    /// Admin Related Operations
+    Admin,
 }
 
 fn get_api(_state: AppState) -> impl OpenApi {
-    (TopicApi, UserApi, EventsApi, PMApi, WorkshopApi)
+    (TopicApi, UserApi, EventsApi, PMApi, WorkshopApi, AdminApi)
 }
 
 pub async fn start_http(state: AppState) {
