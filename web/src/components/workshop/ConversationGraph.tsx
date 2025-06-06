@@ -30,14 +30,66 @@ export const ConversationGraph = ({
         const visibleMessageIds = new Set(visibleMessages.map((node) => node.message.message_id));
         let maxCol = 0;
 
-        // Layout the tree with proper spacing
+        // Find user message children by traversing through assistant messages
+        function findUserChildren(node: MessageTreeNode): MessageTreeNode[] {
+            const userChildren: MessageTreeNode[] = [];
+
+            node.children.forEach((child) => {
+                if (child.message.sender_role === 'user') {
+                    userChildren.push(child);
+                } else {
+                    // If it's an assistant message, look at its children
+                    userChildren.push(...findUserChildren(child));
+                }
+            });
+
+            return userChildren;
+        }
+
+        // Find the nearest user message parent by traversing up the tree
+        function findUserParent(node: MessageTreeNode): string | undefined {
+            if (!node.message.parent_message_id) {
+                return undefined;
+            }
+
+            const parentNode = messageMap.get(node.message.parent_message_id);
+
+            if (!parentNode) {
+                return undefined;
+            }
+
+            if (parentNode.message.sender_role === 'user') {
+                return parentNode.message.message_id;
+            }
+
+            // If parent is assistant, keep looking up
+            return findUserParent(parentNode);
+        }
+
+        // Layout the tree with proper spacing (only user messages)
         function layoutTree(
             node: MessageTreeNode,
             level: number = 0,
             startColumn: number = 0
         ): number {
-            // If this is a leaf node, place it at the start column
-            if (node.children.length === 0) {
+            // Skip assistant messages
+            if (node.message.sender_role === 'assistant') {
+                // Process children and return the max column used
+                let currentColumn = startColumn;
+                const userChildren = findUserChildren(node);
+
+                userChildren.forEach((child) => {
+                    currentColumn = layoutTree(child, level, currentColumn); // Don't increment level for assistant
+                });
+
+                return currentColumn;
+            }
+
+            // Get user message children (skipping assistant messages)
+            const userChildren = findUserChildren(node);
+
+            // If this is a leaf user node, place it at the start column
+            if (userChildren.length === 0) {
                 nodes.push({
                     messageId: node.message.message_id,
                     level,
@@ -46,7 +98,7 @@ export const ConversationGraph = ({
                     hasChildren: false,
                     siblings: node.siblings.length,
                     siblingIndex: node.currentSiblingIndex,
-                    parentMessageId: node.message.parent_message_id || undefined,
+                    parentMessageId: findUserParent(node), // Use user parent, not immediate parent
                 });
 
                 maxCol = Math.max(maxCol, startColumn);
@@ -54,16 +106,16 @@ export const ConversationGraph = ({
                 return startColumn + 1; // Return next available column
             }
 
-            // For nodes with children, we need to center the parent over its children
+            // For user nodes with children, we need to center the parent over its children
             let currentColumn = startColumn;
             const childColumns: number[] = [];
 
-            // First, layout all children and collect their column positions
-            node.children.forEach((child) => {
+            // First, layout all user children and collect their column positions
+            userChildren.forEach((child) => {
                 const childColumn = currentColumn;
 
                 childColumns.push(childColumn);
-                currentColumn = layoutTree(child, level + 1, currentColumn);
+                currentColumn = layoutTree(child, level + 1, currentColumn); // Increment level for user children
             });
 
             // Center the parent over its children
@@ -79,7 +131,7 @@ export const ConversationGraph = ({
                 hasChildren: true,
                 siblings: node.siblings.length,
                 siblingIndex: node.currentSiblingIndex,
-                parentMessageId: node.message.parent_message_id || undefined,
+                parentMessageId: findUserParent(node), // Use user parent, not immediate parent
             });
 
             maxCol = Math.max(maxCol, parentColumn);
@@ -87,11 +139,20 @@ export const ConversationGraph = ({
             return currentColumn; // Return the next available column after all children
         }
 
-        // Layout root nodes with proper spacing
+        // Layout root nodes with proper spacing (only process user root nodes)
         let currentColumn = 0;
 
         rootNodes.forEach((rootNode) => {
-            currentColumn = layoutTree(rootNode, 0, currentColumn);
+            if (rootNode.message.sender_role === 'user') {
+                currentColumn = layoutTree(rootNode, 0, currentColumn);
+            } else {
+                // If root is assistant message, process its user children
+                const userChildren = findUserChildren(rootNode);
+
+                userChildren.forEach((child) => {
+                    currentColumn = layoutTree(child, 0, currentColumn);
+                });
+            }
         });
 
         // Sort by level first, then by column for proper rendering order
@@ -123,7 +184,7 @@ export const ConversationGraph = ({
                     className="relative min-w-full"
                     style={{
                         width: `${Math.max(200, (maxColumn + 1) * columnWidth + 60)}px`,
-                        height: `${graphNodes.length * rowHeight + 40}px`,
+                        height: `${(Math.max(...graphNodes.map((n) => n.level)) + 1) * rowHeight + 40}px`, // Use max level instead of array length
                     }}
                 >
                     {/* Add SVG for the lines */}
@@ -131,14 +192,11 @@ export const ConversationGraph = ({
                         className="absolute inset-0 pointer-events-none"
                         style={{
                             width: `${Math.max(200, (maxColumn + 1) * columnWidth + 60)}px`,
-                            height: `${graphNodes.length * rowHeight + 40}px`,
+                            height: `${(Math.max(...graphNodes.map((n) => n.level)) + 1) * rowHeight + 40}px`,
                         }}
                     >
                         {graphNodes.map((node) => {
-                            const nodeIndex = graphNodes.findIndex(
-                                (n) => n.messageId === node.messageId
-                            );
-                            const nodeY = nodeIndex * rowHeight + 20;
+                            const nodeY = node.level * rowHeight + 20; // Use level instead of index
                             const nodeX = node.column * columnWidth + 20;
 
                             // Find parent node for connection
@@ -147,10 +205,7 @@ export const ConversationGraph = ({
                                 : null;
 
                             if (parentNode) {
-                                const parentIndex = graphNodes.findIndex(
-                                    (n) => n.messageId === parentNode.messageId
-                                );
-                                const parentY = parentIndex * rowHeight + 20;
+                                const parentY = parentNode.level * rowHeight + 20; // Use level instead of index
                                 const parentX = parentNode.column * columnWidth + 20;
 
                                 return (
@@ -184,13 +239,13 @@ export const ConversationGraph = ({
                     </svg>
 
                     {/* Render message dots */}
-                    {graphNodes.map((node, index) => (
+                    {graphNodes.map((node) => (
                         <div
                             key={node.messageId}
                             className="absolute flex items-center gap-3"
                             style={{
                                 left: `${node.column * columnWidth + 12}px`,
-                                top: `${index * rowHeight + 12}px`,
+                                top: `${node.level * rowHeight + 12}px`, // Use level instead of index
                             }}
                         >
                             {/* Message dot */}
@@ -202,7 +257,7 @@ export const ConversationGraph = ({
                                         : 'bg-primary/60 border-primary/40',
                                     'hover:scale-125 transition-transform cursor-pointer'
                                 )}
-                                title={`Message ${index + 1}${
+                                title={`Message at level ${node.level + 1}${
                                     node.siblings > 1
                                         ? ` (branch ${node.siblingIndex + 1}/${node.siblings})`
                                         : ''
