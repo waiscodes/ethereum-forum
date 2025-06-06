@@ -9,7 +9,7 @@ import {
     useWorkshopSendMessage,
     WorkshopMessage,
 } from '@/api/workshop';
-import { AuthGuard } from '@/components/AuthGuard';
+import { WorkshopAuthGuard } from '@/components/AuthGuard';
 import { UpDownScroller } from '@/components/UpDown';
 import { ChatMessage } from '@/components/workshop/ChatMessage';
 import { ConversationGraph } from '@/components/workshop/ConversationGraph';
@@ -59,9 +59,9 @@ function RouteComponent() {
     return (
         <>
             <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
-                <AuthGuard>
+                <WorkshopAuthGuard>
                     <ChatWithSidebar chatId={chatId} />
-                </AuthGuard>
+                </WorkshopAuthGuard>
             </div>
         </>
     );

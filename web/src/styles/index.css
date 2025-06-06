@@ -133,11 +133,11 @@ body {
 }
 
 .card {
-    @apply rounded-sm bg-secondary border border-primary/50;
+    @apply rounded-md bg-primary border border-primary/50;
 }
 
 .card:not(:has(.no-padding)) {
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
 }
 
 .card.no-padding {
