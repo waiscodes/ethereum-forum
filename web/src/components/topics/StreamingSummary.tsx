@@ -4,6 +4,7 @@ import { LuBrain, LuLoader } from 'react-icons/lu';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { useAuth } from '@/api/auth';
 import { useStartTopicSummaryStream, useTopicSummaryStream } from '@/api/topics';
 import { useWorkshopCreateChatFromSummary } from '@/api/workshop';
 
@@ -12,6 +13,7 @@ interface StreamingSummaryProps {
 }
 
 export const StreamingSummary: React.FC<StreamingSummaryProps> = ({ topicId }) => {
+    const { isAuthenticated } = useAuth();
     const { combinedContent, isLoading, error, isComplete, startStream } =
         useTopicSummaryStream(topicId);
 
@@ -88,24 +90,26 @@ export const StreamingSummary: React.FC<StreamingSummaryProps> = ({ topicId }) =
                         {isShowingExisting ? 'Cached summary' : 'Summary complete'}
                     </p>
                     <div className="flex gap-2 text-sm">
-                        <button
-                            className="button"
-                            onClick={() =>
-                                createChatFromSummary(
-                                    { topicId },
-                                    {
-                                        onSuccess: (data) =>
-                                            navigate({
-                                                to: '/chat/$chatId',
-                                                params: { chatId: data.chat_id },
-                                                hash: data.message_id,
-                                            }),
-                                    }
-                                )
-                            }
-                        >
-                            Open in chat
-                        </button>
+                        {isAuthenticated && (
+                            <button
+                                className="button"
+                                onClick={() =>
+                                    createChatFromSummary(
+                                        { topicId },
+                                        {
+                                            onSuccess: (data) =>
+                                                navigate({
+                                                    to: '/chat/$chatId',
+                                                    params: { chatId: data.chat_id },
+                                                    hash: data.message_id,
+                                                }),
+                                        }
+                                    )
+                                }
+                            >
+                                Open in chat
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
