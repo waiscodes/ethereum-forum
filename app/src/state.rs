@@ -3,7 +3,9 @@ use crate::{
     modules::{
         discourse::DiscourseService,
         ical::{self, ICalConfig},
-        pm::PMModule, workshop::WorkshopService,
+        pm::PMModule,
+        sso::SSOService,
+        workshop::WorkshopService,
     },
     tmp::CacheService,
 };
@@ -23,6 +25,7 @@ pub struct AppStateInner {
     pub ical: Option<ICalConfig>,
     pub discourse: DiscourseService,
     pub pm: PMModule,
+    pub sso: Option<SSOService>,
     pub workshop: WorkshopService,
     pub cache: CacheService,
 }
@@ -50,6 +53,17 @@ impl AppStateInner {
 
         let pm = PMModule::default();
 
+        let sso = match SSOService::new(Figment::new().merge(Env::raw())).await {
+            Ok(service) => {
+                tracing::info!("SSO service initialized successfully");
+                Some(service)
+            }
+            Err(e) => {
+                tracing::info!("SSO service initialization failed: {}. SSO will be disabled.", e);
+                None
+            }
+        };
+
         Self {
             database,
             ical,
@@ -57,6 +71,7 @@ impl AppStateInner {
             discourse,
             pm,
             workshop,
+            sso,
         }
     }
 }

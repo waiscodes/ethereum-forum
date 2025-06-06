@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LuArrowRight, LuLoader, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
 import { getWorkshopChat, useWorkshopChat, useWorkshopSendMessage } from '@/api/workshop';
+import { AuthGuard } from '@/components/AuthGuard';
 import { UpDownScroller } from '@/components/UpDown';
 import { ChatMessage } from '@/components/workshop/ChatMessage';
 import { queryClient } from '@/util/query';
@@ -44,7 +45,9 @@ function RouteComponent() {
 
     return (
         <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
-            <Chat chatId={chatId} />
+            <AuthGuard>
+                <Chat chatId={chatId} />
+            </AuthGuard>
         </div>
     );
 }
@@ -74,8 +77,8 @@ const Chat = ({ chatId }: { chatId: string }) => {
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-                ? 'Good Afternoon'
-                : 'Good Evening';
+              ? 'Good Afternoon'
+              : 'Good Evening';
 
     return (
         <div className="w-full h-full relative py-1">

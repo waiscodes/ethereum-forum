@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as, query_scalar};
 use tracing::info;
 
-use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
 
 use super::discourse::topic::{DiscourseTopicPost, DiscourseTopicResponse};

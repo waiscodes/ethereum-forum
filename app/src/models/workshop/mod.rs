@@ -19,7 +19,7 @@ pub struct WorkshopMessage {
 #[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
 pub struct WorkshopChat {
     pub chat_id: Uuid,
-    pub user_id: i32,
+    pub user_id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
@@ -31,13 +31,13 @@ pub struct WorkshopChat {
 pub struct WorkshopSnapshot {
     pub snapshot_id: Uuid,
     pub chat_id: Uuid,
-    pub user_id: i32,
+    pub user_id: Uuid,
     pub message_id: Uuid,
     pub created_at: DateTime<Utc>,
 }
 
 impl WorkshopChat {
-    pub async fn find_by_user_id(user_id: i32, state: &AppState) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn find_by_user_id(user_id: Uuid, state: &AppState) -> Result<Vec<Self>, sqlx::Error> {
         query_as("SELECT * FROM workshop_chats WHERE user_id = $1 ORDER BY created_at DESC")
             .bind(user_id)
             .fetch_all(&state.database.pool)
@@ -51,7 +51,7 @@ impl WorkshopChat {
             .await
     }
 
-    pub async fn create(user_id: i32, state: &AppState) -> Result<Self, sqlx::Error> {
+    pub async fn create(user_id: Uuid, state: &AppState) -> Result<Self, sqlx::Error> {
         query_as("INSERT INTO workshop_chats (user_id) VALUES ($1) RETURNING *")
             .bind(user_id)
             .fetch_one(&state.database.pool)
@@ -71,7 +71,7 @@ impl WorkshopMessage {
     pub async fn create_user_message(
         chat_id: Option<Uuid>,
         parent_message_id: Option<Uuid>,
-        user_id: i32,
+        user_id: Uuid,
         message: String,
         state: &AppState,
     ) -> Result<Self, sqlx::Error> {

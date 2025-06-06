@@ -12,7 +12,9 @@ use crate::modules::workshop::WorkshopService;
 use crate::state::AppState;
 use crate::server::ApiTags;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
+use crate::server::auth::AuthUser;
 use async_std::task;
+use poem::Request;
 
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct WorkshopApi;
@@ -45,9 +47,10 @@ impl WorkshopApi {
     async fn create_chat_from_summary(
         &self,
         state: Data<&AppState>,
+        auth_user: AuthUser,
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<Json<WorkshopMessage>> {
-        let user_id = 1;
+        let user_id = auth_user.0.user.user_id;
         let user_prompt = format!("Summarize ethereum.forum topic #{}", topic_id.0);
 
         let message = WorkshopMessage::create_user_message(None, None, user_id, user_prompt, &state).await.map_err(|e| {
@@ -77,8 +80,9 @@ impl WorkshopApi {
     async fn get_chats(
         &self,
         state: Data<&AppState>,
+        auth_user: AuthUser,
     ) -> Result<Json<Vec<WorkshopChat>>> {
-        let user_id = 1;
+        let user_id = auth_user.0.user.user_id;
         let chats = WorkshopChat::find_by_user_id(user_id, &state.0).await.map_err(|e| {
             tracing::error!("Error finding chats: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
@@ -94,15 +98,25 @@ impl WorkshopApi {
     async fn get_chat(
         &self,
         state: Data<&AppState>,
+        auth_user: AuthUser,
         #[oai(style = "simple")] chat_id: Path<Uuid>,
     ) -> Result<Json<WorkshopChatPayload>> {
-        let messages = WorkshopMessage::get_messages_by_chat_id(&chat_id, &state).await.map_err(|e| {
-            tracing::error!("Error finding messages: {:?}", e);
+        let user_id = auth_user.0.user.user_id;
+
+        // First verify that the chat belongs to the authenticated user
+        let chat = WorkshopChat::find_by_id(*chat_id, &state).await.map_err(|e| {
+            tracing::error!("Error finding chat: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
-        let chat = WorkshopChat::find_by_id(*chat_id, &state).await.map_err(|e| {
-            tracing::error!("Error finding chat: {:?}", e);
+        // Check if the chat belongs to the authenticated user
+        if chat.user_id != user_id {
+            tracing::warn!("User {} attempted to access chat {} owned by {}", user_id, *chat_id, chat.user_id);
+            return Err(poem::Error::from_status(StatusCode::FORBIDDEN));
+        }
+
+        let messages = WorkshopMessage::get_messages_by_chat_id(&chat_id, &state).await.map_err(|e| {
+            tracing::error!("Error finding messages: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
 
@@ -121,21 +135,36 @@ impl WorkshopApi {
     async fn send_message(
         &self,
         state: Data<&AppState>,
+        auth_user: AuthUser,
         payload: Json<WorkshopChatInput>,
         #[oai(style = "simple")] chat_id: Path<String>,
         #[oai(style = "simple")] parent_message: Query<Option<Uuid>>,
     ) -> Result<Json<WorkshopMessage>> {
-        let user_id = 1;
+        let user_id = auth_user.0.user.user_id;
         let message = payload.message.clone();
 
         let chat_id = if chat_id.eq("new") {
             None
         } else {
-            Some(Uuid::parse_str(&chat_id).map_err(|e| {
+            let parsed_chat_id = Uuid::parse_str(&chat_id).map_err(|e| {
                 tracing::error!("Error parsing chat id: {:?}", e);
                 poem::Error::from_status(StatusCode::BAD_REQUEST)
-            })?)
+            })?;
+
+            // If chat_id is provided, verify that it belongs to the authenticated user
+            let chat = WorkshopChat::find_by_id(parsed_chat_id, &state).await.map_err(|e| {
+                tracing::error!("Error finding chat: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+            if chat.user_id != user_id {
+                tracing::warn!("User {} attempted to send message to chat {} owned by {}", user_id, parsed_chat_id, chat.user_id);
+                return Err(poem::Error::from_status(StatusCode::FORBIDDEN));
+            }
+
+            Some(parsed_chat_id)
         };
+
         let message = WorkshopMessage::create_user_message(chat_id, *parent_message, user_id, message.to_string(), &state).await.map_err(|e| {
             tracing::error!("Error sending message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
@@ -147,7 +176,7 @@ impl WorkshopApi {
         })?;
 
         // Start processing the next message (this will create an OngoingPrompt)
-        let (ongoing_prompt, created_message) = WorkshopService::process_next_message(message.chat_id, message.message_id, &state).await.map_err(|e| {
+        let (_ongoing_prompt, created_message) = WorkshopService::process_next_message(message.chat_id, message.message_id, &state).await.map_err(|e| {
             tracing::error!("Error processing next message: {:?}", e);
             poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
         })?;
@@ -161,14 +190,73 @@ impl WorkshopApi {
 
     /// /ws/chat/:chat_id/:message_id/stream
     ///
-    /// Get SSE stream for a specific message response
+    /// Get SSE stream for message generation
     #[oai(path = "/ws/chat/:chat_id/:message_id/stream", method = "get", tag = "ApiTags::Workshop")]
     async fn stream_message_response(
         &self,
+        req: &Request,
         state: Data<&AppState>,
         #[oai(style = "simple")] chat_id: Path<Uuid>,
         #[oai(style = "simple")] message_id: Path<Uuid>,
+        #[oai(style = "simple")] token: Query<Option<String>>,
     ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
+        // Handle authentication - either via SecurityScheme or query parameter
+        let authenticated_user = if let Some(token_str) = token.0 {
+            // Manual token validation for EventSource compatibility
+            let sso_service = state.sso.as_ref()
+                .ok_or_else(|| {
+                    tracing::error!("SSO service not configured");
+                    poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+            let claims = sso_service.validate_jwt_token(&token_str)
+                .map_err(|e| {
+                    tracing::warn!("Invalid JWT token in query parameter: {}", e);
+                    poem::Error::from_status(StatusCode::UNAUTHORIZED)
+                })?;
+
+            let now = chrono::Utc::now().timestamp();
+            if claims.exp <= now {
+                tracing::warn!("Expired JWT token in query parameter");
+                return Err(poem::Error::from_status(StatusCode::UNAUTHORIZED));
+            }
+
+            let user_id = Uuid::parse_str(&claims.sub)
+                .map_err(|_| poem::Error::from_status(StatusCode::UNAUTHORIZED))?;
+
+            let user = crate::models::user::User::find_by_id(&state.database.pool, user_id).await
+                .map_err(|e| {
+                    tracing::error!("Database error looking up user: {}", e);
+                    poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+                })?
+                .ok_or_else(|| {
+                    tracing::warn!("User not found: {}", user_id);
+                    poem::Error::from_status(StatusCode::UNAUTHORIZED)
+                })?;
+
+            crate::server::auth::AuthenticatedUser { user, claims }
+        } else {
+            // Try to extract from Authorization header using our helper
+            match crate::server::auth::extract_user_from_request(req).await {
+                Ok(Some(user)) => user,
+                Ok(None) => return Err(poem::Error::from_status(StatusCode::UNAUTHORIZED)),
+                Err(_) => return Err(poem::Error::from_status(StatusCode::UNAUTHORIZED)),
+            }
+        };
+
+        let user_id = authenticated_user.user.user_id;
+
+        // Verify that the chat belongs to the authenticated user
+        let chat = WorkshopChat::find_by_id(*chat_id, &state).await.map_err(|e| {
+            tracing::error!("Error finding chat: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
+
+        if chat.user_id != user_id {
+            tracing::warn!("User {} attempted to stream from chat {} owned by {}", user_id, *chat_id, chat.user_id);
+            return Err(poem::Error::from_status(StatusCode::FORBIDDEN));
+        }
+
         tracing::info!("Stream request for chat: {}, message: {}", *chat_id, *message_id);
         
         // List all ongoing prompts for debugging
@@ -223,6 +311,7 @@ impl WorkshopApi {
     async fn start_topic_summary_stream(
         &self,
         state: Data<&AppState>,
+        _auth_user: AuthUser, // Authentication required but user not used for this endpoint
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<Json<serde_json::Value>> {
         let topic = Topic::get_by_topic_id(topic_id.0, &state)
@@ -321,6 +410,7 @@ impl WorkshopApi {
     async fn stream_topic_summary(
         &self,
         state: Data<&AppState>,
+        _auth_user: AuthUser, // Authentication required but user not used for this endpoint
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
         tracing::info!("Summary stream request for topic: {}", topic_id.0);

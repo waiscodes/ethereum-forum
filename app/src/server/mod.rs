@@ -26,6 +26,7 @@ pub mod topic;
 pub mod user;
 pub mod pm;
 pub mod workshop;
+pub mod auth;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -47,7 +48,8 @@ pub async fn start_http(state: AppState) {
     info!("Starting HTTP server");
     let api_service = OpenApiService::new(get_api(state.clone()), "Ethereum Forum", "0.0.1")
         .server("https://ethereum.forum/api")
-        .server("http://localhost:3000/api");
+        .server("http://localhost:3000/api")
+        .description("Ethereum Forum API with JWT Bearer Token Authentication");
 
     let spec = api_service.spec_endpoint();
 

@@ -263,6 +263,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/sso/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /user/sso/providers
+         * @description Get available SSO providers
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["SSOProvidersResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/sso/{sso_id}/login": {
         parameters: {
             query?: never;
@@ -272,7 +310,7 @@ export interface paths {
         };
         /**
          * /user/sso/:sso_id/login
-         * @description Login with SSO
+         * @description Login with SSO - returns redirect URL
          */
         get: {
             parameters: {
@@ -290,13 +328,96 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": unknown;
+                        "application/json; charset=utf-8": components["schemas"]["LoginResponse"];
                     };
                 };
             };
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/sso/{sso_id}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /user/sso/:sso_id/callback
+         * @description SSO callback endpoint - exchanges code for JWT token
+         */
+        get: {
+            parameters: {
+                query: {
+                    code: string;
+                    _state_param?: string;
+                };
+                header?: never;
+                path: {
+                    sso_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AuthResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/token/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * /user/token/validate
+         * @description Validate JWT token
+         */
+        post: {
+            parameters: {
+                query: {
+                    token: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["TokenValidationResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -677,6 +798,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AuthResponse */
+        AuthResponse: {
+            token: string;
+            user: components["schemas"]["User"];
+            /** Format: int64 */
+            expires_at: number;
+        };
         /** DiscourseBadge */
         DiscourseBadge: {
             /** Format: uint32 */
@@ -920,6 +1048,10 @@ export interface components {
         GoogleMeetingData: {
             link: string;
         };
+        /** LoginResponse */
+        LoginResponse: {
+            redirect_url: string;
+        };
         Meeting: components["schemas"]["Meeting_ZoomMeetingData"] | components["schemas"]["Meeting_GoogleMeetingData"] | components["schemas"]["Meeting_YoutubeMeetingData"];
         Meeting_GoogleMeetingData: {
             /**
@@ -1056,11 +1188,22 @@ export interface components {
             /** Format: uint32 */
             pm_number?: number;
         };
+        /** SSOProvidersResponse */
+        SSOProvidersResponse: {
+            providers: string[];
+        };
         /** StreamingResponse */
         StreamingResponse: {
             content: string;
             is_complete: boolean;
             error?: string;
+        };
+        /** TokenValidationResponse */
+        TokenValidationResponse: {
+            valid: boolean;
+            user?: components["schemas"]["UserInfo"];
+            /** Format: int64 */
+            expires_at?: number;
         };
         /** Topic */
         Topic: {
@@ -1096,6 +1239,30 @@ export interface components {
             summary_text: string;
             /** Format: date-time */
             created_at: string;
+        };
+        /** User */
+        User: {
+            /** Format: uuid */
+            user_id: string;
+            username?: string;
+            display_name?: string;
+            email?: string;
+            avatar_url?: string;
+            sso_provider: string;
+            sso_user_id: string;
+            extras: unknown;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            last_login_at?: string;
+        };
+        /** UserInfo */
+        UserInfo: {
+            sub: string;
+            email: string;
+            name: string;
         };
         /** WorkshopChat */
         WorkshopChat: {

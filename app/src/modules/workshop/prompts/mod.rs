@@ -1,15 +1,13 @@
 use async_std::task;
 use futures::{Stream, StreamExt, stream};
 use openai::chat::{ChatCompletion, ChatCompletionDelta, ChatCompletionMessage};
-use reqwest::StatusCode;
 use std::collections::{VecDeque, HashMap};
 use std::sync::Arc;
 use async_std::sync::{RwLock, Mutex};
 use async_std::channel::{unbounded, Sender};
 use tracing::info;
-use uuid::Uuid;
 
-use crate::{models::workshop::{WorkshopChat, WorkshopMessage}, state::AppState};
+use crate::state::AppState;
 
 pub const SUMMARY_PROMPT: &str = include_str!("./summary.md");
 pub const WORKSHOP_PROMPT: &str = include_str!("./workshop.md");
@@ -62,7 +60,7 @@ impl OngoingPrompt {
         
         task::spawn(async move {
             let mut data = String::new();
-            let mut completion_error: Option<String> = None;
+            let completion_error: Option<String> = None;
 
             while let Some(chunk) = chat_completion.recv().await {
                 // Buffer the chunk

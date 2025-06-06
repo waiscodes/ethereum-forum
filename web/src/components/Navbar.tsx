@@ -1,10 +1,16 @@
 import { Link, useMatches } from '@tanstack/react-router';
 import classNames from 'classnames';
 import { FC, useEffect, useState } from 'react';
+import { FiLogOut, FiUser } from 'react-icons/fi';
 import { SiEthereum } from 'react-icons/si';
+
+import { useAuth, useLogout } from '../api/auth';
+import { LoginButton } from './LoginButton';
 
 export const Navbar: FC = () => {
     const data = useMatches();
+    const { isAuthenticated, user, isLoading } = useAuth();
+    const logoutMutation = useLogout();
 
     const title = findMapReverse(data, (m) => {
         if ('title' in m.context) {
@@ -14,6 +20,10 @@ export const Navbar: FC = () => {
     const route = data[data.length - 1].routeId;
 
     document.title = title ?? 'Ethereum Forum';
+
+    const handleLogout = () => {
+        logoutMutation.mutate();
+    };
 
     return (
         <>
@@ -41,8 +51,33 @@ export const Navbar: FC = () => {
                         {title}
                     </div>
                 </div>
-                <div className="items-center h-full gap-2 flex-1 justify-end px-2 text-sm hidden 2xl:flex">
-                    {/* <UserProfile /> */}
+                <div className="items-center h-full gap-2 flex-1 justify-end px-2 text-sm hidden md:flex">
+                    {isLoading ? (
+                        <div className="flex items-center gap-2 px-3 py-1 text-sm text-primary">
+                            <FiUser size={16} />
+                            Loading...
+                        </div>
+                    ) : isAuthenticated && user ? (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 px-2 py-1 text-sm">
+                                <FiUser size={16} />
+                                <span>{user.display_name || user.username || user.email}</span>
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                disabled={logoutMutation.isPending}
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-sm hover:bg-secondary transition-colors disabled:opacity-50"
+                                title="Sign out"
+                            >
+                                <FiLogOut size={14} />
+                                <span className="hidden lg:inline">
+                                    {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
+                                </span>
+                            </button>
+                        </div>
+                    ) : (
+                        <LoginButton />
+                    )}
                     {/* Last refreshed 2 min ago */}
                 </div>
             </div>

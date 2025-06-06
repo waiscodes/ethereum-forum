@@ -112,7 +112,17 @@ export const useWorkshopStreamMessage = (chatId: string, messageId: string) => {
         setIsComplete(false);
         hasReceivedDataRef.current = false;
 
-        const eventSource = new EventSource(`/api/ws/chat/${chatId}/${messageId}/stream`);
+        // Get auth token from localStorage
+        const token = localStorage.getItem('auth_token');
+
+        // Construct URL with auth token as query parameter
+        const url = new URL(`/api/ws/chat/${chatId}/${messageId}/stream`, window.location.origin);
+
+        if (token) {
+            url.searchParams.set('token', token);
+        }
+
+        const eventSource = new EventSource(url.toString());
 
         eventSource.onopen = () => {
             console.log('EventSource connection opened');

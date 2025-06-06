@@ -1,9 +1,22 @@
 import { Link, useParams } from '@tanstack/react-router';
 import classNames from 'classnames';
 
+import { useAuth } from '@/api/auth';
 import { useWorkshopChats } from '@/api/workshop';
 
 export const WorkshopChatsNav = () => {
+    const { isAuthenticated } = useAuth();
+
+    // Don't render anything if not authenticated
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    // Only render the component that uses the hook when authenticated
+    return <AuthenticatedWorkshopChats />;
+};
+
+const AuthenticatedWorkshopChats = () => {
     const { data: chats } = useWorkshopChats();
     const { chatId } = useParams({ from: '/chat/$chatId' });
 

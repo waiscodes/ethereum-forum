@@ -1,13 +1,16 @@
 import { Link, useRouterState } from '@tanstack/react-router';
+import { FiLock } from 'react-icons/fi';
 import { GrWorkshop } from 'react-icons/gr';
 import { SiOpenai } from 'react-icons/si';
 
+import { useAuth } from '../api/auth';
 import { ProseWidthSwitcher } from './preferences/ProseWidthSwitcher';
 import { ThemeSwitcher } from './preferences/ThemeSwitcher';
 import { WorkshopChatsNav } from './workshop/WorkshopChatsNav';
 
 export const Sidebar = () => {
     const { pathname } = useRouterState({ select: (s) => s.location });
+    const { isAuthenticated } = useAuth();
 
     return (
         <div className="left-bar space-y-2">
@@ -57,6 +60,7 @@ export const Sidebar = () => {
                             {
                                 title: 'Workshop',
                                 href: '/chat/new',
+                                requiresAuth: true,
                             },
                         ].map((item) => (
                             <li key={item.href} className="group">
@@ -64,10 +68,13 @@ export const Sidebar = () => {
                                     to={item.href}
                                     className="flex justify-between items-center hover:bg-secondary px-1.5 py-0.5 relative"
                                 >
-                                    <div>
+                                    <div className="flex items-center gap-2">
                                         <div className="absolute top-0 left-2 w-2 h-full border-l-2 border-primary group-last:h-1/2"></div>
                                         <div className="absolute top-0 left-2 w-2 h-full border-primary border-b-2 -translate-y-1/2"></div>
                                         <span className="pl-4">{item.title}</span>
+                                        {item.requiresAuth && !isAuthenticated && (
+                                            <FiLock size={12} className="text-primary opacity-60" />
+                                        )}
                                     </div>
                                     {item.short && (
                                         <span className="text-sm text-secondary text-right">
@@ -75,11 +82,13 @@ export const Sidebar = () => {
                                         </span>
                                     )}
                                 </Link>
-                                {item.href === '/chat/new' && pathname.startsWith('/chat') && (
-                                    <div className="pl-4">
-                                        <WorkshopChatsNav />
-                                    </div>
-                                )}
+                                {item.href === '/chat/new' &&
+                                    pathname.startsWith('/chat') &&
+                                    isAuthenticated && (
+                                        <div className="pl-4">
+                                            <WorkshopChatsNav />
+                                        </div>
+                                    )}
                             </li>
                         ))}
                     </ul>
@@ -95,6 +104,7 @@ export const Sidebar = () => {
                             >
                                 <GrWorkshop />
                                 Open Workshop
+                                {!isAuthenticated && <FiLock size={12} className="opacity-60" />}
                             </Link>
                             <a
                                 href="https://chatgpt.com/g/g-68104906afb88191ae3f52c2aff36737-ethereum-forum-assistant"

@@ -461,3 +461,24 @@ html.scrolled .only-after-scroll {
 .inline-onebox {
     @apply inline;
 }
+
+/* Sonner toast button styling */
+[data-sonner-toast] button[data-button] {
+    background-color: rgb(var(--theme-bg-secondary));
+    color: rgb(var(--theme-text-primary));
+    border: 1px solid rgb(var(--theme-border-secondary));
+}
+
+[data-sonner-toast] button[data-button]:hover {
+    background-color: rgb(var(--theme-bg-tertiary));
+}
+
+[data-sonner-toast] button[data-close-button] {
+    background-color: transparent;
+    color: rgb(var(--theme-text-primary));
+    border: none;
+}
+
+[data-sonner-toast] button[data-close-button]:hover {
+    background-color: rgb(var(--theme-bg-secondary));
+}
