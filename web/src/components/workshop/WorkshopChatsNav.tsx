@@ -30,6 +30,7 @@ const AuthenticatedWorkshopChats = () => {
                         <Link
                             to="/chat/$chatId"
                             params={{ chatId: chat.chat_id }}
+                            hash={chat.last_message_id}
                             className={classNames(
                                 'flex justify-between items-center hover:bg-secondary px-1.5 py-0.5 relative',
                                 chat.chat_id === chatId && 'bg-secondary'

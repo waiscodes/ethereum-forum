@@ -28,6 +28,7 @@ import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/top
 import { CategoryTag } from '@/components/CategoryTag';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
+import { ImageLightbox } from '@/components/topic/Prose';
 import { TopicPost } from '@/components/topic/TopicPost';
 import { StreamingSummary } from '@/components/topics/StreamingSummary';
 import { UpDownScroller } from '@/components/UpDown';
@@ -35,7 +36,6 @@ import { decodeCategory } from '@/util/category';
 import { isGithub, isHackmd, isStandardsLink, spliceRelatedLinks } from '@/util/links';
 import { formatBigNumber } from '@/util/numbers';
 import { queryClient } from '@/util/query';
-import { ImageLightbox } from '@/components/topic/Prose';
 
 interface DiscourseUser {
     id: number;

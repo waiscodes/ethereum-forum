@@ -10,11 +10,12 @@ export const ChatMessage = ({ message }: { message: WorkshopMessage }) => {
     return (
         <div
             className={classNames(
-                'flex flex-col gap-2',
+                'flex flex-col gap-2 scroll-m-20',
                 message.sender_role === 'user' && 'ml-auto w-fit',
                 message.sender_role === 'assistant' && ''
             )}
             key={message.message_id}
+            id={message.message_id}
         >
             {match(message.sender_role)
                 .with('user', () => <div className="text-sm text-primary/50">You</div>)

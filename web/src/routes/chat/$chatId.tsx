@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
-import { useState } from 'react';
+import { createFileRoute, useLocation, useNavigate, useParams } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import { LuArrowRight, LuLoader, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
@@ -58,6 +58,24 @@ const Chat = ({ chatId }: { chatId: string }) => {
     const lastChatMessage = chat?.messages?.[chat?.messages.length - 1];
     const { mutate: sendMessage, isPending: sending } = useWorkshopSendMessage(chatId);
     const navigate = useNavigate();
+    const { hash } = useLocation();
+
+    // Handle scrolling to hash element (last message)
+    useEffect(() => {
+        if (hash && chat?.messages?.length) {
+            // Use setTimeout to ensure the DOM is fully rendered
+            setTimeout(() => {
+                const element = document.getElementById(hash);
+
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                    });
+                }
+            }, 100);
+        }
+    }, [chatId, hash]);
+
     const onMessageSend = (message: string) => {
         sendMessage(
             { message, parent_message: lastChatMessage?.message_id },
