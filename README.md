@@ -1,5 +1,25 @@
 # Ethereum Forum
 
+## MCP
+
+This project exposes mcp tools via the following endpoint:
+
+```url
+https://ethereum.forum/mcp
+```
+
+You can easily add it to your favourite editor by adding the following to your `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "ethereum-forum": {
+      "url": "https://ethereum.forum/mcp"
+    }
+  }
+}
+```
+
 ## Data Sources
 
 - [x] Protocol Calendar (ical)
@@ -12,6 +32,3 @@
 - [ ] github/ethereum/ercs (TODO)
   - data & prs
 - [ ] blog.ethereum.org (TODO)
-
-## Features
-- [x] LLM Summaries
