@@ -46,11 +46,11 @@ pub struct DiscourseTopicPostStream {
     pub extra: serde_json::Value, // unknown
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DiscourseTopicPost {
     pub id: i32,
     // pub name: String,
-    // pub username: String,
+    pub username: String,
     // pub avatar_template: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -51,6 +51,7 @@ pub struct ForumSearchDocument {
     pub post_id: Option<i32>,
     pub post_number: Option<i32>,
     pub user_id: Option<i32>,
+    pub username: Option<String>,
     pub title: Option<String>,
     pub slug: Option<String>,
     pub pm_issue: Option<i32>,
@@ -167,6 +168,7 @@ impl DiscourseService {
                                     post_id: None,
                                     post_number: None,
                                     user_id: None,
+                                    username: None,
                                     title: Some(topic.title.clone()),
                                     slug: Some(topic.slug.clone()),
                                     pm_issue: topic.pm_issue,
@@ -196,8 +198,8 @@ impl DiscourseService {
 
                 // found topic
                 let mut meili_docs = Vec::new();
-                for post in topic.post_stream.posts {
-                    let post = Post::from_discourse(post);
+                for discourse_post in topic.post_stream.posts {
+                    let post = Post::from_discourse(discourse_post.clone());
                     match post.upsert(&state).await {
                         Ok(_) => {
                             info!("Upserted post: {:?}", post.post_id);
@@ -209,6 +211,7 @@ impl DiscourseService {
                                     post_id: Some(post.post_id),
                                     post_number: Some(post.post_number),
                                     user_id: Some(post.user_id),
+                                    username: Some(discourse_post.username),
                                     title: None,
                                     slug: None,
                                     pm_issue: None,

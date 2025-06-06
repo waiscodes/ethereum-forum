@@ -6,7 +6,11 @@ use poem_mcpserver::{
 };
 
 use crate::{
-    models::topics::{Post, Topic},
+    models::{
+        topics::{Post, Topic},
+        discourse::user::{DiscourseUserProfile, DiscourseUserSummaryResponse},
+    },
+    modules::discourse::{ForumSearchDocument, LResult},
     state::AppState,
 };
 
@@ -52,6 +56,428 @@ impl ForumTools {
                 extra: None,
             }]),
         }
+    }
+
+    /// Search forum documents using Meilisearch. Returns both topics and posts matching the query.
+    async fn search_forum(
+        &self,
+        query: String,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            match forum
+                .search()
+                .with_query(&query)
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+            {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: None,
+                        post_id: None,
+                        post_number: None,
+                        user_id: None,
+                        username: None,
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: None,
+                post_id: None,
+                post_number: None,
+                user_id: None,
+                username: None,
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Search only topics using Meilisearch.
+    async fn search_topics(
+        &self,
+        query: String,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            match forum
+                .search()
+                .with_query(&query)
+                .with_filter("entity_type = topic")
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+            {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: None,
+                        post_id: None,
+                        post_number: None,
+                        user_id: None,
+                        username: None,
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: None,
+                post_id: None,
+                post_number: None,
+                user_id: None,
+                username: None,
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Search only posts using Meilisearch.
+    async fn search_posts(
+        &self,
+        query: String,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            match forum
+                .search()
+                .with_query(&query)
+                .with_filter("entity_type = post")
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+            {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: None,
+                        post_id: None,
+                        post_number: None,
+                        user_id: None,
+                        username: None,
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: None,
+                post_id: None,
+                post_number: None,
+                user_id: None,
+                username: None,
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Search for posts within a specific topic using Meilisearch.
+    async fn search_posts_in_topic(
+        &self,
+        topic_id: i32,
+        query: String,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            let filter = format!("entity_type = post AND topic_id = {}", topic_id);
+
+            match forum
+                .search()
+                .with_query(&query)
+                .with_filter(&filter)
+                .with_limit(limit)
+                .with_offset(offset)
+                .execute::<ForumSearchDocument>()
+                .await
+            {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: Some(topic_id),
+                        post_id: None,
+                        post_number: None,
+                        user_id: None,
+                        username: None,
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: Some(topic_id),
+                post_id: None,
+                post_number: None,
+                user_id: None,
+                username: None,
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Search for forum documents by a specific user using Meilisearch.
+    async fn search_by_user(
+        &self,
+        user_id: i32,
+        query: Option<String>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            let filter = format!("user_id = {}", user_id);
+
+            let result = if let Some(q) = query {
+                forum
+                    .search()
+                    .with_filter(&filter)
+                    .with_limit(limit)
+                    .with_offset(offset)
+                    .with_query(&q)
+                    .execute::<ForumSearchDocument>()
+                    .await
+            } else {
+                forum
+                    .search()
+                    .with_filter(&filter)
+                    .with_limit(limit)
+                    .with_offset(offset)
+                    .execute::<ForumSearchDocument>()
+                    .await
+            };
+
+            match result {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: None,
+                        post_id: None,
+                        post_number: None,
+                        user_id: Some(user_id),
+                        username: None,
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: None,
+                post_id: None,
+                post_number: None,
+                user_id: Some(user_id),
+                username: None,
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Get user profile information from Discourse by username.
+    async fn get_user_profile(&self, username: String) -> Json<Option<DiscourseUserProfile>> {
+        match self.state.discourse.fetch_discourse_user_cached(&username).await {
+            LResult::Success(profile) => Json(Some(profile)),
+            LResult::Failed(_) => Json(None),
+        }
+    }
+
+    /// Get user summary information from Discourse by username.
+    async fn get_user_summary(&self, username: String) -> Json<Option<DiscourseUserSummaryResponse>> {
+        match self.state.discourse.fetch_discourse_user_summary_cached(&username).await {
+            LResult::Success(summary) => Json(Some(summary)),
+            LResult::Failed(_) => Json(None),
+        }
+    }
+
+    /// Convert username to user ID. Returns the user ID if found, -1 if not found.
+    async fn username_to_user_id(&self, username: String) -> Json<i32> {
+        match self.state.discourse.fetch_discourse_user_cached(&username).await {
+            LResult::Success(profile) => Json(profile.user.id),
+            LResult::Failed(_) => Json(-1),
+        }
+    }
+
+    /// Search for forum documents by username using Meilisearch.
+    async fn search_by_username(
+        &self,
+        username: String,
+        query: Option<String>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        if let Some(meili) = &self.state.meili {
+            let forum = meili.index("forum");
+            let limit = limit.unwrap_or(20);
+            let offset = offset.unwrap_or(0);
+
+            let filter = format!("username = \"{}\"", username);
+
+            let result = if let Some(q) = query {
+                forum
+                    .search()
+                    .with_filter(&filter)
+                    .with_limit(limit)
+                    .with_offset(offset)
+                    .with_query(&q)
+                    .execute::<ForumSearchDocument>()
+                    .await
+            } else {
+                forum
+                    .search()
+                    .with_filter(&filter)
+                    .with_limit(limit)
+                    .with_offset(offset)
+                    .execute::<ForumSearchDocument>()
+                    .await
+            };
+
+            match result {
+                Ok(results) => {
+                    let documents: Vec<ForumSearchDocument> = results.hits.into_iter().map(|hit| hit.result).collect();
+                    Json(documents)
+                }
+                Err(err) => {
+                    Json(vec![ForumSearchDocument {
+                        entity_type: "error".to_string(),
+                        topic_id: None,
+                        post_id: None,
+                        post_number: None,
+                        user_id: None,
+                        username: Some(username.clone()),
+                        title: None,
+                        slug: None,
+                        pm_issue: None,
+                        cooked: Some(format!("search error: {err}")),
+                        entity_id: "error".to_string(),
+                    }])
+                }
+            }
+        } else {
+            Json(vec![ForumSearchDocument {
+                entity_type: "error".to_string(),
+                topic_id: None,
+                post_id: None,
+                post_number: None,
+                user_id: None,
+                username: Some(username),
+                title: None,
+                slug: None,
+                pm_issue: None,
+                cooked: Some("Meilisearch is not configured".to_string()),
+                entity_id: "error".to_string(),
+            }])
+        }
+    }
+
+    /// Convert @username or /u/username format to clean username and search.
+    async fn search_by_username_mention(
+        &self,
+        username_mention: String,
+        query: Option<String>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Json<Vec<ForumSearchDocument>> {
+        // Clean up the username - handle @username and /u/username formats
+        let clean_username = if username_mention.starts_with('@') {
+            username_mention.trim_start_matches('@').to_string()
+        } else if username_mention.starts_with("/u/") {
+            username_mention.trim_start_matches("/u/").to_string()
+        } else {
+            username_mention
+        };
+
+        self.search_by_username(clean_username, query, limit, offset).await
     }
 }
 

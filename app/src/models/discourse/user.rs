@@ -78,8 +78,8 @@ pub struct DiscourseBadgeType {
 
 #[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseDetailedUser {
-    id: i32,
-    username: String,
+    pub id: i32,
+    pub username: String,
     name: Option<String>,
     avatar_template: String,
     last_posted_at: Option<String>,
@@ -131,7 +131,7 @@ pub struct DiscourseUserProfile {
     badges: Vec<DiscourseBadge>,
     badge_types: Vec<DiscourseBadgeType>,
     users: Vec<DiscourseUser>, // Reuses the existing DiscourseUser struct
-    user: DiscourseDetailedUser,
+    pub user: DiscourseDetailedUser,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object, Clone)]
