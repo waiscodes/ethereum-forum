@@ -11,6 +11,8 @@ use crate::state::AppState;
 
 pub const SUMMARY_PROMPT: &str = include_str!("./summary.md");
 pub const WORKSHOP_PROMPT: &str = include_str!("./workshop.md");
+pub const SHORTSUM_PROMPT: &str = include_str!("./shortsum.md");
+pub const SHORTSUM_MODEL: &str = "mistralai/mistral-7b-instruct:free";
 
 // Shared state for an ongoing prompt
 #[derive(Clone)]

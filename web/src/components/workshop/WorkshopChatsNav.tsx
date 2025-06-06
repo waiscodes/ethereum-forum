@@ -4,6 +4,8 @@ import classNames from 'classnames';
 import { useAuth } from '@/api/auth';
 import { useWorkshopChats } from '@/api/workshop';
 
+import { Tooltip } from '../tooltip/Tooltip';
+
 export const WorkshopChatsNav = () => {
     const { isAuthenticated } = useAuth();
 
@@ -33,12 +35,18 @@ const AuthenticatedWorkshopChats = () => {
                                 chat.chat_id === chatId && 'bg-secondary'
                             )}
                         >
-                            <div>
+                            <div className="w-full">
                                 <div className="absolute top-0 left-2 w-2 h-full border-l-2 border-primary group-last/workshop:h-1/2"></div>
                                 <div className="absolute top-0 left-2 w-2 h-full border-primary border-b-2 -translate-y-1/2"></div>
-                                <div className="pl-4">
+                                <Tooltip
+                                    trigger={
+                                        <div className="pl-4 overflow-hidden text-ellipsis whitespace-nowrap w-full">
+                                            {chat.summary || 'Untitled conversation'}
+                                        </div>
+                                    }
+                                >
                                     {chat.summary || 'Untitled conversation'}
-                                </div>
+                                </Tooltip>
                             </div>
                         </Link>
                     </li>

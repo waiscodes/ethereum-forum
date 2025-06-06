@@ -156,6 +156,14 @@ export const useWorkshopStreamMessage = (chatId: string, messageId: string) => {
         eventSource.onerror = (event) => {
             console.error('EventSource error:', event);
 
+            // invalidate chats (in hopes in made a summary)
+            setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['workshop', 'chats'] });
+            }, 2222);
+            setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['workshop', 'chats'] });
+            }, 5000);
+
             // Only show error if we haven't received any data yet
             // This indicates a real connection problem, not normal stream completion
             if (!hasReceivedDataRef.current) {

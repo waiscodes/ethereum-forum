@@ -100,13 +100,13 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
     
     // Try different ways to access the app state
     let state = if let Some(state) = req.extensions().get::<poem::web::Data<AppState>>() {
-        tracing::debug!("✅ Found AppState via poem::web::Data<AppState>");
+        // tracing::debug!("✅ Found AppState via poem::web::Data<AppState>");
         state
     } else if let Some(state) = req.extensions().get::<AppState>() {
-        tracing::debug!("✅ Found AppState directly");
+        // tracing::debug!("✅ Found AppState directly");
         state
     } else if let Some(state) = req.extensions().get::<std::sync::Arc<crate::state::AppStateInner>>() {
-        tracing::debug!("✅ Found AppState via Arc<AppStateInner>");
+        // tracing::debug!("✅ Found AppState via Arc<AppStateInner>");
         state
     } else {
         tracing::error!("❌ No app state found in request extensions with any method");
@@ -126,12 +126,12 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         }
     };
 
-    tracing::debug!("✅ SSO service found, attempting JWT validation");
+    // tracing::debug!("✅ SSO service found, attempting JWT validation");
 
     // Validate JWT token
     let claims = match sso_service.validate_jwt_token(&bearer.token) {
         Ok(claims) => {
-            tracing::debug!("✅ JWT signature validation successful for user: {}", claims.sub);
+            // tracing::debug!("✅ JWT signature validation successful for user: {}", claims.sub);
             claims
         },
         Err(e) => {
@@ -146,7 +146,7 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         tracing::warn!("❌ JWT token has expired: exp={}, now={}", claims.exp, now);
         return None;
     }
-    tracing::debug!("✅ Token expiration check passed: exp={}, now={}", claims.exp, now);
+    // tracing::debug!("✅ Token expiration check passed: exp={}, now={}", claims.exp, now);
 
     // Parse user_id from claims.sub (which is now a UUID string)
     let user_id = match Uuid::parse_str(&claims.sub) {
@@ -160,12 +160,12 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         }
     };
 
-    tracing::debug!("🔍 Looking up user in database: {}", user_id);
+    // tracing::debug!("🔍 Looking up user in database: {}", user_id);
 
     // Look up user in database
     let user = match User::find_by_id(&state.database.pool, user_id).await {
         Ok(Some(user)) => {
-            tracing::info!("✅ User found in database: {} ({})", user.display_name.as_deref().unwrap_or("no name"), user.user_id);
+            // tracing::info!("✅ User found in database: {} ({})", user.display_name.as_deref().unwrap_or("no name"), user.user_id);
             user
         },
         Ok(None) => {
