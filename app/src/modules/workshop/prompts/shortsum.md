@@ -18,6 +18,8 @@ Avoid referring to yourself or to the fact that there is an agent involved unles
 
 Prefer '&' over 'and'
 
+Try your best to extract what the user was trying to accomplish in the conversation.
+
 ## Examples
 
 - EIP-7702 Security Implications

@@ -249,4 +249,4 @@ pub async fn extract_user_from_request(req: &Request) -> Result<Option<Authentic
         .ok_or(AuthError::UserNotFound)?;
 
     Ok(Some(AuthenticatedUser { user, claims }))
-} 
+}
