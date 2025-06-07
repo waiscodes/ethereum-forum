@@ -373,14 +373,14 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     }, [isResultExpanded, toolCall.result]);
 
     const getStatusIcon = () => {
-        switch (toolCall.status) {
-            case 'Starting':
+        switch (toolCall.status.toLowerCase()) {
+            case 'starting':
                 return <LuCog className="animate-spin text-secondary" size={16} />;
-            case 'Executing':
+            case 'executing':
                 return <LuLoader className="animate-spin text-yellow-600" size={16} />;
-            case 'Success':
+            case 'success':
                 return <LuCheck className="text-green-600" size={16} />;
-            case 'Error':
+            case 'error':
                 return <LuX className="text-red-600" size={16} />;
             default:
                 return <LuCog className="text-primary/60" size={16} />;
@@ -388,29 +388,29 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     };
 
     const getStatusStyles = () => {
-        switch (toolCall.status) {
-            case 'Starting':
+        switch (toolCall.status.toLowerCase()) {
+            case 'starting':
                 return {
                     container: 'border-secondary bg-secondary/30',
                     header: 'bg-secondary/50 border-secondary',
                     badge: 'bg-secondary text-primary',
                     text: 'text-secondary',
                 };
-            case 'Executing':
+            case 'executing':
                 return {
                     container: 'border-yellow-200 bg-yellow-50/50',
                     header: 'bg-yellow-100/50 border-yellow-200',
                     badge: 'bg-yellow-600 text-white',
                     text: 'text-yellow-800',
                 };
-            case 'Success':
+            case 'success':
                 return {
                     container: 'border-green-200 bg-green-50/50',
                     header: 'bg-green-100/50 border-green-200',
                     badge: 'bg-green-600 text-white',
                     text: 'text-green-800',
                 };
-            case 'Error':
+            case 'error':
                 return {
                     container: 'border-red-200 bg-red-50/50',
                     header: 'bg-red-100/50 border-red-200',
@@ -428,17 +428,17 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     };
 
     const getStatusText = () => {
-        switch (toolCall.status) {
-            case 'Starting':
+        switch (toolCall.status.toLowerCase()) {
+            case 'starting':
                 return 'Initializing';
-            case 'Executing':
+            case 'executing':
                 return 'In Progress';
-            case 'Success':
+            case 'success':
                 return 'Completed';
-            case 'Error':
+            case 'error':
                 return 'Failed';
             default:
-                return 'Unknown';
+                return 'Unknown (' + toolCall.status + ')';
         }
     };
 
@@ -446,7 +446,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
         // Convert snake_case to readable format
         return toolName
             .split('_')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .map((word, i) => (i !== 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
             .join(' ');
     };
 
@@ -522,7 +522,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary shadow-sm">
                             {getStatusIcon()}
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <span className="font-semibold text-primary text-sm">
                                     {getToolDisplayName(toolCall.tool_name)}
@@ -537,7 +537,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                                 </span>
                             </div>
                             {toolCall.arguments && (
-                                <span className="text-xs text-primary/70">
+                                <span className="text-xs text-primary/70 leading-4">
                                     {formatInputSummary(toolCall.tool_name, toolCall.arguments)}
                                 </span>
                             )}
