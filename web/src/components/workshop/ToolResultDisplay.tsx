@@ -5,10 +5,11 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { match } from 'ts-pattern';
 
+import { formatDate, truncateText } from '@/util/format';
+
 import { PostCard } from './cards/PostCard';
 import { SearchResults } from './components/SearchResults';
 import type { ToolResultDisplayProps, UserProfile } from './types';
-import { formatDate, truncateText } from './utils';
 
 const UserProfileCard: React.FC<{ user: UserProfile }> = ({ user }) => (
     <div className="border border-primary/20 rounded-lg p-6 bg-secondary/50">

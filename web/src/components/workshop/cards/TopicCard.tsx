@@ -1,8 +1,9 @@
 import React from 'react';
 import { LuCalendar, LuExternalLink, LuMessageSquare, LuUsers } from 'react-icons/lu';
 
+import { formatRelativeTime } from '@/util/format';
+
 import type { TopicSummary } from '../types';
-import { formatRelativeTime } from '../utils';
 
 interface TopicCardProps {
     topic: TopicSummary;

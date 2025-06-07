@@ -77,7 +77,8 @@ pub const SUMMARY_PROMPT: &str = include_str!("./summary.md");
 pub const SUMMARY_MODEL: &str = "mistralai/ministral-3b";
 
 pub const WORKSHOP_PROMPT: &str = include_str!("./workshop.md");
-pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-pro-preview";
+pub const WORKSHOP_MODEL: &str = "google/gemini-2.0-flash-001";
+// pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-pro-preview";
 
 pub const SHORTSUM_PROMPT: &str = include_str!("./shortsum.md");
 pub const SHORTSUM_MODEL: &str = "mistralai/mistral-7b-instruct:free";

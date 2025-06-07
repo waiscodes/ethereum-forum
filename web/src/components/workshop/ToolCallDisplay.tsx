@@ -14,6 +14,8 @@ import {
 import { match } from 'ts-pattern';
 
 import { components } from '@/api/schema.gen';
+import { formatJSON, getToolDisplayName, isValidJSON } from '@/util/format';
+import { getRichRendering, getStatusStyles, getStatusText, isSearchTool } from '@/util/tool';
 
 import { ToolResultDisplay } from './ToolResultDisplay';
 
@@ -24,67 +26,18 @@ const data = Prism.util;
 
 import 'prismjs/components/prism-json';
 
-// Utility functions
-const isValidJSON = (str: string): boolean => {
-    try {
-        JSON.parse(str);
-
-        return true;
-    } catch {
-        return false;
-    }
-};
-
-const formatJSON = (str: string): string => {
-    try {
-        return JSON.stringify(JSON.parse(str), null, 2);
-    } catch {
-        return str;
-    }
-};
-
 interface ToolCallDisplayProps {
     toolCall: components['schemas']['ToolCallEntry'];
 }
 
-const getRichRendering = (toolCall: components['schemas']['ToolCallEntry']) => {
-    return [
-        'get_posts',
-        'get_topic_summary',
-        'search_forum',
-        'search_topics',
-        'search_posts',
-        'search_posts_in_topic',
-        'search_by_user',
-        'get_user_profile',
-        'get_user_summary',
-        'username_to_user_id',
-        'search_by_username',
-        'search_by_username_mention',
-    ].includes(toolCall.tool_name);
-};
-
 export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) => {
-    // Helper to identify search tools
-    const isSearchTool = (toolName: string) => {
-        return [
-            'search_forum',
-            'search_topics',
-            'search_posts',
-            'search_posts_in_topic',
-            'search_by_user',
-            'search_by_username',
-            'search_by_username_mention',
-        ].includes(toolName);
-    };
-
     // Show entire content expanded by default for completed calls, collapsed for unknown status
     const shouldExpandByDefault = true;
     const [isExpanded, setIsExpanded] = useState(shouldExpandByDefault);
     const [isResultExpanded, setIsResultExpanded] = useState(false);
 
     // Determine if we're doing rich rendering (custom components) vs fallback rendering
-    const hasRichRendering = getRichRendering(toolCall);
+    const hasRichRendering = getRichRendering(toolCall.tool_name);
 
     // Input parameters: collapsed by default if rich rendering, expanded if fallback
     const [isInputExpanded, setIsInputExpanded] = useState(!hasRichRendering);
@@ -110,69 +63,6 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
             default:
                 return <LuCog className="text-primary/60" size={16} />;
         }
-    };
-
-    const getStatusStyles = () => {
-        switch (toolCall.status.toLowerCase()) {
-            case 'starting':
-                return {
-                    container: 'border-secondary bg-secondary/30',
-                    header: 'bg-secondary/50 border-secondary',
-                    badge: 'bg-secondary text-primary',
-                    text: 'text-secondary',
-                };
-            case 'executing':
-                return {
-                    container: 'border-warning/30 bg-warning/10',
-                    header: 'bg-warning/20 border-warning/30',
-                    badge: 'bg-warning text-white',
-                    text: 'text-warning',
-                };
-            case 'success':
-                return {
-                    container: 'border-success/30 bg-success/10',
-                    header: 'bg-success/20 border-success/30',
-                    badge: 'bg-success text-white',
-                    text: 'text-success',
-                };
-            case 'error':
-                return {
-                    container: 'border-error/30 bg-error/10',
-                    header: 'bg-error/20 border-error/30',
-                    badge: 'bg-error text-white',
-                    text: 'text-error',
-                };
-            default:
-                return {
-                    container: 'border-primary/20 bg-primary',
-                    header: 'bg-secondary/50 border-primary/20',
-                    badge: 'bg-primary/20 text-primary',
-                    text: 'text-primary',
-                };
-        }
-    };
-
-    const getStatusText = () => {
-        switch (toolCall.status.toLowerCase()) {
-            case 'starting':
-                return 'Initializing';
-            case 'executing':
-                return 'In Progress';
-            case 'success':
-                return 'Completed';
-            case 'error':
-                return 'Failed';
-            default:
-                return 'Unknown (' + toolCall.status + ')';
-        }
-    };
-
-    const getToolDisplayName = (toolName: string) => {
-        // Convert snake_case to readable format
-        return toolName
-            .split('_')
-            .map((word, i) => (i !== 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
-            .join(' ');
     };
 
     const formatInputSummary = (toolName: string, args: string) => {
@@ -250,7 +140,7 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
     const isResultTooLarge = toolCall.result && toolCall.result.length > 10000;
     const shouldHighlight = isResultJSON && !isResultTooLarge;
 
-    const styles = getStatusStyles();
+    const styles = getStatusStyles(toolCall.status);
 
     return (
         <div
@@ -282,7 +172,7 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
                                         styles.badge
                                     )}
                                 >
-                                    {getStatusText()}
+                                    {getStatusText(toolCall.status)}
                                 </span>
                             </div>
                             {toolCall.arguments && (

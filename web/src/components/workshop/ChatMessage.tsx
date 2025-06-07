@@ -1,253 +1,21 @@
 import '../../styles/code.css';
 
-import { Link } from '@tanstack/react-router';
 import classNames from 'classnames';
 import React from 'react';
-import {
-    LuBrain,
-    LuChevronLeft,
-    LuChevronRight,
-    LuCog,
-    LuCopy,
-    LuLoader,
-    LuPencil,
-    LuUser,
-} from 'react-icons/lu';
+import { LuBrain, LuChevronLeft, LuChevronRight, LuCog, LuCopy, LuPencil } from 'react-icons/lu';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { match } from 'ts-pattern';
 
 import { extractModelId, useUsageCost } from '@/api/openrouter';
 import { components } from '@/api/schema.gen';
-import { useTopic } from '@/api/topics';
-import { useUser } from '@/api/user';
 import { useWorkshopStreamMessage, WorkshopMessage } from '@/api/workshop';
 import { Tooltip } from '@/components/tooltip/Tooltip';
 import { UsageTooltip } from '@/components/usage/UsageTooltip';
+import { formatCompact } from '@/util/format';
 
+import { MarkdownLink } from './components/MarkdownLink';
 import { ToolCallDisplay } from './ToolCallDisplay';
-
-// User Profile Tooltip Component
-const UserProfileTooltip = ({
-    username,
-    children,
-}: {
-    username: string;
-    children: React.ReactNode;
-}) => {
-    const { data: user, isLoading, error } = useUser(username);
-
-    const tooltipContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex items-center gap-2 p-2">
-                    <LuLoader className="animate-spin" size={16} />
-                    <span>Loading...</span>
-                </div>
-            );
-        }
-
-        if (error || !user) {
-            return (
-                <div className="flex items-center gap-2 p-2 text-red-500">
-                    <LuUser size={16} />
-                    <span>User not found</span>
-                </div>
-            );
-        }
-
-        const avatarUrl = user.user.avatar_template?.replace('{size}', '40') || '';
-        const fullAvatarUrl = avatarUrl.startsWith('http')
-            ? avatarUrl
-            : `https://ethereum-magicians.org${avatarUrl}`;
-
-        return (
-            <div className="p-3 max-w-xs">
-                <div className="flex items-center gap-3 mb-2">
-                    {user.user.avatar_template && (
-                        <img
-                            src={fullAvatarUrl}
-                            alt={`${user.user.username}'s avatar`}
-                            className="w-10 h-10 rounded-full"
-                        />
-                    )}
-                    <div>
-                        <div className="font-semibold">{user.user.name || user.user.username}</div>
-                        <div className="text-sm text-gray-500">@{user.user.username}</div>
-                    </div>
-                </div>
-
-                <div className="text-xs text-gray-600 space-y-1">
-                    {user.user.title && (
-                        <div className="font-medium text-blue-600">{user.user.title}</div>
-                    )}
-                    <div>Trust Level: {user.user.trust_level}</div>
-                    {user.user.badge_count && user.user.badge_count > 0 && (
-                        <div>
-                            {user.user.badge_count} badge{user.user.badge_count !== 1 ? 's' : ''}
-                        </div>
-                    )}
-                    {user.user.last_seen_at && (
-                        <div>
-                            Last seen: {new Date(user.user.last_seen_at).toLocaleDateString()}
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
-    return <Tooltip trigger={<span>{children}</span>}>{tooltipContent()}</Tooltip>;
-};
-
-// Topic Preview Tooltip Component
-const TopicPreviewTooltip = ({
-    topicId,
-    children,
-}: {
-    topicId: string;
-    children: React.ReactNode;
-}) => {
-    const { data: topic, isLoading, error } = useTopic(topicId);
-
-    const tooltipContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex items-center gap-2 p-2">
-                    <LuLoader className="animate-spin" size={16} />
-                    <span>Loading...</span>
-                </div>
-            );
-        }
-
-        if (error || !topic) {
-            return (
-                <div className="flex items-center gap-2 p-2 text-red-500">
-                    <LuCog size={16} />
-                    <span>Topic not found</span>
-                </div>
-            );
-        }
-
-        return (
-            <div className="p-3 max-w-sm">
-                <div className="mb-2">
-                    <div className="font-semibold text-sm line-clamp-2">{topic.title}</div>
-                    <div className="text-xs text-gray-500 mt-1">#{topic.topic_id}</div>
-                </div>
-
-                <div className="text-xs text-gray-600 space-y-1">
-                    <div className="flex gap-4">
-                        <span>
-                            {topic.post_count} post{topic.post_count !== 1 ? 's' : ''}
-                        </span>
-                        <span>
-                            {topic.view_count} view{topic.view_count !== 1 ? 's' : ''}
-                        </span>
-                    </div>
-
-                    {topic.like_count > 0 && (
-                        <div>
-                            {topic.like_count} like{topic.like_count !== 1 ? 's' : ''}
-                        </div>
-                    )}
-
-                    <div className="flex gap-4 text-xs">
-                        <span>Created: {new Date(topic.created_at).toLocaleDateString()}</span>
-                        {topic.last_post_at && (
-                            <span>
-                                Last post: {new Date(topic.last_post_at).toLocaleDateString()}
-                            </span>
-                        )}
-                    </div>
-
-                    {topic.pm_issue && (
-                        <div className="text-blue-600 font-medium">PM Issue #{topic.pm_issue}</div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
-    return <Tooltip trigger={<span>{children}</span>}>{tooltipContent()}</Tooltip>;
-};
-
-// Custom Link Component for Markdown
-const MarkdownLink = (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
-    const { href, children, ...otherProps } = props;
-
-    if (!href) {
-        return <span {...otherProps}>{children}</span>;
-    }
-
-    // Check if it's an internal link (starts with /)
-    const isInternalLink = href.startsWith('/');
-
-    if (isInternalLink) {
-        // Check if it's a user profile link (/u/username)
-        const userMatch = href.match(/^\/u\/([^/]+)$/);
-        // Check if it's a topic link (/t/topic-id or /t/slug/topic-id)
-        const topicMatch = href.match(/^\/t\/(?:[^/]+\/)?(\d+)(?:\/\d+)?$/);
-
-        if (userMatch) {
-            const [, username] = userMatch;
-
-            return (
-                <UserProfileTooltip username={username}>
-                    <Link
-                        to="/u/$userId"
-                        params={{ userId: username }}
-                        className="text-blue-600 hover:text-blue-800 underline"
-                        {...otherProps}
-                    >
-                        {children}
-                    </Link>
-                </UserProfileTooltip>
-            );
-        }
-
-        if (topicMatch) {
-            const [, topicId] = topicMatch;
-
-            return (
-                <TopicPreviewTooltip topicId={topicId}>
-                    <Link
-                        to="/t/$topicId"
-                        params={{ topicId }}
-                        className="text-blue-600 hover:text-blue-800 underline"
-                        {...otherProps}
-                    >
-                        {children}
-                    </Link>
-                </TopicPreviewTooltip>
-            );
-        }
-
-        // For other internal links, use tanstack Link
-        return (
-            <Link
-                to={href as any}
-                className="text-blue-600 hover:text-blue-800 underline"
-                {...otherProps}
-            >
-                {children}
-            </Link>
-        );
-    }
-
-    // For external links, use regular anchor tag
-    return (
-        <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-            {...otherProps}
-        >
-            {children}
-        </a>
-    );
-};
 
 // Custom markdown components
 const markdownComponents = {
@@ -556,14 +324,6 @@ const TokenUsageDisplay = ({ message }: { message: WorkshopMessage }) => {
     if (message.sender_role !== 'assistant' || !message.total_tokens) {
         return null;
     }
-
-    const formatCompact = (num: number) => {
-        if (num >= 1000) {
-            return `${(num / 1000).toFixed(1)}k`;
-        }
-
-        return num.toString();
-    };
 
     // Extract model ID and calculate costs
     const modelId = extractModelId(message.model_used);

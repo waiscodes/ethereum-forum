@@ -13,14 +13,14 @@ import { WorkshopAuthGuard } from '@/components/AuthGuard';
 import { UpDownScroller } from '@/components/UpDown';
 import { ChatMessage } from '@/components/workshop/ChatMessage';
 import { ConversationGraph } from '@/components/workshop/ConversationGraph';
-import { queryClient } from '@/util/query';
 import {
     buildMessageTree,
     buildPathToMessage,
     getVisiblePath,
     MessagePath,
     updatePath,
-} from '@/utils/messageTree';
+} from '@/util/messageTree';
+import { queryClient } from '@/util/query';
 
 const suggestions = [
     'Find topics related to risc-v in the evm and evaluate me the opinions of all parties involved.',

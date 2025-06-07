@@ -1,8 +1,9 @@
 import React from 'react';
 import { LuCalendar, LuExternalLink, LuUser } from 'react-icons/lu';
 
+import { formatRelativeTime, getPlainText, truncateText } from '@/util/format';
+
 import type { Post } from '../types';
-import { formatRelativeTime, getPlainText, truncateText } from '../utils';
 
 interface PostCardProps {
     post: Post;
