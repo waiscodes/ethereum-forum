@@ -1,6 +1,13 @@
 import { useNavigate } from '@tanstack/react-router';
-import * as React from 'react';
-import { createContext, useContext } from 'react';
+import {
+    createContext,
+    Dispatch,
+    type FC,
+    SetStateAction,
+    useContext,
+    useEffect,
+    useState,
+} from 'react';
 
 import { CommandDialog, CommandInput, CommandList } from './Command';
 import { Navigation } from './groups/Navigation';
@@ -13,7 +20,7 @@ interface CommandContextType {
     onOpenChange: (open: boolean) => void;
     onSelect?: (item: { title: string; href: string; short?: string }) => void;
     search: string;
-    setSearch: React.Dispatch<React.SetStateAction<string>>;
+    setSearch: Dispatch<SetStateAction<string>>;
     handleSelect: (item: { title: string; href: string; short?: string }) => void;
     handleClose: () => void;
 }
@@ -28,13 +35,25 @@ export function useCommand() {
     return ctx;
 }
 
-export const CommandMenu: React.FC<{
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+export const CommandMenu: FC<{
     onSelect?: (item: { title: string; href: string; short?: string }) => void;
-}> = ({ open, onOpenChange, onSelect }) => {
+}> = ({ onSelect }) => {
     const navigate = useNavigate();
-    const [search, setSearch] = React.useState('');
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setOpen((prev) => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const handleSelect = (item: { title: string; href: string; short?: string }) => {
         if (onSelect) {
@@ -47,12 +66,12 @@ export const CommandMenu: React.FC<{
     };
 
     const handleClose = () => {
-        onOpenChange(false);
+        setOpen(false);
     };
 
     const contextValue: CommandContextType = {
         open,
-        onOpenChange,
+        onOpenChange: setOpen,
         onSelect,
         search,
         setSearch,
@@ -62,7 +81,7 @@ export const CommandMenu: React.FC<{
 
     return (
         <CommandContext.Provider value={contextValue}>
-            <CommandDialog open={open} onOpenChange={onOpenChange}>
+            <CommandDialog open={open} onOpenChange={setOpen}>
                 <CommandInput
                     placeholder="Type a command or search..."
                     value={search}
