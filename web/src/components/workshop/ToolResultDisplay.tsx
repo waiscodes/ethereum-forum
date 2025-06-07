@@ -19,6 +19,7 @@ interface ToolResultDisplayProps {
     toolName: string;
     result: string;
     isExpanded: boolean;
+    onExpand?: () => void;
 }
 
 // Type definitions for the API responses
@@ -527,6 +528,7 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
     toolName,
     result,
     isExpanded,
+    onExpand,
 }) => {
     // Handle get_topic_summary first since it returns raw markdown, not JSON
     if (toolName === 'get_topic_summary') {
@@ -540,7 +542,16 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
                 : lines.slice(0, previewLines).join('\n') + (shouldTruncate ? '\n\n...' : '');
 
         return (
-            <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 space-y-3">
+            <div
+                className={classNames(
+                    'border border-primary/20 rounded-lg p-4 bg-secondary/50 space-y-3 transition-all duration-300',
+                    shouldTruncate &&
+                        !isExpanded &&
+                        'cursor-pointer hover:bg-secondary/70 hover:shadow-sm'
+                )}
+                onClick={shouldTruncate && !isExpanded && onExpand ? onExpand : undefined}
+                title={shouldTruncate && !isExpanded ? 'Click to expand full summary' : undefined}
+            >
                 <div className="flex items-center gap-2">
                     <LuFileText className="text-primary/60" size={16} />
                     <h3 className="font-semibold text-primary">Topic Summary</h3>

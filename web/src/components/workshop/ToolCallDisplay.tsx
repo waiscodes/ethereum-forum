@@ -329,6 +329,7 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
                             toolName={toolCall.tool_name}
                             result={toolCall.result}
                             isExpanded={isResultExpanded || !shouldShowExpand}
+                            onExpand={() => setIsResultExpanded(true)}
                         />
                     ) : (
                         /* Fallback to raw display for errors or other cases */
