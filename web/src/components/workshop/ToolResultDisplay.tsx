@@ -194,8 +194,8 @@ const PostCard: React.FC<{ post: Post; showDetails?: boolean }> = ({
     const plainText = getPlainText(post.cooked);
 
     return (
-        <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 hover:bg-secondary/70 transition-colors">
-            <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 hover:bg-secondary/70 transition-colors space-y-3">
+            <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <LuUser size={14} className="text-primary/60" />
                     <span className="font-medium text-primary text-sm">@{post.username}</span>
@@ -215,7 +215,7 @@ const PostCard: React.FC<{ post: Post; showDetails?: boolean }> = ({
                 </div>
             </div>
 
-            <div className="text-sm text-primary/80 leading-relaxed mb-3">
+            <div className="text-sm text-primary/80 leading-relaxed">
                 {truncateText(plainText, showDetails ? 300 : 150)}
             </div>
 
@@ -330,8 +330,8 @@ const SearchTopicCard: React.FC<{ entity: SearchEntity }> = ({ entity }) => (
 );
 
 const SearchPostCard: React.FC<{ entity: SearchEntity }> = ({ entity }) => (
-    <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 hover:bg-secondary/70 transition-colors">
-        <div className="flex items-start justify-between gap-3 mb-3">
+    <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 hover:bg-secondary/70 transition-colors space-y-3">
+        <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
                 <LuUser size={14} className="text-primary/60" />
                 <span className="font-medium text-primary text-sm">
@@ -351,7 +351,7 @@ const SearchPostCard: React.FC<{ entity: SearchEntity }> = ({ entity }) => (
         </div>
 
         {entity.cooked && (
-            <div className="text-sm text-primary/80 leading-relaxed mb-3">
+            <div className="text-sm text-primary/80 leading-relaxed">
                 {truncateText(entity.cooked.replace(/<[^>]*>/g, ''), 200)}
             </div>
         )}
@@ -400,9 +400,9 @@ const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName:
 
             {/* Topics */}
             {topics.length > 0 && (
-                <div>
+                <div className="space-y-3">
                     {topics.length > 1 && (
-                        <h4 className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuHash size={14} />
                             Topics ({topics.length})
                         </h4>
@@ -417,9 +417,9 @@ const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName:
 
             {/* Posts */}
             {posts.length > 0 && (
-                <div>
+                <div className="space-y-3">
                     {posts.length > 1 && (
-                        <h4 className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuMessageSquare size={14} />
                             Posts ({posts.length})
                         </h4>
@@ -468,9 +468,9 @@ const SearchResultsDisplay: React.FC<{ data: SearchResult; toolName: string }> =
 
             {/* Topics */}
             {data.topics && data.topics.length > 0 && (
-                <div>
+                <div className="space-y-3">
                     {data.topics.length > 1 && (
-                        <h4 className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuHash size={14} />
                             Topics ({data.topics.length})
                         </h4>
@@ -485,9 +485,9 @@ const SearchResultsDisplay: React.FC<{ data: SearchResult; toolName: string }> =
 
             {/* Posts */}
             {data.posts && data.posts.length > 0 && (
-                <div>
+                <div className="space-y-3">
                     {data.posts.length > 1 && (
-                        <h4 className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuMessageSquare size={14} />
                             Posts ({data.posts.length})
                         </h4>
@@ -520,8 +520,8 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
                 : lines.slice(0, previewLines).join('\n') + (shouldTruncate ? '\n\n...' : '');
 
         return (
-            <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50">
-                <div className="flex items-center gap-2 mb-3">
+            <div className="border border-primary/20 rounded-lg p-4 bg-secondary/50 space-y-3">
+                <div className="flex items-center gap-2">
                     <LuFileText className="text-primary/60" size={16} />
                     <h3 className="font-semibold text-primary">Topic Summary</h3>
                     {shouldTruncate && !isExpanded && (
@@ -571,15 +571,32 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
                     reply_count: apiPost.extra?.reply_count,
                 }));
 
+                // Determine display logic
+                const hasManyPosts = transformedPosts.length >= 4;
+
+                // For <4 posts: show all when expanded, none when collapsed
+                // For >=4 posts: show first 3 when collapsed, all when expanded
+                const postsToShow =
+                    hasManyPosts && !isExpanded ? transformedPosts.slice(0, 3) : transformedPosts;
+
                 return (
                     <div className="space-y-3">
-                        <div className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
+                        <div className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuMessageSquare size={14} />
-                            Posts ({transformedPosts.length})
+                            <span>Posts ({transformedPosts.length})</span>
                         </div>
-                        {transformedPosts.map((post) => (
-                            <PostCard key={post.id} post={post} />
-                        ))}
+                        {isExpanded && (
+                            <div
+                                className={classNames(
+                                    'space-y-3 transition-all duration-300',
+                                    isExpanded && hasManyPosts ? 'max-h-96 overflow-y-auto' : ''
+                                )}
+                            >
+                                {postsToShow.map((post) => (
+                                    <PostCard key={post.id} post={post} />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 );
             })
