@@ -47,6 +47,23 @@ interface ToolCallDisplayProps {
     toolCall: components['schemas']['ToolCallEntry'];
 }
 
+const getRichRendering = (toolCall: components['schemas']['ToolCallEntry']) => {
+    return [
+        'get_posts',
+        'get_topic_summary',
+        'search_forum',
+        'search_topics',
+        'search_posts',
+        'search_posts_in_topic',
+        'search_by_user',
+        'get_user_profile',
+        'get_user_summary',
+        'username_to_user_id',
+        'search_by_username',
+        'search_by_username_mention',
+    ].includes(toolCall.tool_name);
+};
+
 export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) => {
     // Helper to identify search tools
     const isSearchTool = (toolName: string) => {
@@ -67,17 +84,7 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
     const [isResultExpanded, setIsResultExpanded] = useState(false);
 
     // Determine if we're doing rich rendering (custom components) vs fallback rendering
-    const hasRichRendering =
-        toolCall.result &&
-        toolCall.status.toLowerCase() === 'success' &&
-        (isSearchTool(toolCall.tool_name) ||
-            [
-                'get_posts',
-                'get_topic_summary',
-                'get_user_profile',
-                'get_user_summary',
-                'username_to_user_id',
-            ].includes(toolCall.tool_name));
+    const hasRichRendering = getRichRendering(toolCall);
 
     // Input parameters: collapsed by default if rich rendering, expanded if fallback
     const [isInputExpanded, setIsInputExpanded] = useState(!hasRichRendering);
@@ -298,8 +305,8 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
             </div>
 
             {toolCall.arguments && isExpanded && (
-                <div className="px-4 py-4 border-b border-primary/20">
-                    <div className="flex items-center justify-between mb-2">
+                <div className="px-4 py-4 border-b border-primary/20 space-y-2">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <LuCode className="text-primary/60" size={14} />
                             <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
@@ -337,8 +344,8 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
 
             {/* Results Section */}
             {toolCall.result && isExpanded && (
-                <div className="px-4 py-4">
-                    <div className="flex items-center justify-between mb-2">
+                <div className="px-4 py-4 space-y-2">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {toolCall.status.toLowerCase() === 'error' ? (
                                 <LuTriangle className="text-error" size={14} />
