@@ -41,8 +41,8 @@ pub struct DiscourseUserSummary {
 #[derive(Debug, Serialize, Deserialize, Object, Clone)]
 pub struct DiscourseUserBadge {
     id: u32,
-    granted_at: String, // ISO datetime
-    created_at: String, // ISO datetime
+    granted_at: Option<String>, // ISO datetime
+    created_at: Option<String>, // ISO datetime
     count: u32,
     badge_id: u32,
     user_id: i32,
