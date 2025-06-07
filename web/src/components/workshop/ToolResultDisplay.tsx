@@ -550,19 +550,34 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
 
         return match(toolName)
             .with('get_posts', () => {
-                const posts = data as { posts: Post[] };
+                // Handle direct array response from get_posts API
+                const posts = Array.isArray(data) ? data : [];
 
-                if (!posts.posts || posts.posts.length === 0) {
+                if (posts.length === 0) {
                     return <div className="text-center py-4 text-primary/60">No posts found</div>;
                 }
+
+                // Transform API response to match our Post interface
+                const transformedPosts = posts.map((apiPost: any) => ({
+                    id: apiPost.post_id,
+                    topic_id: apiPost.topic_id,
+                    post_number: apiPost.post_number,
+                    cooked: apiPost.cooked,
+                    created_at: apiPost.created_at,
+                    username: apiPost.extra?.username || 'Unknown User',
+                    name: apiPost.extra?.display_username || apiPost.extra?.name,
+                    avatar_template: apiPost.extra?.avatar_template,
+                    like_count: apiPost.extra?.actions_summary?.find((a: any) => a.id === 2)?.count,
+                    reply_count: apiPost.extra?.reply_count,
+                }));
 
                 return (
                     <div className="space-y-3">
                         <div className="text-sm font-semibold text-primary/80 mb-3 flex items-center gap-2">
                             <LuMessageSquare size={14} />
-                            Posts ({posts.posts.length})
+                            Posts ({transformedPosts.length})
                         </div>
-                        {posts.posts.map((post) => (
+                        {transformedPosts.map((post) => (
                             <PostCard key={post.id} post={post} />
                         ))}
                     </div>
