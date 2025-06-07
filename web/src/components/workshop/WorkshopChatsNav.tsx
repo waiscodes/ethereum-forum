@@ -1,5 +1,6 @@
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, useParams, useRouterState } from '@tanstack/react-router';
 import classNames from 'classnames';
+import { FiBarChart } from 'react-icons/fi';
 
 import { useAuth } from '@/api/auth';
 import { useWorkshopChats } from '@/api/workshop';
@@ -20,10 +21,37 @@ export const WorkshopChatsNav = () => {
 
 const AuthenticatedWorkshopChats = () => {
     const { data: chats } = useWorkshopChats();
-    const { chatId } = useParams({ from: '/chat/$chatId' });
+    const { pathname } = useRouterState({ select: (s) => s.location });
+
+    // Safely get chatId only if we're on a route that has it
+    let chatId: string | undefined;
+
+    try {
+        const params = useParams({ from: '/chat/$chatId' });
+
+        chatId = params.chatId;
+    } catch {
+        // We're not on a /chat/$chatId route, so no chatId
+        chatId = undefined;
+    }
 
     return (
-        <div className="max-h-[50vh] overflow-y-auto">
+        <div className="max-h-[50vh] overflow-y-auto space-y-1">
+            {/* Usage Statistics Link */}
+            <div className="border-b border-border pb-1 mb-2">
+                <Link
+                    to="/chat/usage"
+                    className={classNames(
+                        'flex items-center gap-2 hover:bg-secondary px-1.5 py-0.5 rounded text-sm text-secondary',
+                        pathname === '/chat/usage' && 'bg-secondary'
+                    )}
+                >
+                    <FiBarChart size={14} />
+                    <span>Usage Statistics</span>
+                </Link>
+            </div>
+
+            {/* Chat List */}
             <ul>
                 {chats?.map((chat) => (
                     <li key={chat.chat_id} className="group/workshop">

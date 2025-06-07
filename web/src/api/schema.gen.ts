@@ -836,6 +836,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/usage
+         * @description Get current user's usage statistics
+         */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["UserUsageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/reindex": {
         parameters: {
             query?: never;
@@ -916,6 +956,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /admin/usage
+         * @description Get workshop usage statistics for all users
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "X-Admin-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AdminUsageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -929,12 +1009,40 @@ export interface components {
             /** Format: int64 */
             meilisearch_documents?: number;
         };
+        /** AdminUsageResponse */
+        AdminUsageResponse: {
+            /** Format: int32 */
+            total_users: number;
+            /** Format: int64 */
+            total_tokens: number;
+            /** Format: int64 */
+            total_prompt_tokens: number;
+            /** Format: int64 */
+            total_completion_tokens: number;
+            /** Format: int64 */
+            total_reasoning_tokens: number;
+            users: components["schemas"]["UserUsageOverview"][];
+        };
         /** AuthResponse */
         AuthResponse: {
             token: string;
             user: components["schemas"]["User"];
             /** Format: int64 */
             expires_at: number;
+        };
+        /** DailyUsage */
+        DailyUsage: {
+            date: string;
+            /** Format: int64 */
+            prompt_tokens: number;
+            /** Format: int64 */
+            completion_tokens: number;
+            /** Format: int64 */
+            total_tokens: number;
+            /** Format: int64 */
+            reasoning_tokens: number;
+            /** Format: int64 */
+            message_count: number;
         };
         /** DiscourseBadge */
         DiscourseBadge: {
@@ -1205,6 +1313,20 @@ export interface components {
              */
             type: "Zoom";
         } & components["schemas"]["ZoomMeetingData"];
+        /** ModelUsage */
+        ModelUsage: {
+            model_name: string;
+            /** Format: int64 */
+            prompt_tokens: number;
+            /** Format: int64 */
+            completion_tokens: number;
+            /** Format: int64 */
+            total_tokens: number;
+            /** Format: int64 */
+            reasoning_tokens: number;
+            /** Format: int64 */
+            message_count: number;
+        };
         PMMeetingData: components["schemas"]["PMRecurringMeeting"] | components["schemas"]["PMOneOffMeeting"];
         /** PMOccurrence */
         PMOccurrence: {
@@ -1431,6 +1553,41 @@ export interface components {
             /** Format: int64 */
             expires_at: number;
             token_expiring_soon: boolean;
+        };
+        /** UserUsageOverview */
+        UserUsageOverview: {
+            /** Format: uuid */
+            user_id: string;
+            username?: string;
+            /** Format: int64 */
+            total_tokens: number;
+            /** Format: int64 */
+            prompt_tokens: number;
+            /** Format: int64 */
+            completion_tokens: number;
+            /** Format: int64 */
+            reasoning_tokens: number;
+            /** Format: int64 */
+            message_count: number;
+        };
+        /** UserUsageResponse */
+        UserUsageResponse: {
+            stats: components["schemas"]["UserUsageStats"];
+            by_model: components["schemas"]["ModelUsage"][];
+            daily_usage: components["schemas"]["DailyUsage"][];
+        };
+        /** UserUsageStats */
+        UserUsageStats: {
+            /** Format: int64 */
+            total_prompt_tokens: number;
+            /** Format: int64 */
+            total_completion_tokens: number;
+            /** Format: int64 */
+            total_tokens: number;
+            /** Format: int64 */
+            total_reasoning_tokens: number;
+            /** Format: int64 */
+            message_count: number;
         };
         /** WorkshopChat */
         WorkshopChat: {

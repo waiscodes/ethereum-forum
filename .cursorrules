@@ -18,6 +18,8 @@ This is a monorepo with two main components:
 - **Framework**: Tailwind CSS with PostCSS
 - **Features**: Nested CSS and CSS custom properties (CSS vars)
 - **Config**: Check `tailwindcss.config.js` and `index.css` for styling setup details
+- **Class names**: Use the `classnames` utility function to combine class names
+- **Template literal class names**: Avoid using template literal to concatenate class names, use the `classnames` utility function instead
 
 ## Code Organization
 

@@ -10,246 +10,298 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root';
-import { Route as IndexImport } from './routes/index';
-import { Route as SIndexImport } from './routes/s/index';
-import { Route as RIndexImport } from './routes/r/index';
-import { Route as CIndexImport } from './routes/c/index';
-import { Route as ChatChatIdImport } from './routes/chat/$chatId';
-import { Route as UUserIdIndexImport } from './routes/u/$userId/index';
-import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index';
-import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index';
-import { Route as SsoProviderIdCallbackImport } from './routes/sso/$providerId/callback';
+import { Route as rootRoute } from './routes/__root'
+import { Route as IndexImport } from './routes/index'
+import { Route as SIndexImport } from './routes/s/index'
+import { Route as RIndexImport } from './routes/r/index'
+import { Route as CIndexImport } from './routes/c/index'
+import { Route as ChatUsageImport } from './routes/chat/usage'
+import { Route as ChatChatIdImport } from './routes/chat/$chatId'
+import { Route as UUserIdIndexImport } from './routes/u/$userId/index'
+import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index'
+import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
+import { Route as ChatUsageIndexImport } from './routes/chat/usage/index'
+import { Route as SsoProviderIdCallbackImport } from './routes/sso/$providerId/callback'
 
 // Create/Update Routes
 
 const IndexRoute = IndexImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const SIndexRoute = SIndexImport.update({
-    id: '/s/',
-    path: '/s/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/s/',
+  path: '/s/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const RIndexRoute = RIndexImport.update({
-    id: '/r/',
-    path: '/r/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/r/',
+  path: '/r/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const CIndexRoute = CIndexImport.update({
-    id: '/c/',
-    path: '/c/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/c/',
+  path: '/c/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChatUsageRoute = ChatUsageImport.update({
+  id: '/chat/usage',
+  path: '/chat/usage',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const ChatChatIdRoute = ChatChatIdImport.update({
-    id: '/chat/$chatId',
-    path: '/chat/$chatId',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const UUserIdIndexRoute = UUserIdIndexImport.update({
-    id: '/u/$userId/',
-    path: '/u/$userId/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/u/$userId/',
+  path: '/u/$userId/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const TTopicIdIndexRoute = TTopicIdIndexImport.update({
-    id: '/t/$topicId/',
-    path: '/t/$topicId/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/t/$topicId/',
+  path: '/t/$topicId/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const PmIssueIdIndexRoute = PmIssueIdIndexImport.update({
-    id: '/pm/$issueId/',
-    path: '/pm/$issueId/',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/pm/$issueId/',
+  path: '/pm/$issueId/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChatUsageIndexRoute = ChatUsageIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ChatUsageRoute,
+} as any)
 
 const SsoProviderIdCallbackRoute = SsoProviderIdCallbackImport.update({
-    id: '/sso/$providerId/callback',
-    path: '/sso/$providerId/callback',
-    getParentRoute: () => rootRoute,
-} as any);
+  id: '/sso/$providerId/callback',
+  path: '/sso/$providerId/callback',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
-    interface FileRoutesByPath {
-        '/': {
-            id: '/';
-            path: '/';
-            fullPath: '/';
-            preLoaderRoute: typeof IndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/chat/$chatId': {
-            id: '/chat/$chatId';
-            path: '/chat/$chatId';
-            fullPath: '/chat/$chatId';
-            preLoaderRoute: typeof ChatChatIdImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/c/': {
-            id: '/c/';
-            path: '/c';
-            fullPath: '/c';
-            preLoaderRoute: typeof CIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/r/': {
-            id: '/r/';
-            path: '/r';
-            fullPath: '/r';
-            preLoaderRoute: typeof RIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/s/': {
-            id: '/s/';
-            path: '/s';
-            fullPath: '/s';
-            preLoaderRoute: typeof SIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/sso/$providerId/callback': {
-            id: '/sso/$providerId/callback';
-            path: '/sso/$providerId/callback';
-            fullPath: '/sso/$providerId/callback';
-            preLoaderRoute: typeof SsoProviderIdCallbackImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/pm/$issueId/': {
-            id: '/pm/$issueId/';
-            path: '/pm/$issueId';
-            fullPath: '/pm/$issueId';
-            preLoaderRoute: typeof PmIssueIdIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/t/$topicId/': {
-            id: '/t/$topicId/';
-            path: '/t/$topicId';
-            fullPath: '/t/$topicId';
-            preLoaderRoute: typeof TTopicIdIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        '/u/$userId/': {
-            id: '/u/$userId/';
-            path: '/u/$userId';
-            fullPath: '/u/$userId';
-            preLoaderRoute: typeof UUserIdIndexImport;
-            parentRoute: typeof rootRoute;
-        };
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
     }
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/chat/usage': {
+      id: '/chat/usage'
+      path: '/chat/usage'
+      fullPath: '/chat/usage'
+      preLoaderRoute: typeof ChatUsageImport
+      parentRoute: typeof rootRoute
+    }
+    '/c/': {
+      id: '/c/'
+      path: '/c'
+      fullPath: '/c'
+      preLoaderRoute: typeof CIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/r/': {
+      id: '/r/'
+      path: '/r'
+      fullPath: '/r'
+      preLoaderRoute: typeof RIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/s/': {
+      id: '/s/'
+      path: '/s'
+      fullPath: '/s'
+      preLoaderRoute: typeof SIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/sso/$providerId/callback': {
+      id: '/sso/$providerId/callback'
+      path: '/sso/$providerId/callback'
+      fullPath: '/sso/$providerId/callback'
+      preLoaderRoute: typeof SsoProviderIdCallbackImport
+      parentRoute: typeof rootRoute
+    }
+    '/chat/usage/': {
+      id: '/chat/usage/'
+      path: '/'
+      fullPath: '/chat/usage/'
+      preLoaderRoute: typeof ChatUsageIndexImport
+      parentRoute: typeof ChatUsageImport
+    }
+    '/pm/$issueId/': {
+      id: '/pm/$issueId/'
+      path: '/pm/$issueId'
+      fullPath: '/pm/$issueId'
+      preLoaderRoute: typeof PmIssueIdIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/t/$topicId/': {
+      id: '/t/$topicId/'
+      path: '/t/$topicId'
+      fullPath: '/t/$topicId'
+      preLoaderRoute: typeof TTopicIdIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/u/$userId/': {
+      id: '/u/$userId/'
+      path: '/u/$userId'
+      fullPath: '/u/$userId'
+      preLoaderRoute: typeof UUserIdIndexImport
+      parentRoute: typeof rootRoute
+    }
+  }
 }
 
 // Create and export the route tree
 
+interface ChatUsageRouteChildren {
+  ChatUsageIndexRoute: typeof ChatUsageIndexRoute
+}
+
+const ChatUsageRouteChildren: ChatUsageRouteChildren = {
+  ChatUsageIndexRoute: ChatUsageIndexRoute,
+}
+
+const ChatUsageRouteWithChildren = ChatUsageRoute._addFileChildren(
+  ChatUsageRouteChildren,
+)
+
 export interface FileRoutesByFullPath {
-    '/': typeof IndexRoute;
-    '/chat/$chatId': typeof ChatChatIdRoute;
-    '/c': typeof CIndexRoute;
-    '/r': typeof RIndexRoute;
-    '/s': typeof SIndexRoute;
-    '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute;
-    '/pm/$issueId': typeof PmIssueIdIndexRoute;
-    '/t/$topicId': typeof TTopicIdIndexRoute;
-    '/u/$userId': typeof UUserIdIndexRoute;
+  '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/chat/usage': typeof ChatUsageRouteWithChildren
+  '/c': typeof CIndexRoute
+  '/r': typeof RIndexRoute
+  '/s': typeof SIndexRoute
+  '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
+  '/chat/usage/': typeof ChatUsageIndexRoute
+  '/pm/$issueId': typeof PmIssueIdIndexRoute
+  '/t/$topicId': typeof TTopicIdIndexRoute
+  '/u/$userId': typeof UUserIdIndexRoute
 }
 
 export interface FileRoutesByTo {
-    '/': typeof IndexRoute;
-    '/chat/$chatId': typeof ChatChatIdRoute;
-    '/c': typeof CIndexRoute;
-    '/r': typeof RIndexRoute;
-    '/s': typeof SIndexRoute;
-    '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute;
-    '/pm/$issueId': typeof PmIssueIdIndexRoute;
-    '/t/$topicId': typeof TTopicIdIndexRoute;
-    '/u/$userId': typeof UUserIdIndexRoute;
+  '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/c': typeof CIndexRoute
+  '/r': typeof RIndexRoute
+  '/s': typeof SIndexRoute
+  '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
+  '/chat/usage': typeof ChatUsageIndexRoute
+  '/pm/$issueId': typeof PmIssueIdIndexRoute
+  '/t/$topicId': typeof TTopicIdIndexRoute
+  '/u/$userId': typeof UUserIdIndexRoute
 }
 
 export interface FileRoutesById {
-    __root__: typeof rootRoute;
-    '/': typeof IndexRoute;
-    '/chat/$chatId': typeof ChatChatIdRoute;
-    '/c/': typeof CIndexRoute;
-    '/r/': typeof RIndexRoute;
-    '/s/': typeof SIndexRoute;
-    '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute;
-    '/pm/$issueId/': typeof PmIssueIdIndexRoute;
-    '/t/$topicId/': typeof TTopicIdIndexRoute;
-    '/u/$userId/': typeof UUserIdIndexRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/chat/usage': typeof ChatUsageRouteWithChildren
+  '/c/': typeof CIndexRoute
+  '/r/': typeof RIndexRoute
+  '/s/': typeof SIndexRoute
+  '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
+  '/chat/usage/': typeof ChatUsageIndexRoute
+  '/pm/$issueId/': typeof PmIssueIdIndexRoute
+  '/t/$topicId/': typeof TTopicIdIndexRoute
+  '/u/$userId/': typeof UUserIdIndexRoute
 }
 
 export interface FileRouteTypes {
-    fileRoutesByFullPath: FileRoutesByFullPath;
-    fullPaths:
-        | '/'
-        | '/chat/$chatId'
-        | '/c'
-        | '/r'
-        | '/s'
-        | '/sso/$providerId/callback'
-        | '/pm/$issueId'
-        | '/t/$topicId'
-        | '/u/$userId';
-    fileRoutesByTo: FileRoutesByTo;
-    to:
-        | '/'
-        | '/chat/$chatId'
-        | '/c'
-        | '/r'
-        | '/s'
-        | '/sso/$providerId/callback'
-        | '/pm/$issueId'
-        | '/t/$topicId'
-        | '/u/$userId';
-    id:
-        | '__root__'
-        | '/'
-        | '/chat/$chatId'
-        | '/c/'
-        | '/r/'
-        | '/s/'
-        | '/sso/$providerId/callback'
-        | '/pm/$issueId/'
-        | '/t/$topicId/'
-        | '/u/$userId/';
-    fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/chat/$chatId'
+    | '/chat/usage'
+    | '/c'
+    | '/r'
+    | '/s'
+    | '/sso/$providerId/callback'
+    | '/chat/usage/'
+    | '/pm/$issueId'
+    | '/t/$topicId'
+    | '/u/$userId'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/chat/$chatId'
+    | '/c'
+    | '/r'
+    | '/s'
+    | '/sso/$providerId/callback'
+    | '/chat/usage'
+    | '/pm/$issueId'
+    | '/t/$topicId'
+    | '/u/$userId'
+  id:
+    | '__root__'
+    | '/'
+    | '/chat/$chatId'
+    | '/chat/usage'
+    | '/c/'
+    | '/r/'
+    | '/s/'
+    | '/sso/$providerId/callback'
+    | '/chat/usage/'
+    | '/pm/$issueId/'
+    | '/t/$topicId/'
+    | '/u/$userId/'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-    IndexRoute: typeof IndexRoute;
-    ChatChatIdRoute: typeof ChatChatIdRoute;
-    CIndexRoute: typeof CIndexRoute;
-    RIndexRoute: typeof RIndexRoute;
-    SIndexRoute: typeof SIndexRoute;
-    SsoProviderIdCallbackRoute: typeof SsoProviderIdCallbackRoute;
-    PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute;
-    TTopicIdIndexRoute: typeof TTopicIdIndexRoute;
-    UUserIdIndexRoute: typeof UUserIdIndexRoute;
+  IndexRoute: typeof IndexRoute
+  ChatChatIdRoute: typeof ChatChatIdRoute
+  ChatUsageRoute: typeof ChatUsageRouteWithChildren
+  CIndexRoute: typeof CIndexRoute
+  RIndexRoute: typeof RIndexRoute
+  SIndexRoute: typeof SIndexRoute
+  SsoProviderIdCallbackRoute: typeof SsoProviderIdCallbackRoute
+  PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
+  TTopicIdIndexRoute: typeof TTopicIdIndexRoute
+  UUserIdIndexRoute: typeof UUserIdIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-    IndexRoute: IndexRoute,
-    ChatChatIdRoute: ChatChatIdRoute,
-    CIndexRoute: CIndexRoute,
-    RIndexRoute: RIndexRoute,
-    SIndexRoute: SIndexRoute,
-    SsoProviderIdCallbackRoute: SsoProviderIdCallbackRoute,
-    PmIssueIdIndexRoute: PmIssueIdIndexRoute,
-    TTopicIdIndexRoute: TTopicIdIndexRoute,
-    UUserIdIndexRoute: UUserIdIndexRoute,
-};
+  IndexRoute: IndexRoute,
+  ChatChatIdRoute: ChatChatIdRoute,
+  ChatUsageRoute: ChatUsageRouteWithChildren,
+  CIndexRoute: CIndexRoute,
+  RIndexRoute: RIndexRoute,
+  SIndexRoute: SIndexRoute,
+  SsoProviderIdCallbackRoute: SsoProviderIdCallbackRoute,
+  PmIssueIdIndexRoute: PmIssueIdIndexRoute,
+  TTopicIdIndexRoute: TTopicIdIndexRoute,
+  UUserIdIndexRoute: UUserIdIndexRoute,
+}
 
 export const routeTree = rootRoute
-    ._addFileChildren(rootRouteChildren)
-    ._addFileTypes<FileRouteTypes>();
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -259,6 +311,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/chat/$chatId",
+        "/chat/usage",
         "/c/",
         "/r/",
         "/s/",
@@ -274,6 +327,12 @@ export const routeTree = rootRoute
     "/chat/$chatId": {
       "filePath": "chat/$chatId.tsx"
     },
+    "/chat/usage": {
+      "filePath": "chat/usage.tsx",
+      "children": [
+        "/chat/usage/"
+      ]
+    },
     "/c/": {
       "filePath": "c/index.tsx"
     },
@@ -285,6 +344,10 @@ export const routeTree = rootRoute
     },
     "/sso/$providerId/callback": {
       "filePath": "sso/$providerId/callback.tsx"
+    },
+    "/chat/usage/": {
+      "filePath": "chat/usage/index.tsx",
+      "parent": "/chat/usage"
     },
     "/pm/$issueId/": {
       "filePath": "pm/$issueId/index.tsx"

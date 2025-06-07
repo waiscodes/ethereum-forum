@@ -1,5 +1,5 @@
 use crate::models::topics::Topic;
-use crate::models::workshop::{WorkshopChat, WorkshopMessage};
+use crate::models::workshop::{WorkshopChat, WorkshopMessage, UserUsageStats, ModelUsage, DailyUsage, UserUsageOverview};
 use crate::modules::workshop::WorkshopService;
 use crate::modules::workshop::prompts::{StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry, ToolCallStatus as PromptsToolCallStatus};
 use crate::server::ApiTags;
@@ -30,6 +30,22 @@ pub struct WorkshopChatPayload {
     pub chat_id: Uuid,
     pub chat: WorkshopChat,
     pub messages: Vec<WorkshopMessage>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct UserUsageResponse {
+    pub stats: UserUsageStats,
+    pub by_model: Vec<ModelUsage>,
+    pub daily_usage: Vec<DailyUsage>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct AdminUsageResponse {
+    pub total_users: i32,
+    pub total_tokens: i64,
+    pub total_prompt_tokens: i64,
+    pub total_completion_tokens: i64,
+    pub users: Vec<UserUsageOverview>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object)]
@@ -602,6 +618,50 @@ impl WorkshopApi {
             .boxed();
 
         Ok(EventStream::new(response_stream))
+    }
+
+    /// /ws/usage
+    ///
+    /// Get current user's usage statistics
+    #[oai(path = "/ws/usage", method = "get", tag = "ApiTags::Workshop")]
+    async fn get_user_usage(
+        &self,
+        state: Data<&AppState>,
+        auth_user: AuthUser,
+        #[oai(style = "simple")] days: Query<Option<i32>>,
+    ) -> Result<Json<UserUsageResponse>> {
+        let user_id = auth_user.0.user.user_id;
+        let days = days.0.unwrap_or(30); // Default to 30 days
+
+        // Get overall stats
+        let stats = WorkshopMessage::get_user_usage_stats(user_id, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting user usage stats: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        // Get usage by model
+        let by_model = WorkshopMessage::get_user_usage_by_model(user_id, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting user usage by model: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        // Get daily usage
+        let daily_usage = WorkshopMessage::get_user_daily_usage(user_id, days, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting user daily usage: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        Ok(Json(UserUsageResponse {
+            stats,
+            by_model,
+            daily_usage,
+        }))
     }
 
     // MCP endpoints removed - using direct integration in ongoing prompts

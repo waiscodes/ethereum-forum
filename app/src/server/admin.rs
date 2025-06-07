@@ -9,6 +9,7 @@ use sqlx::query_as;
 use tracing::{error, info, warn};
 
 use crate::models::topics::{Post, Topic};
+use crate::models::workshop::{WorkshopMessage, UserUsageOverview};
 use crate::modules::discourse::{DiscourseService, ForumSearchDocument};
 use crate::server::ApiTags;
 use crate::state::AppState;
@@ -31,6 +32,16 @@ pub struct AdminStatsResponse {
     pub database_topics: i64,
     pub database_posts: i64,
     pub meilisearch_documents: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct AdminUsageResponse {
+    pub total_users: i32,
+    pub total_tokens: i64,
+    pub total_prompt_tokens: i64,
+    pub total_completion_tokens: i64,
+    pub total_reasoning_tokens: i64,
+    pub users: Vec<UserUsageOverview>,
 }
 
 impl AdminApi {
@@ -265,6 +276,42 @@ impl AdminApi {
             database_topics,
             database_posts,
             meilisearch_documents,
+        }))
+    }
+
+    /// /admin/usage
+    ///
+    /// Get workshop usage statistics for all users
+    #[oai(path = "/admin/usage", method = "get", tag = "ApiTags::Admin")]
+    async fn get_usage_stats(
+        &self,
+        state: Data<&AppState>,
+        #[oai(name = "X-Admin-Key")] admin_key: Header<Option<String>>,
+    ) -> Result<Json<AdminUsageResponse>> {
+        Self::verify_admin_key(admin_key.0)?;
+
+        // Get all users' usage overview
+        let users = WorkshopMessage::get_all_users_usage_overview(&state)
+            .await
+            .map_err(|e| {
+                error!("Failed to get usage overview: {}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        // Calculate totals
+        let total_users = users.len() as i32;
+        let total_tokens = users.iter().map(|u| u.total_tokens).sum();
+        let total_prompt_tokens = users.iter().map(|u| u.prompt_tokens).sum();
+        let total_completion_tokens = users.iter().map(|u| u.completion_tokens).sum();
+        let total_reasoning_tokens = users.iter().map(|u| u.reasoning_tokens).sum();
+
+        Ok(Json(AdminUsageResponse {
+            total_users,
+            total_tokens,
+            total_prompt_tokens,
+            total_completion_tokens,
+            total_reasoning_tokens,
+            users,
         }))
     }
 }
