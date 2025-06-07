@@ -48,10 +48,39 @@ interface ToolCallDisplayProps {
 }
 
 export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) => {
-    // Show input expanded by default for completed calls, collapsed for unknown status
+    // Helper to identify search tools
+    const isSearchTool = (toolName: string) => {
+        return [
+            'search_forum',
+            'search_topics',
+            'search_posts',
+            'search_posts_in_topic',
+            'search_by_user',
+            'search_by_username',
+            'search_by_username_mention',
+        ].includes(toolName);
+    };
+
+    // Show entire content expanded by default for completed calls, collapsed for unknown status
     const shouldExpandByDefault = toolCall.status === 'Success' || toolCall.status === 'Error';
     const [isExpanded, setIsExpanded] = useState(shouldExpandByDefault);
     const [isResultExpanded, setIsResultExpanded] = useState(false);
+
+    // Determine if we're doing rich rendering (custom components) vs fallback rendering
+    const hasRichRendering =
+        toolCall.result &&
+        toolCall.status.toLowerCase() === 'success' &&
+        (isSearchTool(toolCall.tool_name) ||
+            [
+                'get_posts',
+                'get_topic_summary',
+                'get_user_profile',
+                'get_user_summary',
+                'username_to_user_id',
+            ].includes(toolCall.tool_name));
+
+    // Input parameters: collapsed by default if rich rendering, expanded if fallback
+    const [isInputExpanded, setIsInputExpanded] = useState(!hasRichRendering);
     const codeRef = useRef<HTMLElement>(null);
 
     // Apply Prism highlighting when content changes
@@ -209,7 +238,6 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
 
     const isResultJSON = toolCall.result && isValidJSON(toolCall.result);
     const formattedResult = isResultJSON ? formatJSON(toolCall.result!) : toolCall.result;
-    const shouldShowExpand = toolCall.result && toolCall.result.length > 200;
 
     // Disable syntax highlighting for large payloads to prevent performance issues
     const isResultTooLarge = toolCall.result && toolCall.result.length > 10000;
@@ -251,51 +279,64 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
                                 </span>
                             </div>
                             {toolCall.arguments && (
-                                <span className="text-xs text-primary/70 leading-4">
-                                    {formatInputSummary(toolCall.tool_name, toolCall.arguments)}
-                                </span>
+                                <div className="space-y-1">
+                                    <span className="text-xs text-primary/70 leading-4">
+                                        {formatInputSummary(toolCall.tool_name, toolCall.arguments)}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    {toolCall.arguments && (
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="button aspect-square flex items-center justify-center"
-                        >
-                            {isExpanded ? <LuChevronDown size={14} /> : <LuChevronLeft size={14} />}
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="button aspect-square flex items-center justify-center"
+                    >
+                        {isExpanded ? <LuChevronDown size={14} /> : <LuChevronLeft size={14} />}
+                    </button>
                 </div>
             </div>
 
-            {/* Expandable Arguments Section */}
-            {isExpanded && toolCall.arguments && (
+            {toolCall.arguments && isExpanded && (
                 <div className="px-4 py-4 border-b border-primary/20">
-                    <div className="flex items-center gap-2 mb-2">
-                        <LuCode className="text-primary/60" size={14} />
-                        <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
-                            Input Parameters
-                        </span>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <LuCode className="text-primary/60" size={14} />
+                            <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
+                                Input Parameters
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setIsInputExpanded(!isInputExpanded)}
+                            className="button aspect-square flex items-center justify-center"
+                        >
+                            {isInputExpanded ? (
+                                <LuChevronDown size={12} />
+                            ) : (
+                                <LuChevronLeft size={12} />
+                            )}
+                        </button>
                     </div>
-                    <div className="bg-secondary rounded-lg p-3 overflow-x-auto border border-primary/20">
-                        {isValidJSON(toolCall.arguments) ? (
-                            <pre className="language-json text-xs">
-                                <code className="text-primary">
-                                    {formatJSON(toolCall.arguments)}
-                                </code>
-                            </pre>
-                        ) : (
-                            <pre className="text-xs text-primary font-mono">
-                                {toolCall.arguments}
-                            </pre>
-                        )}
-                    </div>
+                    {isInputExpanded && (
+                        <div className="bg-secondary rounded-lg overflow-x-auto border border-primary/20">
+                            {isValidJSON(toolCall.arguments) ? (
+                                <pre className="language-json text-xs p-3">
+                                    <code className="text-primary">
+                                        {formatJSON(toolCall.arguments)}
+                                    </code>
+                                </pre>
+                            ) : (
+                                <pre className="text-xs text-primary font-mono p-3">
+                                    {toolCall.arguments}
+                                </pre>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* Results Section */}
-            {toolCall.result && (
+            {toolCall.result && isExpanded && (
                 <div className="px-4 py-4">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -310,25 +351,32 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
                                     : 'Output Result'}
                             </span>
                         </div>
-                        {shouldShowExpand && (
-                            <button
-                                onClick={() => setIsResultExpanded(!isResultExpanded)}
-                                className="button aspect-square flex items-center justify-center"
-                            >
-                                {isResultExpanded ? (
-                                    <LuChevronDown size={12} />
-                                ) : (
-                                    <LuChevronLeft size={12} />
-                                )}
-                            </button>
-                        )}
+                        {toolCall.result &&
+                            toolCall.result.length > 200 &&
+                            !isSearchTool(toolCall.tool_name) && (
+                                <button
+                                    onClick={() => setIsResultExpanded(!isResultExpanded)}
+                                    className="button aspect-square flex items-center justify-center"
+                                >
+                                    {isResultExpanded ? (
+                                        <LuChevronDown size={12} />
+                                    ) : (
+                                        <LuChevronLeft size={12} />
+                                    )}
+                                </button>
+                            )}
                     </div>
                     {/* Custom Tool Result Display */}
                     {toolCall.status.toLowerCase() === 'success' && toolCall.result ? (
                         <ToolResultDisplay
                             toolName={toolCall.tool_name}
                             result={toolCall.result}
-                            isExpanded={isResultExpanded || !shouldShowExpand}
+                            isExpanded={
+                                isResultExpanded ||
+                                (toolCall.result && toolCall.result.length <= 200) ||
+                                isSearchTool(toolCall.tool_name) ||
+                                false
+                            }
                             onExpand={() => setIsResultExpanded(true)}
                         />
                     ) : (
@@ -339,13 +387,12 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
                                 toolCall.status.toLowerCase() === 'error'
                                     ? 'bg-error/10 border-error/30'
                                     : 'bg-secondary border-primary/20',
-                                // Height control based on expansion state
-                                isResultExpanded || !shouldShowExpand
+                                isResultExpanded ||
+                                    (toolCall.result && toolCall.result.length <= 200)
                                     ? 'max-h-96 overflow-y-auto'
                                     : 'max-h-24 overflow-hidden'
                             )}
                         >
-                            fallback
                             {shouldHighlight ? (
                                 <pre className="language-json text-xs p-3">
                                     <code ref={codeRef} className="text-primary">

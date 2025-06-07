@@ -415,7 +415,12 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
                 {messageData.streaming_events && messageData.streaming_events.length > 0 && (
                     <StoredStreamingEvents events={messageData.streaming_events} />
                 )}
-                <div className="prose">
+                <div
+                    className={classNames(
+                        'prose',
+                        messageData.sender_role === 'user' && 'card border border-primary/50'
+                    )}
+                >
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                         {messageData.message}
                     </Markdown>

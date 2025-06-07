@@ -57,7 +57,7 @@ function RouteComponent() {
 
     return (
         <>
-            <div className="mx-auto w-full max-w-screen-lg pt-8 px-2 space-y-4">
+            <div className="mx-auto w-full prose-width pt-8 px-2 space-y-4">
                 <WorkshopAuthGuard>
                     <ChatWithSidebar chatId={chatId} />
                 </WorkshopAuthGuard>

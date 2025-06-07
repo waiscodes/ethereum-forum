@@ -43,10 +43,10 @@ pub struct DiscourseUserBadge {
     id: u32,
     granted_at: Option<String>, // ISO datetime
     created_at: Option<String>, // ISO datetime
-    count: u32,
-    badge_id: u32,
-    user_id: i32,
-    granted_by_id: i32,
+    count: Option<u32>,
+    badge_id: Option<u32>,
+    user_id: Option<i32>,
+    granted_by_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object, Clone)]
@@ -168,7 +168,7 @@ pub struct DiscourseUserStats {
     id: i32,
     username: String,
     name: Option<String>,
-    count: u32,
+    count: Option<u32>,
     avatar_template: String,
     admin: bool,
     moderator: bool,

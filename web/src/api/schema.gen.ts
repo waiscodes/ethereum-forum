@@ -1100,13 +1100,13 @@ export interface components {
             granted_at?: string;
             created_at?: string;
             /** Format: uint32 */
-            count: number;
+            count?: number;
             /** Format: uint32 */
-            badge_id: number;
+            badge_id?: number;
             /** Format: int32 */
-            user_id: number;
+            user_id?: number;
             /** Format: int32 */
-            granted_by_id: number;
+            granted_by_id?: number;
         };
         /** DiscourseUserProfile */
         DiscourseUserProfile: {
@@ -1122,7 +1122,7 @@ export interface components {
             username: string;
             name?: string;
             /** Format: uint32 */
-            count: number;
+            count?: number;
             avatar_template: string;
             admin: boolean;
             moderator: boolean;
