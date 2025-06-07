@@ -19,11 +19,12 @@ import {
     LuChevronDown,
     LuChevronLeft,
     LuChevronRight,
-    LuChevronUp,
+    LuCode,
     LuCog,
     LuCopy,
     LuLoader,
     LuPencil,
+    LuTriangle,
     LuUser,
     LuX,
 } from 'react-icons/lu';
@@ -336,18 +337,31 @@ const StoredStreamingEvents = ({ events }: { events: StreamingEvent[] }) => {
     }
 
     return (
-        <div className="mb-4">
-            <div className="text-sm text-gray-600 mb-2">🔧 Tool Calls:</div>
-            {toolCalls.map((toolCall) => (
-                <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
-            ))}
+        <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4 px-1">
+                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-secondary text-primary shadow-sm">
+                    <LuCog size={14} />
+                </div>
+                <h3 className="text-sm font-semibold text-primary">Tool Executions</h3>
+                <div className="flex-1 h-px bg-primary/20"></div>
+                <span className="text-xs text-primary/70 bg-secondary px-2 py-1 rounded-full border border-primary/20">
+                    {toolCalls.length} call{toolCalls.length !== 1 ? 's' : ''}
+                </span>
+            </div>
+            <div className="space-y-3">
+                {toolCalls.map((toolCall) => (
+                    <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
+                ))}
+            </div>
         </div>
     );
 };
 
 // Tool Call Display Component
 const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCallEntry'] }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    // Show input expanded by default for completed calls, collapsed for unknown status
+    const shouldExpandByDefault = toolCall.status === 'Success' || toolCall.status === 'Error';
+    const [isExpanded, setIsExpanded] = useState(shouldExpandByDefault);
     const [isResultExpanded, setIsResultExpanded] = useState(false);
     const codeRef = useRef<HTMLElement>(null);
 
@@ -361,45 +375,121 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     const getStatusIcon = () => {
         switch (toolCall.status) {
             case 'Starting':
-                return <LuCog className="animate-spin text-blue-500" />;
+                return <LuCog className="animate-spin text-secondary" size={16} />;
             case 'Executing':
-                return <LuLoader className="animate-spin text-yellow-500" />;
+                return <LuLoader className="animate-spin text-yellow-600" size={16} />;
             case 'Success':
-                return <LuCheck className="text-green-500" />;
+                return <LuCheck className="text-green-600" size={16} />;
             case 'Error':
-                return <LuX className="text-red-500" />;
+                return <LuX className="text-red-600" size={16} />;
             default:
-                return <LuCog className="text-gray-500" />;
+                return <LuCog className="text-primary/60" size={16} />;
         }
     };
 
-    const getStatusColor = () => {
+    const getStatusStyles = () => {
         switch (toolCall.status) {
             case 'Starting':
-                return 'border-blue-200 bg-blue-50';
+                return {
+                    container: 'border-secondary bg-secondary/30',
+                    header: 'bg-secondary/50 border-secondary',
+                    badge: 'bg-secondary text-primary',
+                    text: 'text-secondary',
+                };
             case 'Executing':
-                return 'border-yellow-200 bg-yellow-50';
+                return {
+                    container: 'border-yellow-200 bg-yellow-50/50',
+                    header: 'bg-yellow-100/50 border-yellow-200',
+                    badge: 'bg-yellow-600 text-white',
+                    text: 'text-yellow-800',
+                };
             case 'Success':
-                return 'border-green-200 bg-green-50';
+                return {
+                    container: 'border-green-200 bg-green-50/50',
+                    header: 'bg-green-100/50 border-green-200',
+                    badge: 'bg-green-600 text-white',
+                    text: 'text-green-800',
+                };
             case 'Error':
-                return 'border-red-200 bg-red-50';
+                return {
+                    container: 'border-red-200 bg-red-50/50',
+                    header: 'bg-red-100/50 border-red-200',
+                    badge: 'bg-red-600 text-white',
+                    text: 'text-red-800',
+                };
             default:
-                return 'border-gray-200 bg-gray-50';
+                return {
+                    container: 'border-primary/20 bg-primary',
+                    header: 'bg-secondary/50 border-primary/20',
+                    badge: 'bg-primary/20 text-primary',
+                    text: 'text-primary',
+                };
         }
     };
 
     const getStatusText = () => {
         switch (toolCall.status) {
             case 'Starting':
-                return 'Starting...';
+                return 'Initializing';
             case 'Executing':
-                return 'Executing...';
+                return 'In Progress';
             case 'Success':
                 return 'Completed';
             case 'Error':
                 return 'Failed';
             default:
                 return 'Unknown';
+        }
+    };
+
+    const getToolDisplayName = (toolName: string) => {
+        // Convert snake_case to readable format
+        return toolName
+            .split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    const formatInputSummary = (toolName: string, args: string) => {
+        try {
+            const parsedArgs = JSON.parse(args);
+
+            switch (toolName) {
+                case 'search_forum':
+                case 'search_topics':
+                case 'search_posts':
+                    return `Searching for "${parsedArgs.query || 'unknown'}"`;
+                case 'search_posts_in_topic':
+                    return `Searching topic ${parsedArgs.topic_id || 'unknown'} for "${parsedArgs.query || 'unknown'}"`;
+                case 'get_topic_summary':
+                    return `Getting summary of topic ${parsedArgs.topic_id || 'unknown'}`;
+                case 'get_posts':
+                    return `Fetching posts from topic ${parsedArgs.topic_id || 'unknown'}${parsedArgs.page ? ` (page ${parsedArgs.page})` : ''}`;
+                case 'search_by_user':
+                    return `Finding content by user ${parsedArgs.user_id || 'unknown'}${parsedArgs.query ? ` about "${parsedArgs.query}"` : ''}`;
+                case 'search_by_username':
+                case 'search_by_username_mention':
+                    return `Finding content by @${parsedArgs.username || parsedArgs.username_mention || 'unknown'}${parsedArgs.query ? ` about "${parsedArgs.query}"` : ''}`;
+                case 'get_user_profile':
+                    return `Getting profile for @${parsedArgs.username || 'unknown'}`;
+                case 'get_user_summary':
+                    return `Getting activity summary for @${parsedArgs.username || 'unknown'}`;
+                case 'username_to_user_id':
+                    return `Looking up user ID for @${parsedArgs.username || 'unknown'}`;
+                default:
+                    // For unknown tools, try to extract the most relevant parameter
+                    const keys = Object.keys(parsedArgs);
+
+                    if (keys.length > 0) {
+                        const mainParam = parsedArgs[keys[0]];
+
+                        return `${getToolDisplayName(toolName)}: ${mainParam}`;
+                    }
+
+                    return `Executing ${getToolDisplayName(toolName)}`;
+            }
+        } catch {
+            return `Executing ${getToolDisplayName(toolName)}`;
         }
     };
 
@@ -411,77 +501,139 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     const isResultTooLarge = toolCall.result && toolCall.result.length > 10000;
     const shouldHighlight = isResultJSON && !isResultTooLarge;
 
+    const styles = getStatusStyles();
+
     return (
         <div
             className={classNames(
-                'border rounded-lg p-3 mb-2 transition-all duration-200',
-                getStatusColor()
+                'border rounded-lg shadow-sm transition-all duration-200 hover:shadow-md',
+                styles.container
             )}
         >
-            <div className="flex items-center gap-2 mb-2">
-                {getStatusIcon()}
-                <span className="font-medium text-sm">Tool: {toolCall.tool_name}</span>
-                <span className="text-xs text-gray-500">{getStatusText()}</span>
-                {(toolCall.arguments || shouldShowExpand) && (
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="ml-auto text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                    >
-                        {isExpanded ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}
-                        {isExpanded ? 'Collapse' : 'Expand'}
-                    </button>
+            {/* Header Section */}
+            <div
+                className={classNames(
+                    'border-b rounded-t-lg px-4 py-3 transition-all duration-200',
+                    styles.header
                 )}
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary shadow-sm">
+                            {getStatusIcon()}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="font-semibold text-primary text-sm">
+                                    {getToolDisplayName(toolCall.tool_name)}
+                                </span>
+                                <span
+                                    className={classNames(
+                                        'px-2 py-1 rounded-full text-xs font-medium',
+                                        styles.badge
+                                    )}
+                                >
+                                    {getStatusText()}
+                                </span>
+                            </div>
+                            {toolCall.arguments && (
+                                <span className="text-xs text-primary/70">
+                                    {formatInputSummary(toolCall.tool_name, toolCall.arguments)}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {toolCall.arguments && (
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="button aspect-square flex items-center justify-center"
+                        >
+                            {isExpanded ? <LuChevronDown size={14} /> : <LuChevronLeft size={14} />}
+                        </button>
+                    )}
+                </div>
             </div>
 
+            {/* Expandable Arguments Section */}
             {isExpanded && toolCall.arguments && (
-                <div className="mb-2">
-                    <div className="text-xs text-gray-600 mb-1">Arguments:</div>
-                    <div className="bg-gray-100 rounded p-2 text-xs font-mono overflow-x-auto">
+                <div className="px-4 py-4 border-b border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                        <LuCode className="text-primary/60" size={14} />
+                        <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
+                            Input Parameters
+                        </span>
+                    </div>
+                    <div className="bg-secondary rounded-lg p-3 overflow-x-auto border border-primary/20">
                         {isValidJSON(toolCall.arguments) ? (
-                            <pre className="language-json">
-                                <code>{formatJSON(toolCall.arguments)}</code>
+                            <pre className="language-json text-xs">
+                                <code className="text-primary">
+                                    {formatJSON(toolCall.arguments)}
+                                </code>
                             </pre>
                         ) : (
-                            <pre>{toolCall.arguments}</pre>
+                            <pre className="text-xs text-primary font-mono">
+                                {toolCall.arguments}
+                            </pre>
                         )}
                     </div>
                 </div>
             )}
 
+            {/* Results Section */}
             {toolCall.result && (
-                <div>
-                    <div className="text-xs text-gray-600 mb-1 flex items-center justify-between">
-                        <span>{toolCall.status === 'Error' ? 'Error:' : 'Result:'}</span>
+                <div className="px-4 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            {toolCall.status === 'Error' ? (
+                                <LuTriangle className="text-red-500" size={14} />
+                            ) : (
+                                <LuCheck className="text-green-600" size={14} />
+                            )}
+                            <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
+                                {toolCall.status === 'Error' ? 'Error Details' : 'Output Result'}
+                            </span>
+                        </div>
                         {shouldShowExpand && (
                             <button
                                 onClick={() => setIsResultExpanded(!isResultExpanded)}
-                                className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                                className="button aspect-square flex items-center justify-center"
                             >
                                 {isResultExpanded ? (
-                                    <LuChevronUp size={12} />
-                                ) : (
                                     <LuChevronDown size={12} />
+                                ) : (
+                                    <LuChevronLeft size={12} />
                                 )}
-                                {isResultExpanded ? 'Collapse' : 'Expand'}
                             </button>
                         )}
                     </div>
                     <div
                         className={classNames(
-                            'rounded text-xs overflow-x-auto transition-all duration-200',
-                            toolCall.status === 'Error' ? 'bg-red-100 text-red-800' : 'bg-gray-100',
+                            'rounded-lg overflow-hidden transition-all duration-300 border',
+                            toolCall.status === 'Error'
+                                ? 'bg-red-50/50 border-red-200'
+                                : 'bg-secondary border-primary/20',
                             // Height control based on expansion state
                             isResultExpanded || !shouldShowExpand
                                 ? 'max-h-96 overflow-y-auto'
-                                : 'max-h-20 overflow-hidden'
+                                : 'max-h-24 overflow-hidden'
                         )}
                     >
                         {shouldHighlight ? (
-                            <pre className="language-json">
-                                <code ref={codeRef}>{formattedResult}</code>
+                            <pre className="language-json text-xs p-3">
+                                <code ref={codeRef} className="text-primary">
+                                    {formattedResult}
+                                </code>
                             </pre>
                         ) : (
-                            <pre className="whitespace-pre-wrap p-4">{formattedResult}</pre>
+                            <pre
+                                className={classNames(
+                                    'text-xs p-3 font-mono whitespace-pre-wrap',
+                                    toolCall.status === 'Error' ? 'text-red-800' : 'text-primary'
+                                )}
+                            >
+                                {formattedResult}
+                            </pre>
                         )}
                     </div>
                 </div>
@@ -556,7 +708,7 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
 
             <div
                 key={messageData.message_id}
-                className="border p-4 border-primary/50 rounded-md pr-6"
+                // className="border p-4 border-primary/50 rounded-md pr-6"
             >
                 {/* Show stored streaming events if they exist */}
                 {messageData.streaming_events && messageData.streaming_events.length > 0 && (
@@ -653,11 +805,22 @@ export const ChatDataStream = ({ chatId, messageId }: { chatId: string; messageI
         <>
             {/* Display tool calls */}
             {toolCalls.length > 0 && (
-                <div className="mb-4">
-                    <div className="text-sm text-gray-600 mb-2">🔧 Tool Calls:</div>
-                    {toolCalls.map((toolCall) => (
-                        <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
-                    ))}
+                <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-4 px-1">
+                        <div className="flex items-center justify-center w-6 h-6 rounded-md bg-secondary text-primary shadow-sm">
+                            <LuCog size={14} />
+                        </div>
+                        <h3 className="text-sm font-semibold text-primary">Tool Executions</h3>
+                        <div className="flex-1 h-px bg-primary/20"></div>
+                        <span className="text-xs text-primary/70 bg-secondary px-2 py-1 rounded-full border border-primary/20">
+                            {toolCalls.length} call{toolCalls.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    <div className="space-y-3">
+                        {toolCalls.map((toolCall) => (
+                            <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
+                        ))}
+                    </div>
                 </div>
             )}
 

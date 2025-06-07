@@ -1097,8 +1097,8 @@ export interface components {
         DiscourseUserBadge: {
             /** Format: uint32 */
             id: number;
-            granted_at: string;
-            created_at: string;
+            granted_at?: string;
+            created_at?: string;
             /** Format: uint32 */
             count: number;
             /** Format: uint32 */
