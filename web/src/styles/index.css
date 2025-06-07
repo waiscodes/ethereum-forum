@@ -22,6 +22,9 @@ html.light {
     --theme-border: 101 123 131;
     --theme-border-secondary: 238 232 213;
     --theme-code-shadow: 1px;
+    --theme-success: 16 185 129;
+    --theme-error: 239 68 68;
+    --theme-warning: 234 179 8;
 }
 
 html.dark {
@@ -33,6 +36,9 @@ html.dark {
     --theme-border: 36 36 36;
     --theme-border-secondary: 36 36 36;
     --theme-code-shadow: 6px;
+    --theme-success: 16 185 129;
+    --theme-error: 239 68 68;
+    --theme-warning: 234 179 8;
     .github-icon {
         /* filter: invert(1); */
         fill: #efefef;
@@ -49,6 +55,9 @@ html.dark {
         --theme-border: 101 123 131;
         --theme-border-secondary: 238 232 213;
         --theme-code-shadow: 1px;
+        --theme-success: 16 185 129;
+        --theme-error: 239 68 68;
+        --theme-warning: 234 179 8;
     }
 }
 @media (prefers-color-scheme: dark) {
@@ -61,6 +70,9 @@ html.dark {
         --theme-border: 36 36 36;
         --theme-border-secondary: 36 36 36;
         --theme-code-shadow: 6px;
+        --theme-success: 16 185 129;
+        --theme-error: 239 68 68;
+        --theme-warning: 234 179 8;
         .github-icon {
             fill: #efefef;
         }

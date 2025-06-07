@@ -30,6 +30,9 @@ export default {
                     'rgb(var(--theme-border-secondary) / <alpha-value>) /* rgb(238, 232, 213) */',
             },
             colors: {
+                success: 'rgb(var(--theme-success) / <alpha-value>) /* rgb(16, 185, 129) */',
+                error: 'rgb(var(--theme-error) / <alpha-value>) /* rgb(239, 68, 68) */',
+                warning: 'rgb(var(--theme-warning) / <alpha-value>) /* rgb(234, 179, 8) */',
                 // background: 'var(--theme-bg-color)',
                 // text: 'var(--theme-text-color)',
                 // hint: 'var(--theme-hint-color)',

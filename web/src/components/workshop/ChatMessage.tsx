@@ -377,11 +377,11 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
             case 'starting':
                 return <LuCog className="animate-spin text-secondary" size={16} />;
             case 'executing':
-                return <LuLoader className="animate-spin text-yellow-600" size={16} />;
+                return <LuLoader className="animate-spin text-warning" size={16} />;
             case 'success':
-                return <LuCheck className="text-green-600" size={16} />;
+                return <LuCheck className="text-success" size={16} />;
             case 'error':
-                return <LuX className="text-red-600" size={16} />;
+                return <LuX className="text-error" size={16} />;
             default:
                 return <LuCog className="text-primary/60" size={16} />;
         }
@@ -398,24 +398,24 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                 };
             case 'executing':
                 return {
-                    container: 'border-yellow-200 bg-yellow-50/50',
-                    header: 'bg-yellow-100/50 border-yellow-200',
-                    badge: 'bg-yellow-600 text-white',
-                    text: 'text-yellow-800',
+                    container: 'border-warning/30 bg-warning/10',
+                    header: 'bg-warning/20 border-warning/30', 
+                    badge: 'bg-warning text-white',
+                    text: 'text-warning',
                 };
             case 'success':
                 return {
-                    container: 'border-green-200 bg-green-50/50',
-                    header: 'bg-green-100/50 border-green-200',
-                    badge: 'bg-green-600 text-white',
-                    text: 'text-green-800',
+                    container: 'border-success/30 bg-success/10',
+                    header: 'bg-success/20 border-success/30',
+                    badge: 'bg-success text-white',
+                    text: 'text-success',
                 };
             case 'error':
                 return {
-                    container: 'border-red-200 bg-red-50/50',
-                    header: 'bg-red-100/50 border-red-200',
-                    badge: 'bg-red-600 text-white',
-                    text: 'text-red-800',
+                    container: 'border-error/30 bg-error/10',
+                    header: 'bg-error/20 border-error/30',
+                    badge: 'bg-error text-white',
+                    text: 'text-error',
                 };
             default:
                 return {
@@ -585,13 +585,13 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                 <div className="px-4 py-4">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                            {toolCall.status === 'Error' ? (
-                                <LuTriangle className="text-red-500" size={14} />
+                            {toolCall.status.toLowerCase() === 'error' ? (
+                                <LuTriangle className="text-error" size={14} />
                             ) : (
-                                <LuCheck className="text-green-600" size={14} />
+                                <LuCheck className="text-success" size={14} />
                             )}
                             <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">
-                                {toolCall.status === 'Error' ? 'Error Details' : 'Output Result'}
+                                {toolCall.status.toLowerCase() === 'error' ? 'Error Details' : 'Output Result'}
                             </span>
                         </div>
                         {shouldShowExpand && (
@@ -607,11 +607,11 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                             </button>
                         )}
                     </div>
-                    <div
+                                        <div
                         className={classNames(
                             'rounded-lg overflow-hidden transition-all duration-300 border',
-                            toolCall.status === 'Error'
-                                ? 'bg-red-50/50 border-red-200'
+                            toolCall.status.toLowerCase() === 'error' 
+                                ? 'bg-error/10 border-error/30' 
                                 : 'bg-secondary border-primary/20',
                             // Height control based on expansion state
                             isResultExpanded || !shouldShowExpand
@@ -629,7 +629,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                             <pre
                                 className={classNames(
                                     'text-xs p-3 font-mono whitespace-pre-wrap',
-                                    toolCall.status === 'Error' ? 'text-red-800' : 'text-primary'
+                                    toolCall.status.toLowerCase() === 'error' ? 'text-error' : 'text-primary'
                                 )}
                             >
                                 {formattedResult}
