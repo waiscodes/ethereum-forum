@@ -34,7 +34,8 @@ const RouteComponent: FC = () => {
         userData.user.name &&
         userData.user.name.toLowerCase() !== userData.user.username.toLowerCase();
 
-    const modifyAvatarUrl = (url: string) => {
+    const modifyAvatarUrl = (url: string | undefined) => {
+        if (!url) return '/default-avatar.png'; // Fallback avatar
         return 'https://ethereum-magicians.org' + url.replace('{size}', '200');
     };
 
@@ -59,18 +60,20 @@ const RouteComponent: FC = () => {
             </div>
 
             <div className="flex flex-wrap text-sm text-primary border-b pb-2 border-primary gap-x-6 font-thin">
-                <span>
-                    Joined:{' '}
-                    <Tooltip
-                        trigger={
-                            <span className="font-semibold">
-                                <TimeAgo date={new Date(userData.user.created_at)} />
-                            </span>
-                        }
-                    >
-                        {userData.user.created_at}
-                    </Tooltip>
-                </span>
+                {userData.user.created_at && (
+                    <span>
+                        Joined:{' '}
+                        <Tooltip
+                            trigger={
+                                <span className="font-semibold">
+                                    <TimeAgo date={new Date(userData.user.created_at)} />
+                                </span>
+                            }
+                        >
+                            {userData.user.created_at}
+                        </Tooltip>
+                    </span>
+                )}
                 <span>
                     Last post:{' '}
                     {userData.user.last_posted_at ? (
@@ -87,36 +90,46 @@ const RouteComponent: FC = () => {
                         'Never'
                     )}
                 </span>
-                <span>
-                    Profile views:{' '}
-                    <span className="font-semibold">{userData.user.profile_view_count}</span>
-                </span>
-                <span>
-                    Likes given:{' '}
-                    <span className="font-semibold">{userSummary?.user_summary.likes_given}</span>
-                </span>
-                <span>
-                    Likes received:{' '}
-                    <span className="font-semibold">
-                        {userSummary?.user_summary.likes_received}
+                {userData.user.profile_view_count !== undefined && (
+                    <span>
+                        Profile views:{' '}
+                        <span className="font-semibold">{userData.user.profile_view_count}</span>
                     </span>
-                </span>
+                )}
+                                 {userSummary?.user_summary?.likes_given !== undefined && (
+                     <span>
+                         Likes given:{' '}
+                         <span className="font-semibold">
+                             {userSummary.user_summary.likes_given}
+                         </span>
+                     </span>
+                 )}
+                {userSummary?.user_summary?.likes_received !== undefined && (
+                    <span>
+                        Likes received:{' '}
+                        <span className="font-semibold">
+                            {userSummary.user_summary.likes_received}
+                        </span>
+                    </span>
+                )}
             </div>
 
-            <div>
-                <h2 className="text-lg font-semibold mb-1">Top Categories</h2>
-                <div className="flex flex-wrap gap-2">
-                    {userSummary?.user_summary.top_categories.map((cat) => (
-                        <CategoryTag key={cat.name} tag={cat.name} />
-                    ))}
+            {userSummary?.user_summary?.top_categories && (
+                <div>
+                    <h2 className="text-lg font-semibold mb-1">Top Categories</h2>
+                    <div className="flex flex-wrap gap-2">
+                        {userSummary.user_summary.top_categories.map((cat) => (
+                            <CategoryTag key={cat.name} tag={cat.name} />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {userSummary?.user_summary?.most_liked_by_users?.length > 0 && (
                 <div>
                     <h2 className="text-lg font-semibold mb-1">Most Liked By</h2>
                     <div className="flex flex-wrap gap-2 items-center">
-                        {userSummary.user_summary.most_liked_by_users.map((u) => (
+                        {userSummary.user_summary.most_liked_by_users?.map((u) => (
                             <div key={u.id} className="flex items-center gap-1">
                                 <img
                                     src={modifyAvatarUrl(u.avatar_template)}
@@ -131,11 +144,11 @@ const RouteComponent: FC = () => {
                 </div>
             )}
 
-            {userSummary?.user_summary.most_liked_users?.length > 0 && (
+            {userSummary?.user_summary?.most_liked_users?.length > 0 && (
                 <div>
                     <h2 className="text-lg font-semibold mb-1">Most Liked Users</h2>
                     <div className="flex flex-wrap gap-2 items-center">
-                        {userSummary.user_summary.most_liked_users.map((u) => (
+                        {userSummary.user_summary.most_liked_users?.map((u) => (
                             <div key={u.id} className="flex items-center gap-1">
                                 <img
                                     src={modifyAvatarUrl(u.avatar_template)}
@@ -150,12 +163,12 @@ const RouteComponent: FC = () => {
                 </div>
             )}
 
-            {userSummary?.user_summary.replies?.length > 0 && (
+            {userSummary?.user_summary?.replies?.length > 0 && (
                 <div>
                     <h2 className="text-lg font-semibold mb-1">Recent Replies</h2>
                     <ul className="list-disc pl-5">
-                        {userSummary.user_summary.replies.map((reply, i) => {
-                            const topic = userSummary.topics.find((t) => t.id === reply.topic_id);
+                        {userSummary.user_summary.replies?.map((reply, i) => {
+                            const topic = userSummary.topics?.find((t) => t.id === reply.topic_id);
 
                             return (
                                 <li key={i}>
@@ -179,10 +192,10 @@ const RouteComponent: FC = () => {
             <div className="flex flex-col gap-4">
                 <h2 className="text-xl font-semibold">Topics</h2>
                 <div className="flex flex-col gap-2">
-                    {userSummary?.topics.length === 0 && (
+                    {(!userSummary?.topics || userSummary.topics.length === 0) && (
                         <div className="text-gray-500 italic">No topics found.</div>
                     )}
-                    {userSummary?.topics.map((topic) => (
+                    {userSummary?.topics?.map((topic) => (
                         <Link
                             to="/t/$topicId"
                             params={{ topicId: topic.id.toString() }}

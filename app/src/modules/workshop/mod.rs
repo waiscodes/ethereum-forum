@@ -1,73 +1,88 @@
-use figment::providers::Env;
-use openai::{
-    chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole}, Credentials
+use async_openai::{
+    types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage, CreateChatCompletionRequest},
+    Client
 };
 use opentelemetry_http::HttpError;
 use serde_json::json;
 use tracing::info;
 use uuid::Uuid;
 use async_std::task;
+use std::sync::Arc;
+use async_std::sync::RwLock;
 
 use crate::{
     models::{
         topics::{Post, Topic},
         workshop::{WorkshopChat, WorkshopMessage},
-    }, modules::workshop::prompts::{OngoingPrompt, OngoingPromptManager, SHORTSUM_MODEL}, state::AppState
+    }, modules::workshop::prompts::{OngoingPrompt, OngoingPromptManager, SHORTSUM_MODEL, SUMMARY_MODEL}, state::AppState
 };
 
 pub mod prompts;
+pub mod mcp_client;
 
 pub struct WorkshopService {
-    pub credentials: Credentials,
+    pub client: Client<async_openai::config::OpenAIConfig>,
     pub prompts: WorkshopPrompts,
     // Manager for request coalescing of streaming responses
     pub ongoing_prompts: OngoingPromptManager,
+    // MCP client manager for AI tool calling
+    pub mcp_client: Arc<RwLock<mcp_client::McpClientManager>>,
 }
 
 pub struct WorkshopPrompts {
-    pub summerize: ChatCompletionMessage,
-    pub shortsum: ChatCompletionMessage,
+    pub summerize: ChatCompletionRequestMessage,
+    pub shortsum: ChatCompletionRequestMessage,
 }
 
 impl Default for WorkshopPrompts {
     fn default() -> Self {
         Self {
-            summerize: ChatCompletionMessage {
-                role: ChatCompletionMessageRole::System,
-                content: Some(prompts::SUMMARY_PROMPT.to_string()),
+            summerize: ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+                content: prompts::SUMMARY_PROMPT.to_string().into(),
                 name: None,
-                function_call: None,
-                tool_call_id: None,
-                tool_calls: None,
-            },
-            shortsum: ChatCompletionMessage {
-                role: ChatCompletionMessageRole::System,
-                content: Some(prompts::SHORTSUM_PROMPT.to_string()),
+            }),
+            shortsum: ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+                content: prompts::SHORTSUM_PROMPT.to_string().into(),
                 name: None,
-                function_call: None,
-                tool_call_id: None,
-                tool_calls: None,
-            },
+            }),
         }
     }
 }
 
 impl WorkshopService {
     pub async fn init() -> Self {
-        let base_url = Env::var_or(
-            "WORKSHOP_INTELLIGENCE_BASE_URL",
-            "https://openrouter.ai/api/v1",
-        );
+        let api_key = std::env::var("WORKSHOP_INTELLIGENCE_KEY")
+            .expect("WORKSHOP_INTELLIGENCE_KEY not set");
+        
+        let base_url = std::env::var("WORKSHOP_INTELLIGENCE_BASE_URL")
+            .unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
 
-        let credentials = Credentials::new(
-            Env::var("WORKSHOP_INTELLIGENCE_KEY").expect("WORKSHOP_INTELLIGENCE_KEY not set"),
-            base_url,
-        );
+        tracing::info!("🔧 Workshop Service Init:");
+        tracing::info!("  API Key present: {}", !api_key.is_empty());
+        tracing::info!("  API Key length: {}", api_key.len());
+        tracing::info!("  Base URL: {}", base_url);
+
+        let config = async_openai::config::OpenAIConfig::new()
+            .with_api_key(api_key)
+            .with_api_base(base_url);
+            
+        let client = Client::with_config(config);
+        tracing::info!("  OpenAI client configured successfully");
+
+        // Initialize MCP client manager
+        let mut mcp_client = mcp_client::McpClientManager::new();
+        let mcp_base_url = std::env::var("MCP_BASE_URL")
+            .unwrap_or_else(|_| "https://ethereum.forum/mcp".to_string());
+        
+        if let Err(e) = mcp_client.init_default_client(mcp_base_url).await {
+            tracing::warn!("Failed to initialize MCP client: {}", e);
+        }
 
         Self {
-            credentials,
+            client,
             prompts: WorkshopPrompts::default(),
             ongoing_prompts: OngoingPromptManager::new(),
+            mcp_client: Arc::new(RwLock::new(mcp_client)),
         }
     }
 
@@ -79,27 +94,26 @@ impl WorkshopService {
 
         let messages = vec![
             state.workshop.prompts.summerize.clone(),
-            ChatCompletionMessage {
-                role: ChatCompletionMessageRole::User,
-                content: Some(
-                    serde_json::to_string(&json!({
-                        "topic_info": topic,
-                        "posts": posts.await.map(|(posts, _)| posts).unwrap_or_else(|_| vec![]),
-                    }))
-                    .unwrap(),
-                ),
+            ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                content: serde_json::to_string(&json!({
+                    "topic_info": topic,
+                    "posts": posts.await.map(|(posts, _)| posts).unwrap_or_else(|_| vec![]),
+                }))
+                .unwrap().into(),
                 name: None,
-                function_call: None,
-                tool_call_id: None,
-                tool_calls: None,
-            },
+            }),
         ];
 
-        let chat_completion =
-            ChatCompletion::builder("deepseek/deepseek-r1-0528-qwen3-8b:free", messages.clone())
-                .credentials(state.workshop.credentials.clone())
-                .create()
-                .await?;
+        let request = CreateChatCompletionRequest {
+            model: SUMMARY_MODEL.to_string(),
+            messages,
+            ..Default::default()
+        };
+
+        let chat_completion = state.workshop.client
+            .chat()
+            .create(request)
+            .await?;
 
         let response = chat_completion.choices.first().unwrap().message.clone();
 
@@ -115,33 +129,82 @@ impl WorkshopService {
         message_id: Uuid,
         state: &AppState,
     ) -> Result<(OngoingPrompt, WorkshopMessage), Box<dyn std::error::Error + Send + Sync>> {
-        let mut messages: Vec<ChatCompletionMessage> =
+        tracing::info!("🔄 Starting process_next_message for chat: {}, message: {}", chat_id, message_id);
+        
+        let mut messages: Vec<ChatCompletionRequestMessage> =
             WorkshopMessage::get_messages_upwards(&message_id, state)
                 .await?
                 .into_iter()
                 .map(|m| m.into())
                 .collect();
 
-        info!("Messages: {:?}", messages);
+        tracing::info!("📝 Retrieved {} messages for context", messages.len());
 
-        let system_message = ChatCompletionMessage {
-            role: ChatCompletionMessageRole::System,
-            content: Some(prompts::WORKSHOP_PROMPT.to_string()),
+        // Process MCP tool calls from the conversation
+        match mcp_client::ToolCallHelper::process_tool_calls(&mut *state.workshop.mcp_client.write().await, &messages).await {
+            Ok(tool_results) => {
+                if !tool_results.is_empty() {
+                    let tool_context = mcp_client::ToolCallHelper::format_tool_results(&tool_results);
+                    info!("Adding tool results to context: {}", tool_context);
+                    
+                    // Add tool results as a system message
+                    let tool_message = ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+                        content: format!("Tool Results:\n{}", tool_context).into(),
+                        name: None,
+                    });
+                    messages.push(tool_message);
+                }
+            }
+            Err(e) => {
+                info!("Error processing tool calls: {}", e);
+            }
+        }
+
+        let system_message = ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+            content: prompts::WORKSHOP_PROMPT.to_string().into(),
             name: None,
-            function_call: None,
-            tool_call_id: None,
-            tool_calls: None,
-        };
+        });
 
         messages.insert(0, system_message);
 
+        // Get available MCP tools for the chat completion
+        tracing::info!("🔧 Getting MCP tools...");
+        let tools = match state.workshop.mcp_client.write().await.get_openai_tools().await {
+            Ok(mut tools) if !tools.is_empty() => {
+                tracing::info!("✅ Got {} MCP tools", tools.len());
+                
+                // TEMPORARY: Limit tools to first 5 to debug 400 error
+                // Some LLM models have issues with large numbers of tools
+                if tools.len() > 5 {
+                    tracing::warn!("🔧 Limiting tools from {} to 5 for debugging", tools.len());
+                    tools.truncate(5);
+                }
+                
+                Some(tools)
+            },
+            Ok(_) => {
+                tracing::info!("ℹ️ No MCP tools available");
+                None
+            },
+            Err(e) => {
+                tracing::warn!("⚠️ Failed to get MCP tools: {}", e);
+                None
+            }
+        };
+
         // Use chat_id + message_id as the coalescing key
         let key = format!("{}-{}", chat_id, message_id);
+        tracing::info!("🔑 Using coalescing key: {}", key);
         
         // Get or create the ongoing prompt
+        tracing::info!("🚀 Creating OngoingPrompt...");
         let ongoing_prompt = state.workshop.ongoing_prompts
-            .get_or_create(key.clone(), state, messages)
-            .await?;
+            .get_or_create(key.clone(), state, messages, tools)
+            .await
+            .map_err(|e| {
+                tracing::error!("❌ Failed to create OngoingPrompt: {}", e);
+                e
+            })?;
 
         // Create an empty system message for this response
         let system_response = WorkshopMessage::create_system_response(&chat_id, Some(message_id), "".to_string(), state).await?;
@@ -158,26 +221,37 @@ impl WorkshopService {
         let system_message_key_clone = system_message_key.clone();
         
         task::spawn(async move {
+            tracing::info!("⏳ Waiting for prompt completion...");
             match prompt_clone.await_completion().await {
                 Ok(content) => {
+                    tracing::info!("✅ Prompt completed successfully with {} characters", content.len());
+                    
                     // Update the message content
                     if let Err(e) = WorkshopMessage::update_message_content(&system_response_clone.message_id, &content, &state_clone).await {
-                        tracing::error!("Error updating message: {:?}", e);
+                        tracing::error!("❌ Error updating message: {:?}", e);
+                    } else {
+                        tracing::info!("✅ Updated message content successfully");
                     }
 
                     // Update the chat's last message
                     if let Err(e) = WorkshopChat::update_last_message(&system_response_clone.chat_id, &system_response_clone.message_id, &state_clone).await {
-                        tracing::error!("Error updating chat: {:?}", e);
+                        tracing::error!("❌ Error updating chat: {:?}", e);
                     } else {
+                        tracing::info!("✅ Updated chat last message successfully");
                         // Trigger background summarization agent after successful update
                         Self::shortsum_agent(system_response_clone.chat_id, state_clone.clone()).await;
                     }
                 },
                 Err(e) => {
-                    tracing::error!("Error in prompt completion: {:?}", e);
+                    tracing::error!("❌ Error in prompt completion: \"{}\"", e);
+                    tracing::error!("❌ Full error details: {:?}", e);
+                    
                     // Optionally update the message with an error message
-                    if let Err(update_err) = WorkshopMessage::update_message_content(&system_response_clone.message_id, &format!("Error: {}", e), &state_clone).await {
-                        tracing::error!("Error updating message with error: {:?}", update_err);
+                    let error_message = format!("Error: stream failed: {}", e);
+                    if let Err(update_err) = WorkshopMessage::update_message_content(&system_response_clone.message_id, &error_message, &state_clone).await {
+                        tracing::error!("❌ Error updating message with error: {:?}", update_err);
+                    } else {
+                        tracing::info!("📝 Updated message with error content");
                     }
                 }
             }
@@ -208,28 +282,22 @@ impl WorkshopService {
 
         let messages = vec![
             state.workshop.prompts.summerize.clone(),
-            ChatCompletionMessage {
-                role: ChatCompletionMessageRole::User,
-                content: Some(
-                    serde_json::to_string(&json!({
-                        "topic_info": topic,
-                        "posts": posts.await.map(|(posts, _)| posts).unwrap_or_else(|_| vec![]),
-                    }))
-                    .unwrap(),
-                ),
+            ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                content: serde_json::to_string(&json!({
+                    "topic_info": topic,
+                    "posts": posts.await.map(|(posts, _)| posts).unwrap_or_else(|_| vec![]),
+                }))
+                .unwrap().into(),
                 name: None,
-                function_call: None,
-                tool_call_id: None,
-                tool_calls: None,
-            },
+            }),
         ];
 
         // Use topic_id as the coalescing key for summaries
         let key = format!("summary-{}", topic.topic_id);
         
-        // Get or create the ongoing prompt
+        // Get or create the ongoing prompt (no tools needed for summaries)
         let ongoing_prompt = state.workshop.ongoing_prompts
-            .get_or_create(key, state, messages)
+            .get_or_create(key, state, messages, None)
             .await?;
 
         Ok(ongoing_prompt)
@@ -275,7 +343,7 @@ impl WorkshopService {
         let messages = WorkshopMessage::get_messages_by_chat_id(&chat_id, state).await?;
 
         // Convert workshop messages to chat completion messages for context
-        let conversation_messages: Vec<ChatCompletionMessage> = messages
+        let conversation_messages: Vec<ChatCompletionRequestMessage> = messages
             .into_iter()
             .map(|m| m.into())
             .collect();
@@ -284,13 +352,35 @@ impl WorkshopService {
         let conversation_context = conversation_messages
             .iter()
             .map(|msg| {
-                let role = match msg.role {
-                    ChatCompletionMessageRole::User => "User",
-                    ChatCompletionMessageRole::Assistant => "Assistant",
-                    ChatCompletionMessageRole::System => "System",
-                    _ => "Unknown",
+                let (role, content) = match msg {
+                    ChatCompletionRequestMessage::User(user_msg) => {
+                        let content = match &user_msg.content {
+                            async_openai::types::ChatCompletionRequestUserMessageContent::Text(text) => text.clone(),
+                            async_openai::types::ChatCompletionRequestUserMessageContent::Array(_) => "[Complex content]".to_string(),
+                        };
+                        ("User", content)
+                    },
+                    ChatCompletionRequestMessage::Assistant(assistant_msg) => {
+                        let content = if let Some(refusal) = &assistant_msg.refusal {
+                            format!("[Refusal: {}]", refusal)
+                        } else {
+                            assistant_msg.content.as_ref().map(|c| match c {
+                                async_openai::types::ChatCompletionRequestAssistantMessageContent::Text(text) => text.clone(),
+                                async_openai::types::ChatCompletionRequestAssistantMessageContent::Array(_) => "[Complex content]".to_string(),
+                            }).unwrap_or_default()
+                        };
+                        ("Assistant", content)
+                    },
+                    ChatCompletionRequestMessage::System(system_msg) => {
+                        let content = match &system_msg.content {
+                            async_openai::types::ChatCompletionRequestSystemMessageContent::Text(text) => text.clone(),
+                            async_openai::types::ChatCompletionRequestSystemMessageContent::Array(_) => "[Complex content]".to_string(),
+                        };
+                        ("System", content)
+                    },
+                    _ => ("Unknown", "".to_string()),
                 };
-                format!("{}: {}", role, msg.content.as_ref().unwrap_or(&"".to_string()))
+                format!("{}: {}", role, content)
             })
             .collect::<Vec<String>>()
             .join("\n\n");
@@ -298,21 +388,23 @@ impl WorkshopService {
         // Prepare the messages for summarization
         let summary_messages = vec![
             state.workshop.prompts.shortsum.clone(),
-            ChatCompletionMessage {
-                role: ChatCompletionMessageRole::User,
-                content: Some(conversation_context),
+            ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                content: conversation_context.into(),
                 name: None,
-                function_call: None,
-                tool_call_id: None,
-                tool_calls: None,
-            },
+            }),
         ];
 
-        // Generate the summary
-        let chat_completion = ChatCompletion::builder(SHORTSUM_MODEL, summary_messages)
-            .credentials(state.workshop.credentials.clone())
-            .max_completion_tokens(10u64)
-            .create()
+        // Generate the summary using async-openai
+        let request = CreateChatCompletionRequest {
+            model: SHORTSUM_MODEL.to_string(),
+            messages: summary_messages,
+            max_completion_tokens: Some(10),
+            ..Default::default()
+        };
+
+        let chat_completion = state.workshop.client
+            .chat()
+            .create(request)
             .await?;
 
         let summary = chat_completion

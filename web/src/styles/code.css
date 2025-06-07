@@ -25,7 +25,7 @@ pre[class*="language-"] {
 	-moz-hyphens: none;
 	-ms-hyphens: none;
 	hyphens: none;
-	background: rgb(var(--theme-bg-secondary));
+	/* background: rgb(var(--theme-bg-secondary)); */
 	color: #767693;
 }
 

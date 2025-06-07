@@ -1,10 +1,429 @@
+import '../../styles/code.css';
+
 import classNames from 'classnames';
-import { LuBrain, LuChevronLeft, LuChevronRight, LuCopy, LuPencil } from 'react-icons/lu';
+import * as Prism from 'prismjs';
+import { useEffect, useRef, useState } from 'react';
+
+// This ensures prism is loaded first
+// @ts-ignore
+// eslint-disable-next-line
+const data = Prism.util;
+
+// Import JSON language support for Prism
+import 'prismjs/components/prism-json';
+
+import { Link } from '@tanstack/react-router';
+import {
+    LuBrain,
+    LuCheck,
+    LuChevronDown,
+    LuChevronLeft,
+    LuChevronRight,
+    LuChevronUp,
+    LuCog,
+    LuCopy,
+    LuLoader,
+    LuPencil,
+    LuUser,
+    LuX,
+} from 'react-icons/lu';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { match } from 'ts-pattern';
 
+import { components } from '@/api/schema.gen';
+import { useTopic } from '@/api/topics';
+import { useUser } from '@/api/user';
 import { useWorkshopStreamMessage, WorkshopMessage } from '@/api/workshop';
+import { Tooltip } from '@/components/tooltip/Tooltip';
+
+// Helper function to check if a string is valid JSON
+const isValidJSON = (str: string): boolean => {
+    try {
+        JSON.parse(str);
+
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+// Helper function to format JSON string
+const formatJSON = (str: string): string => {
+    try {
+        return JSON.stringify(JSON.parse(str), null, 2);
+    } catch {
+        return str;
+    }
+};
+
+// User Profile Tooltip Component
+const UserProfileTooltip = ({
+    username,
+    children,
+}: {
+    username: string;
+    children: React.ReactNode;
+}) => {
+    const { data: user, isLoading, error } = useUser(username);
+
+    const tooltipContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex items-center gap-2 p-2">
+                    <LuLoader className="animate-spin" size={16} />
+                    <span>Loading...</span>
+                </div>
+            );
+        }
+
+        if (error || !user) {
+            return (
+                <div className="flex items-center gap-2 p-2 text-red-500">
+                    <LuUser size={16} />
+                    <span>User not found</span>
+                </div>
+            );
+        }
+
+        const avatarUrl = user.user.avatar_template?.replace('{size}', '40') || '';
+        const fullAvatarUrl = avatarUrl.startsWith('http')
+            ? avatarUrl
+            : `https://ethereum-magicians.org${avatarUrl}`;
+
+        return (
+            <div className="p-3 max-w-xs">
+                <div className="flex items-center gap-3 mb-2">
+                    {user.user.avatar_template && (
+                        <img
+                            src={fullAvatarUrl}
+                            alt={`${user.user.username}'s avatar`}
+                            className="w-10 h-10 rounded-full"
+                        />
+                    )}
+                    <div>
+                        <div className="font-semibold">{user.user.name || user.user.username}</div>
+                        <div className="text-sm text-gray-500">@{user.user.username}</div>
+                    </div>
+                </div>
+
+                <div className="text-xs text-gray-600 space-y-1">
+                    {user.user.title && (
+                        <div className="font-medium text-blue-600">{user.user.title}</div>
+                    )}
+                    <div>Trust Level: {user.user.trust_level}</div>
+                    {user.user.badge_count > 0 && (
+                        <div>
+                            {user.user.badge_count} badge{user.user.badge_count !== 1 ? 's' : ''}
+                        </div>
+                    )}
+                    {user.user.last_seen_at && (
+                        <div>
+                            Last seen: {new Date(user.user.last_seen_at).toLocaleDateString()}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    return <Tooltip trigger={<span>{children}</span>}>{tooltipContent()}</Tooltip>;
+};
+
+// Topic Preview Tooltip Component
+const TopicPreviewTooltip = ({
+    topicId,
+    children,
+}: {
+    topicId: string;
+    children: React.ReactNode;
+}) => {
+    const { data: topic, isLoading, error } = useTopic(topicId);
+
+    const tooltipContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex items-center gap-2 p-2">
+                    <LuLoader className="animate-spin" size={16} />
+                    <span>Loading...</span>
+                </div>
+            );
+        }
+
+        if (error || !topic) {
+            return (
+                <div className="flex items-center gap-2 p-2 text-red-500">
+                    <LuCog size={16} />
+                    <span>Topic not found</span>
+                </div>
+            );
+        }
+
+        return (
+            <div className="p-3 max-w-sm">
+                <div className="mb-2">
+                    <div className="font-semibold text-sm line-clamp-2">{topic.title}</div>
+                    <div className="text-xs text-gray-500 mt-1">#{topic.topic_id}</div>
+                </div>
+
+                <div className="text-xs text-gray-600 space-y-1">
+                    <div className="flex gap-4">
+                        <span>
+                            {topic.post_count} post{topic.post_count !== 1 ? 's' : ''}
+                        </span>
+                        <span>
+                            {topic.view_count} view{topic.view_count !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+
+                    {topic.like_count > 0 && (
+                        <div>
+                            {topic.like_count} like{topic.like_count !== 1 ? 's' : ''}
+                        </div>
+                    )}
+
+                    <div className="flex gap-4 text-xs">
+                        <span>Created: {new Date(topic.created_at).toLocaleDateString()}</span>
+                        {topic.last_post_at && (
+                            <span>
+                                Last post: {new Date(topic.last_post_at).toLocaleDateString()}
+                            </span>
+                        )}
+                    </div>
+
+                    {topic.pm_issue && (
+                        <div className="text-blue-600 font-medium">PM Issue #{topic.pm_issue}</div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    return <Tooltip trigger={<span>{children}</span>}>{tooltipContent()}</Tooltip>;
+};
+
+// Custom Link Component for Markdown
+const MarkdownLink = (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+    const { href, children, ...otherProps } = props;
+
+    if (!href) {
+        return <span {...otherProps}>{children}</span>;
+    }
+
+    // Check if it's an internal link (starts with /)
+    const isInternalLink = href.startsWith('/');
+
+    if (isInternalLink) {
+        // Check if it's a user profile link (/u/username)
+        const userMatch = href.match(/^\/u\/([^/]+)$/);
+        // Check if it's a topic link (/t/topic-id or /t/slug/topic-id)
+        const topicMatch = href.match(/^\/t\/(?:[^/]+\/)?(\d+)(?:\/\d+)?$/);
+
+        if (userMatch) {
+            const [, username] = userMatch;
+
+            return (
+                <UserProfileTooltip username={username}>
+                    <Link
+                        to="/u/$userId"
+                        params={{ userId: username }}
+                        className="text-blue-600 hover:text-blue-800 underline"
+                        {...otherProps}
+                    >
+                        {children}
+                    </Link>
+                </UserProfileTooltip>
+            );
+        }
+
+        if (topicMatch) {
+            const [, topicId] = topicMatch;
+
+            return (
+                <TopicPreviewTooltip topicId={topicId}>
+                    <Link
+                        to="/t/$topicId"
+                        params={{ topicId }}
+                        className="text-blue-600 hover:text-blue-800 underline"
+                        {...otherProps}
+                    >
+                        {children}
+                    </Link>
+                </TopicPreviewTooltip>
+            );
+        }
+
+        // For other internal links, use tanstack Link
+        return (
+            <Link
+                to={href as any}
+                className="text-blue-600 hover:text-blue-800 underline"
+                {...otherProps}
+            >
+                {children}
+            </Link>
+        );
+    }
+
+    // For external links, use regular anchor tag
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+            {...otherProps}
+        >
+            {children}
+        </a>
+    );
+};
+
+// Custom markdown components
+const markdownComponents = {
+    a: MarkdownLink,
+};
+
+// Tool Call Display Component
+const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCallEntry'] }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isResultExpanded, setIsResultExpanded] = useState(false);
+    const codeRef = useRef<HTMLElement>(null);
+
+    // Apply Prism highlighting when content changes
+    useEffect(() => {
+        if (codeRef.current && isResultExpanded && toolCall.result) {
+            Prism.highlightElement(codeRef.current);
+        }
+    }, [isResultExpanded, toolCall.result]);
+
+    const getStatusIcon = () => {
+        switch (toolCall.status) {
+            case 'Starting':
+                return <LuCog className="animate-spin text-blue-500" />;
+            case 'Executing':
+                return <LuLoader className="animate-spin text-yellow-500" />;
+            case 'Success':
+                return <LuCheck className="text-green-500" />;
+            case 'Error':
+                return <LuX className="text-red-500" />;
+            default:
+                return <LuCog className="text-gray-500" />;
+        }
+    };
+
+    const getStatusColor = () => {
+        switch (toolCall.status) {
+            case 'Starting':
+                return 'border-blue-200 bg-blue-50';
+            case 'Executing':
+                return 'border-yellow-200 bg-yellow-50';
+            case 'Success':
+                return 'border-green-200 bg-green-50';
+            case 'Error':
+                return 'border-red-200 bg-red-50';
+            default:
+                return 'border-gray-200 bg-gray-50';
+        }
+    };
+
+    const getStatusText = () => {
+        switch (toolCall.status) {
+            case 'Starting':
+                return 'Starting...';
+            case 'Executing':
+                return 'Executing...';
+            case 'Success':
+                return 'Completed';
+            case 'Error':
+                return 'Failed';
+            default:
+                return 'Unknown';
+        }
+    };
+
+    const isResultJSON = toolCall.result && isValidJSON(toolCall.result);
+    const formattedResult = isResultJSON ? formatJSON(toolCall.result!) : toolCall.result;
+    const shouldShowExpand = toolCall.result && toolCall.result.length > 200;
+
+    return (
+        <div
+            className={classNames(
+                'border rounded-lg p-3 mb-2 transition-all duration-200',
+                getStatusColor()
+            )}
+        >
+            <div className="flex items-center gap-2 mb-2">
+                {getStatusIcon()}
+                <span className="font-medium text-sm">Tool: {toolCall.tool_name}</span>
+                <span className="text-xs text-gray-500">{getStatusText()}</span>
+                {(toolCall.arguments || shouldShowExpand) && (
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="ml-auto text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                    >
+                        {isExpanded ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}
+                        {isExpanded ? 'Collapse' : 'Expand'}
+                    </button>
+                )}
+            </div>
+
+            {isExpanded && toolCall.arguments && (
+                <div className="mb-2">
+                    <div className="text-xs text-gray-600 mb-1">Arguments:</div>
+                    <div className="bg-gray-100 rounded p-2 text-xs font-mono overflow-x-auto">
+                        {isValidJSON(toolCall.arguments) ? (
+                            <pre className="language-json">
+                                <code>{formatJSON(toolCall.arguments)}</code>
+                            </pre>
+                        ) : (
+                            <pre>{toolCall.arguments}</pre>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {toolCall.result && (
+                <div>
+                    <div className="text-xs text-gray-600 mb-1 flex items-center justify-between">
+                        <span>{toolCall.status === 'Error' ? 'Error:' : 'Result:'}</span>
+                        {shouldShowExpand && (
+                            <button
+                                onClick={() => setIsResultExpanded(!isResultExpanded)}
+                                className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                            >
+                                {isResultExpanded ? (
+                                    <LuChevronUp size={12} />
+                                ) : (
+                                    <LuChevronDown size={12} />
+                                )}
+                                {isResultExpanded ? 'Collapse' : 'Expand'}
+                            </button>
+                        )}
+                    </div>
+                    <div
+                        className={classNames(
+                            'rounded p-2 text-xs overflow-x-auto transition-all duration-200',
+                            toolCall.status === 'Error' ? 'bg-red-100 text-red-800' : 'bg-gray-100',
+                            // Height control based on expansion state
+                            isResultExpanded || !shouldShowExpand
+                                ? 'max-h-96 overflow-y-auto'
+                                : 'max-h-20 overflow-hidden'
+                        )}
+                    >
+                        {isResultJSON ? (
+                            <pre className="language-json">
+                                <code ref={codeRef}>{formattedResult}</code>
+                            </pre>
+                        ) : (
+                            <pre className="whitespace-pre-wrap">{formattedResult}</pre>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export interface MessageTreeNode {
     message: WorkshopMessage;
@@ -70,14 +489,16 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
                 className="border p-4 border-primary/50 rounded-md pr-6"
             >
                 <div className="prose">
-                    <Markdown remarkPlugins={[remarkGfm]}>{messageData.message}</Markdown>
-                    {messageData.message.length === 0 && (
-                        <ChatDataStream
-                            chatId={messageData.chat_id}
-                            messageId={messageData.message_id}
-                        />
-                    )}
+                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {messageData.message}
+                    </Markdown>
                 </div>
+                {messageData.message.length === 0 && (
+                    <ChatDataStream
+                        chatId={messageData.chat_id}
+                        messageId={messageData.message_id}
+                    />
+                )}
             </div>
 
             {/* Branch navigation and actions */}
@@ -139,7 +560,7 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
 };
 
 export const ChatDataStream = ({ chatId, messageId }: { chatId: string; messageId: string }) => {
-    const { combinedContent, isLoading, error, isComplete } = useWorkshopStreamMessage(
+    const { combinedContent, toolCalls, isLoading, error, isComplete } = useWorkshopStreamMessage(
         chatId,
         messageId
     );
@@ -156,7 +577,22 @@ export const ChatDataStream = ({ chatId, messageId }: { chatId: string; messageI
 
     return (
         <>
-            <Markdown remarkPlugins={[remarkGfm]}>{combinedContent}</Markdown>
+            {/* Display tool calls */}
+            {toolCalls.length > 0 && (
+                <div className="mb-4">
+                    <div className="text-sm text-gray-600 mb-2">🔧 Tool Calls:</div>
+                    {toolCalls.map((toolCall) => (
+                        <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
+                    ))}
+                </div>
+            )}
+
+            {/* Display regular content */}
+            <div className="prose">
+                <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {combinedContent}
+                </Markdown>
+            </div>
             {!isComplete && !error && <span className="animate-pulse">▋</span>}
         </>
     );

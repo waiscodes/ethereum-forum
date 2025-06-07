@@ -836,10 +836,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reindex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * /admin/reindex
+         * @description Trigger a full reindex of all topics and posts from database to Meilisearch
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "X-Admin-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["ReindexResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /admin/stats
+         * @description Get indexing statistics
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "X-Admin-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AdminStatsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminStatsResponse */
+        AdminStatsResponse: {
+            /** Format: int64 */
+            database_topics: number;
+            /** Format: int64 */
+            database_posts: number;
+            /** Format: int64 */
+            meilisearch_documents?: number;
+        };
         /** AuthResponse */
         AuthResponse: {
             token: string;
@@ -884,28 +973,28 @@ export interface components {
             id: number;
             username: string;
             name?: string;
-            avatar_template: string;
+            avatar_template?: string;
             last_posted_at?: string;
             last_seen_at?: string;
-            created_at: string;
-            ignored: boolean;
-            muted: boolean;
-            can_ignore_user: boolean;
-            can_mute_user: boolean;
-            can_send_private_messages: boolean;
-            can_send_private_message_to_user: boolean;
+            created_at?: string;
+            ignored?: boolean;
+            muted?: boolean;
+            can_ignore_user?: boolean;
+            can_mute_user?: boolean;
+            can_send_private_messages?: boolean;
+            can_send_private_message_to_user?: boolean;
             /** Format: uint32 */
-            trust_level: number;
-            moderator: boolean;
-            admin: boolean;
+            trust_level?: number;
+            moderator?: boolean;
+            admin?: boolean;
             title?: string;
             /** Format: uint32 */
-            badge_count: number;
-            custom_fields: unknown;
+            badge_count?: number;
+            custom_fields?: unknown;
             /** Format: uint32 */
-            time_read: number;
+            time_read?: number;
             /** Format: uint32 */
-            recent_time_read: number;
+            recent_time_read?: number;
             /** Format: uint32 */
             primary_group_id?: number;
             primary_group_name?: string;
@@ -916,27 +1005,28 @@ export interface components {
             flair_bg_color?: string;
             flair_color?: string;
             featured_topic?: unknown;
-            can_edit: boolean;
-            can_edit_username: boolean;
-            can_edit_email: boolean;
-            can_edit_name: boolean;
+            can_edit?: boolean;
+            can_edit_username?: boolean;
+            can_edit_email?: boolean;
+            can_edit_name?: boolean;
             /** Format: uint32 */
             uploaded_avatar_id?: number;
             /** Format: uint32 */
-            pending_count: number;
+            pending_count?: number;
             /** Format: uint32 */
-            profile_view_count: number;
-            can_upload_profile_header: boolean;
-            can_upload_user_card_background: boolean;
+            profile_view_count?: number;
+            can_upload_profile_header?: boolean;
+            can_upload_user_card_background?: boolean;
             /** Format: uint32 */
             gravatar_avatar_upload_id?: number;
             gravatar_avatar_template?: string;
             /** Format: uint32 */
             custom_avatar_upload_id?: number;
             custom_avatar_template?: string;
-            featured_user_badge_ids: number[];
+            featured_user_badge_ids?: number[];
             invited_by?: unknown;
-            groups: unknown[];
+            groups?: unknown[];
+            profile_hidden?: boolean;
         };
         /** DiscourseLink */
         DiscourseLink: {
@@ -1020,10 +1110,9 @@ export interface components {
         };
         /** DiscourseUserProfile */
         DiscourseUserProfile: {
-            user_badges: components["schemas"]["DiscourseUserBadge"][];
-            badges: components["schemas"]["DiscourseBadge"][];
-            badge_types: components["schemas"]["DiscourseBadgeType"][];
-            users: components["schemas"]["DiscourseUser"][];
+            badges?: components["schemas"]["DiscourseUserBadge"][];
+            badge_types?: components["schemas"]["DiscourseBadgeType"][];
+            users?: components["schemas"]["DiscourseUser"][];
             user: components["schemas"]["DiscourseDetailedUser"];
         };
         /** DiscourseUserStats */
@@ -1078,11 +1167,11 @@ export interface components {
         };
         /** DiscourseUserSummaryResponse */
         DiscourseUserSummaryResponse: {
-            topics: components["schemas"]["DiscourseTopic"][];
-            badges: components["schemas"]["DiscourseBadge"][];
-            badge_types: components["schemas"]["DiscourseBadgeType"][];
-            users: components["schemas"]["DiscourseUser"][];
-            user_summary: components["schemas"]["DiscourseUserSummary"];
+            topics?: components["schemas"]["DiscourseTopic"][];
+            badges?: components["schemas"]["DiscourseBadge"][];
+            badge_types?: components["schemas"]["DiscourseBadgeType"][];
+            users?: components["schemas"]["DiscourseUser"][];
+            user_summary?: components["schemas"]["DiscourseUserSummary"];
         };
         /** @enum {string} */
         EventOccurrence: "Single" | "Recurring";
@@ -1213,6 +1302,17 @@ export interface components {
             posts: components["schemas"]["Post"][];
             has_more: boolean;
         };
+        /** ReindexResponse */
+        ReindexResponse: {
+            success: boolean;
+            message: string;
+            /** Format: int32 */
+            topics_processed: number;
+            /** Format: int32 */
+            posts_processed: number;
+            /** Format: int32 */
+            errors: number;
+        };
         /** RichCalendarEvent */
         RichCalendarEvent: {
             summary?: string;
@@ -1234,11 +1334,15 @@ export interface components {
         SSOProvidersResponse: {
             providers: string[];
         };
+        /** @enum {string} */
+        StreamingEntryType: "Content" | "ToolCallStart" | "ToolCallResult" | "ToolCallError";
         /** StreamingResponse */
         StreamingResponse: {
             content: string;
             is_complete: boolean;
             error?: string;
+            entry_type: components["schemas"]["StreamingEntryType"];
+            tool_call?: components["schemas"]["ToolCallEntry"];
         };
         /** TokenValidationResponse */
         TokenValidationResponse: {
@@ -1247,6 +1351,16 @@ export interface components {
             /** Format: int64 */
             expires_at?: number;
         };
+        /** ToolCallEntry */
+        ToolCallEntry: {
+            tool_name: string;
+            tool_id: string;
+            arguments?: string;
+            result?: string;
+            status: components["schemas"]["ToolCallStatus"];
+        };
+        /** @enum {string} */
+        ToolCallStatus: "Starting" | "Executing" | "Success" | "Error";
         /** Topic */
         Topic: {
             /** Format: int32 */

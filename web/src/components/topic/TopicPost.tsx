@@ -54,8 +54,8 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     )}
                     <div className="leading-3">
                         <div className="font-bold">{displayName ?? post.user_id}</div>
-                        {username.toLowerCase().replace(' ', '') !==
-                            displayName.toLowerCase().replace(' ', '') && (
+                        {username?.toLowerCase().replace(' ', '') !==
+                            displayName?.toLowerCase().replace(' ', '') && (
                             <div className="text-sm text-gray-500">@{username}</div>
                         )}
                     </div>

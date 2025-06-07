@@ -181,14 +181,31 @@ export const useWorkshopStreamMessage = (chatId: string, messageId: string) => {
         };
     }, [chatId, messageId]);
 
-    // Combine all content from the responses
+    // Combine all content from the responses, excluding tool call entries
     const combinedContent = React.useMemo(() => {
-        return data.map((response) => response.content).join('');
+        return data
+            .filter((response) => response.entry_type === 'Content')
+            .map((response) => response.content)
+            .join('');
+    }, [data]);
+
+    // Extract tool call entries for special handling
+    const toolCalls = React.useMemo(() => {
+        const calls = new Map<string, components['schemas']['ToolCallEntry']>();
+
+        data.forEach((response) => {
+            if (response.tool_call && response.entry_type !== 'Content') {
+                calls.set(response.tool_call.tool_id, response.tool_call);
+            }
+        });
+
+        return Array.from(calls.values());
     }, [data]);
 
     return {
         data,
         combinedContent,
+        toolCalls,
         isLoading,
         error,
         isComplete,

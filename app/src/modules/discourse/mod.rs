@@ -329,6 +329,19 @@ impl DiscourseService {
     ) -> Result<DiscourseUserSummaryResponse> {
         let url = format!("https://ethereum-magicians.org/u/{}/summary.json", username);
         let response = reqwest::get(url).await?;
+        
+        // Check if the response is a 404 (profile hidden or user not found)
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            // Return an empty summary response for hidden profiles
+            return Ok(DiscourseUserSummaryResponse {
+                topics: None,
+                badges: None,
+                badge_types: None,
+                users: None,
+                user_summary: None,
+            });
+        }
+        
         let body = response.text().await?;
         let parsed: DiscourseUserSummaryResponse = serde_json::from_str(&body)?;
         Ok(parsed)

@@ -93,27 +93,15 @@ pub struct JWTAuth(pub AuthenticatedUser);
 
 /// Parse and validate JWT token from Authorization header
 async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<AuthenticatedUser> {
-    tracing::info!("🔐 Starting JWT validation for token: {}...", &bearer.token[..20]);
-    
-    // Debug: list all available extensions
-    tracing::debug!("🔍 Request extensions debug info:");
-    
     // Try different ways to access the app state
     let state = if let Some(state) = req.extensions().get::<poem::web::Data<AppState>>() {
-        // tracing::debug!("✅ Found AppState via poem::web::Data<AppState>");
         state
     } else if let Some(state) = req.extensions().get::<AppState>() {
-        // tracing::debug!("✅ Found AppState directly");
         state
     } else if let Some(state) = req.extensions().get::<std::sync::Arc<crate::state::AppStateInner>>() {
-        // tracing::debug!("✅ Found AppState via Arc<AppStateInner>");
         state
     } else {
-        tracing::error!("❌ No app state found in request extensions with any method");
-        
-        // Debug: Log what extensions are available
-        tracing::debug!("Available request extension types: (this may be empty)");
-        
+        tracing::error!("❌ No app state found in request extensions");
         return None;
     };
 
@@ -126,14 +114,9 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         }
     };
 
-    // tracing::debug!("✅ SSO service found, attempting JWT validation");
-
     // Validate JWT token
     let claims = match sso_service.validate_jwt_token(&bearer.token) {
-        Ok(claims) => {
-            // tracing::debug!("✅ JWT signature validation successful for user: {}", claims.sub);
-            claims
-        },
+        Ok(claims) => claims,
         Err(e) => {
             tracing::warn!("❌ JWT validation failed: {}", e);
             return None;
@@ -146,28 +129,19 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         tracing::warn!("❌ JWT token has expired: exp={}, now={}", claims.exp, now);
         return None;
     }
-    // tracing::debug!("✅ Token expiration check passed: exp={}, now={}", claims.exp, now);
 
     // Parse user_id from claims.sub (which is now a UUID string)
     let user_id = match Uuid::parse_str(&claims.sub) {
-        Ok(id) => {
-            tracing::debug!("✅ Parsed user UUID: {}", id);
-            id
-        },
+        Ok(id) => id,
         Err(e) => {
             tracing::warn!("❌ Invalid user ID format in token: '{}', error: {}", claims.sub, e);
             return None;
         }
     };
 
-    // tracing::debug!("🔍 Looking up user in database: {}", user_id);
-
     // Look up user in database
     let user = match User::find_by_id(&state.database.pool, user_id).await {
-        Ok(Some(user)) => {
-            // tracing::info!("✅ User found in database: {} ({})", user.display_name.as_deref().unwrap_or("no name"), user.user_id);
-            user
-        },
+        Ok(Some(user)) => user,
         Ok(None) => {
             tracing::warn!("❌ User not found in database: {}", user_id);
             return None;
@@ -178,8 +152,8 @@ async fn validate_bearer_token(req: &Request, bearer: Bearer) -> Option<Authenti
         }
     };
 
-    tracing::info!("🎉 JWT authentication successful for user: {} ({})", 
-        user.display_name.as_deref().unwrap_or("no name"), user.user_id);
+    // Single line for successful authentication
+    tracing::debug!("✅ JWT auth: {}", user.display_name.as_deref().unwrap_or("unknown"));
 
     Some(AuthenticatedUser { user, claims })
 }

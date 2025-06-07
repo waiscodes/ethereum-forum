@@ -1,6 +1,6 @@
 use crate::state::AppState;
 use chrono::{DateTime, Utc};
-use openai::chat::{ChatCompletionMessage, ChatCompletionMessageRole};
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage, ChatCompletionRequestAssistantMessage};
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
@@ -162,23 +162,30 @@ impl WorkshopMessage {
     }
 }
 
-impl Into<ChatCompletionMessage> for WorkshopMessage {
-    fn into(self) -> ChatCompletionMessage {
-        ChatCompletionMessage {
-            role: match self.sender_role.as_str() {
-                "user" => ChatCompletionMessageRole::User,
-                "assistant" => ChatCompletionMessageRole::Assistant,
-                "system" => ChatCompletionMessageRole::System,
-                "tool" => ChatCompletionMessageRole::Tool,
-                "function" => ChatCompletionMessageRole::Function,
-                "developer" => ChatCompletionMessageRole::Developer,
-                _ => ChatCompletionMessageRole::User,
-            },
-            content: Some(self.message),
-            name: None,
-            function_call: None,
-            tool_call_id: None,
-            tool_calls: None,
+impl Into<ChatCompletionRequestMessage> for WorkshopMessage {
+    fn into(self) -> ChatCompletionRequestMessage {
+        match self.sender_role.as_str() {
+            "user" => ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                content: self.message.into(),
+                name: None,
+            }),
+            "assistant" => ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
+                content: Some(self.message.into()),
+                name: None,
+                tool_calls: None,
+                #[allow(deprecated)]
+                function_call: None,
+                refusal: None,
+                audio: None,
+            }),
+            "system" => ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+                content: self.message.into(),
+                name: None,
+            }),
+            _ => ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                content: self.message.into(),
+                name: None,
+            }),
         }
     }
 }

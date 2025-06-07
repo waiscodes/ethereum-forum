@@ -23,8 +23,7 @@ import {
 } from '@/utils/messageTree';
 
 const suggestions = [
-    // eslint-disable-next-line quotes
-    "Evaluate vitalik's opinion on RISC-V within the EVM",
+    'Find topics related to risc-v in the evm and evaluate me the opinions of all parties involved.',
     'Summarize EIP-7702, who it affects, and what I can do to understand it better',
     'What is currently being talked about?',
 ];

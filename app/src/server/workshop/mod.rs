@@ -1,6 +1,7 @@
 use crate::models::topics::Topic;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
 use crate::modules::workshop::WorkshopService;
+use crate::modules::workshop::prompts::{StreamingEntry, StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry, ToolCallStatus as PromptsToolCallStatus};
 use crate::server::ApiTags;
 use crate::server::auth::AuthUser;
 use crate::state::AppState;
@@ -11,7 +12,7 @@ use poem::Result;
 use poem::web::Data;
 use poem_openapi::param::{Path, Query};
 use poem_openapi::payload::{EventStream, Json};
-use poem_openapi::{Object, OpenApi};
+use poem_openapi::{Object, OpenApi, Enum};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -36,6 +37,65 @@ pub struct StreamingResponse {
     pub content: String,
     pub is_complete: bool,
     pub error: Option<String>,
+    #[serde(rename = "type")]
+    pub entry_type: StreamingEntryType,
+    pub tool_call: Option<ToolCallEntry>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Enum)]
+#[serde(rename_all = "snake_case")]
+pub enum StreamingEntryType {
+    Content,
+    ToolCallStart,
+    ToolCallResult,
+    ToolCallError,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct ToolCallEntry {
+    pub tool_name: String,
+    pub tool_id: String,
+    pub arguments: Option<String>,
+    pub result: Option<String>,
+    pub status: ToolCallStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize, Enum)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolCallStatus {
+    Starting,
+    Executing,
+    Success,
+    Error,
+}
+
+// Conversion functions
+fn convert_entry_type(entry_type: PromptsStreamingEntryType) -> StreamingEntryType {
+    match entry_type {
+        PromptsStreamingEntryType::Content => StreamingEntryType::Content,
+        PromptsStreamingEntryType::ToolCallStart => StreamingEntryType::ToolCallStart,
+        PromptsStreamingEntryType::ToolCallResult => StreamingEntryType::ToolCallResult,
+        PromptsStreamingEntryType::ToolCallError => StreamingEntryType::ToolCallError,
+    }
+}
+
+fn convert_tool_call_entry(entry: PromptsToolCallEntry) -> ToolCallEntry {
+    ToolCallEntry {
+        tool_name: entry.tool_name,
+        tool_id: entry.tool_id,
+        arguments: entry.arguments,
+        result: entry.result,
+        status: convert_tool_call_status(entry.status),
+    }
+}
+
+fn convert_tool_call_status(status: PromptsToolCallStatus) -> ToolCallStatus {
+    match status {
+        PromptsToolCallStatus::Starting => ToolCallStatus::Starting,
+        PromptsToolCallStatus::Executing => ToolCallStatus::Executing,
+        PromptsToolCallStatus::Success => ToolCallStatus::Success,
+        PromptsToolCallStatus::Error => ToolCallStatus::Error,
+    }
 }
 
 #[OpenApi]
@@ -348,18 +408,13 @@ impl WorkshopApi {
         // Convert to streaming response events
         let response_stream = stream
             .map(|result| match result {
-                Ok(delta) => {
-                    let content = delta
-                        .choices
-                        .first()
-                        .and_then(|c| c.delta.content.as_ref())
-                        .cloned()
-                        .unwrap_or_default();
-
+                Ok(entry) => {
                     StreamingResponse {
-                        content,
+                        content: entry.content,
                         is_complete: false,
                         error: None,
+                        entry_type: convert_entry_type(entry.entry_type),
+                        tool_call: entry.tool_call.map(convert_tool_call_entry),
                     }
                 }
                 Err(err) => {
@@ -368,6 +423,8 @@ impl WorkshopApi {
                         content: String::new(),
                         is_complete: true,
                         error: Some(err),
+                        entry_type: StreamingEntryType::ToolCallError,
+                        tool_call: None,
                     }
                 }
             })
@@ -522,18 +579,13 @@ impl WorkshopApi {
         // Convert to streaming response events
         let response_stream = stream
             .map(|result| match result {
-                Ok(delta) => {
-                    let content = delta
-                        .choices
-                        .first()
-                        .and_then(|c| c.delta.content.as_ref())
-                        .cloned()
-                        .unwrap_or_default();
-
+                Ok(entry) => {
                     StreamingResponse {
-                        content,
+                        content: entry.content,
                         is_complete: false,
                         error: None,
+                        entry_type: convert_entry_type(entry.entry_type),
+                        tool_call: entry.tool_call.map(convert_tool_call_entry),
                     }
                 }
                 Err(err) => {
@@ -542,6 +594,8 @@ impl WorkshopApi {
                         content: String::new(),
                         is_complete: true,
                         error: Some(err),
+                        entry_type: StreamingEntryType::ToolCallError,
+                        tool_call: None,
                     }
                 }
             })
@@ -549,4 +603,6 @@ impl WorkshopApi {
 
         Ok(EventStream::new(response_stream))
     }
+
+    // MCP endpoints removed - using direct integration in ongoing prompts
 }
