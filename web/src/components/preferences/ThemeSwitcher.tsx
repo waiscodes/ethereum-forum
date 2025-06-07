@@ -7,6 +7,31 @@ export const updateTheme = () => {
 
     document.documentElement.classList.remove('light', 'dark', 'system');
     document.documentElement.classList.add(theme);
+
+    // Update theme-color meta tag for Apple's overscroll
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
+
+    if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.name = 'theme-color';
+        document.head.appendChild(metaThemeColor);
+    }
+
+    // Define theme colors
+    const themeColors = {
+        light: 'rgb(253, 246, 227)', // --theme-bg-primary for light
+        dark: 'rgb(0, 0, 0)', // --theme-bg-primary for dark
+    };
+
+    // Determine the actual theme to apply
+    let actualTheme = theme;
+
+    if (theme === 'system') {
+        actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Set the theme color
+    metaThemeColor.content = themeColors[actualTheme as keyof typeof themeColors];
 };
 
 export const ThemeSwitcher = () => {
