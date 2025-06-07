@@ -529,7 +529,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                                 </span>
                                 <span
                                     className={classNames(
-                                        'px-2 py-1 rounded-full text-xs font-medium',
+                                        'px-1.5 py-0.5 rounded-full text-xs font-medium flex items-center',
                                         styles.badge
                                     )}
                                 >
