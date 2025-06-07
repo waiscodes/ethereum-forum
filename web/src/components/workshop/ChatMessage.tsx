@@ -2,7 +2,7 @@ import '../../styles/code.css';
 
 import classNames from 'classnames';
 import * as Prism from 'prismjs';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // This ensures prism is loaded first
 // @ts-ignore
@@ -112,7 +112,7 @@ const UserProfileTooltip = ({
                         <div className="font-medium text-blue-600">{user.user.title}</div>
                     )}
                     <div>Trust Level: {user.user.trust_level}</div>
-                    {user.user.badge_count > 0 && (
+                    {user.user.badge_count && user.user.badge_count > 0 && (
                         <div>
                             {user.user.badge_count} badge{user.user.badge_count !== 1 ? 's' : ''}
                         </div>
@@ -284,6 +284,67 @@ const markdownComponents = {
     a: MarkdownLink,
 };
 
+// Streaming Events Types (temporary until schema is regenerated)
+interface StreamingEvent {
+    content: string;
+    type: 'content' | 'tool_call_start' | 'tool_call_result' | 'tool_call_error';
+    tool_call?: {
+        tool_name: string;
+        tool_id: string;
+        arguments?: string;
+        result?: string;
+        status: 'starting' | 'executing' | 'success' | 'error';
+    };
+}
+
+// Component to display stored streaming events using the same logic as live streaming
+const StoredStreamingEvents = ({ events }: { events: StreamingEvent[] }) => {
+    // Convert stored events to StreamingResponse format to reuse existing logic
+    const streamingResponses: components['schemas']['StreamingResponse'][] = events.map(
+        (event) => ({
+            content: event.content,
+            is_complete: false,
+            error: undefined,
+            entry_type: event.type as any,
+            tool_call: event.tool_call
+                ? {
+                    tool_name: event.tool_call.tool_name,
+                    tool_id: event.tool_call.tool_id,
+                    arguments: event.tool_call.arguments || undefined,
+                    result: event.tool_call.result || undefined,
+                    status: event.tool_call.status as any,
+                }
+                : undefined,
+        })
+    );
+
+    // Use the same tool call processing logic as the streaming API
+    const toolCalls = React.useMemo(() => {
+        const calls = new Map<string, components['schemas']['ToolCallEntry']>();
+
+        streamingResponses.forEach((response) => {
+            if (response.tool_call && response.entry_type !== 'Content') {
+                calls.set(response.tool_call.tool_id, response.tool_call);
+            }
+        });
+
+        return Array.from(calls.values());
+    }, [streamingResponses]);
+
+    if (toolCalls.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mb-4">
+            <div className="text-sm text-gray-600 mb-2">🔧 Tool Calls:</div>
+            {toolCalls.map((toolCall) => (
+                <ToolCallDisplay key={toolCall.tool_id} toolCall={toolCall} />
+            ))}
+        </div>
+    );
+};
+
 // Tool Call Display Component
 const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCallEntry'] }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -346,6 +407,10 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     const formattedResult = isResultJSON ? formatJSON(toolCall.result!) : toolCall.result;
     const shouldShowExpand = toolCall.result && toolCall.result.length > 200;
 
+    // Disable syntax highlighting for large payloads to prevent performance issues
+    const isResultTooLarge = toolCall.result && toolCall.result.length > 10000;
+    const shouldHighlight = isResultJSON && !isResultTooLarge;
+
     return (
         <div
             className={classNames(
@@ -403,7 +468,7 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                     </div>
                     <div
                         className={classNames(
-                            'rounded p-2 text-xs overflow-x-auto transition-all duration-200',
+                            'rounded text-xs overflow-x-auto transition-all duration-200',
                             toolCall.status === 'Error' ? 'bg-red-100 text-red-800' : 'bg-gray-100',
                             // Height control based on expansion state
                             isResultExpanded || !shouldShowExpand
@@ -411,12 +476,12 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
                                 : 'max-h-20 overflow-hidden'
                         )}
                     >
-                        {isResultJSON ? (
+                        {shouldHighlight ? (
                             <pre className="language-json">
                                 <code ref={codeRef}>{formattedResult}</code>
                             </pre>
                         ) : (
-                            <pre className="whitespace-pre-wrap">{formattedResult}</pre>
+                            <pre className="whitespace-pre-wrap p-4">{formattedResult}</pre>
                         )}
                     </div>
                 </div>
@@ -425,18 +490,23 @@ const ToolCallDisplay = ({ toolCall }: { toolCall: components['schemas']['ToolCa
     );
 };
 
+// Extended WorkshopMessage type that includes streaming_events
+interface ExtendedWorkshopMessage extends WorkshopMessage {
+    streaming_events?: StreamingEvent[];
+}
+
 export interface MessageTreeNode {
-    message: WorkshopMessage;
+    message: ExtendedWorkshopMessage;
     children: MessageTreeNode[];
-    siblings: WorkshopMessage[];
+    siblings: ExtendedWorkshopMessage[];
     currentSiblingIndex: number;
 }
 
 export interface ChatMessageProps {
     node?: MessageTreeNode;
-    message?: WorkshopMessage;
-    onEdit?: (message: WorkshopMessage) => void;
-    onNavigate?: (message: WorkshopMessage) => void;
+    message?: ExtendedWorkshopMessage;
+    onEdit?: (message: ExtendedWorkshopMessage) => void;
+    onNavigate?: (message: ExtendedWorkshopMessage) => void;
 }
 
 export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessageProps) => {
@@ -488,6 +558,10 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
                 key={messageData.message_id}
                 className="border p-4 border-primary/50 rounded-md pr-6"
             >
+                {/* Show stored streaming events if they exist */}
+                {messageData.streaming_events && messageData.streaming_events.length > 0 && (
+                    <StoredStreamingEvents events={messageData.streaming_events} />
+                )}
                 <div className="prose">
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                         {messageData.message}

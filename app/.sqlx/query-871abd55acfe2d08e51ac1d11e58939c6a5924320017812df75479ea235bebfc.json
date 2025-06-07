@@ -32,6 +32,11 @@
         "ordinal": 5,
         "name": "parent_message_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "streaming_events",
+        "type_info": "Jsonb"
       }
     ],
     "parameters": {
@@ -45,6 +50,7 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },

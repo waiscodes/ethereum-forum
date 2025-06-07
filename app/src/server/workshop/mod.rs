@@ -1,7 +1,7 @@
 use crate::models::topics::Topic;
 use crate::models::workshop::{WorkshopChat, WorkshopMessage};
 use crate::modules::workshop::WorkshopService;
-use crate::modules::workshop::prompts::{StreamingEntry, StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry, ToolCallStatus as PromptsToolCallStatus};
+use crate::modules::workshop::prompts::{StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry, ToolCallStatus as PromptsToolCallStatus};
 use crate::server::ApiTags;
 use crate::server::auth::AuthUser;
 use crate::state::AppState;

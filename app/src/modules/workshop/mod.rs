@@ -226,11 +226,15 @@ impl WorkshopService {
                 Ok(content) => {
                     tracing::info!("✅ Prompt completed successfully with {} characters", content.len());
                     
-                    // Update the message content
-                    if let Err(e) = WorkshopMessage::update_message_content(&system_response_clone.message_id, &content, &state_clone).await {
-                        tracing::error!("❌ Error updating message: {:?}", e);
+                    // Collect all streaming events
+                    let streaming_events = prompt_clone.get_all_events().await;
+                    tracing::info!("📊 Collected {} streaming events", streaming_events.len());
+                    
+                    // Update the message content and streaming events
+                    if let Err(e) = WorkshopMessage::update_message_with_streaming_events(&system_response_clone.message_id, &content, &streaming_events, &state_clone).await {
+                        tracing::error!("❌ Error updating message with streaming events: {:?}", e);
                     } else {
-                        tracing::info!("✅ Updated message content successfully");
+                        tracing::info!("✅ Updated message content and streaming events successfully");
                     }
 
                     // Update the chat's last message
@@ -246,12 +250,16 @@ impl WorkshopService {
                     tracing::error!("❌ Error in prompt completion: \"{}\"", e);
                     tracing::error!("❌ Full error details: {:?}", e);
                     
-                    // Optionally update the message with an error message
+                    // Collect streaming events even on error (may contain partial tool calls)
+                    let streaming_events = prompt_clone.get_all_events().await;
+                    tracing::info!("📊 Collected {} streaming events (with error)", streaming_events.len());
+                    
+                    // Update the message with error and any streaming events that were collected
                     let error_message = format!("Error: stream failed: {}", e);
-                    if let Err(update_err) = WorkshopMessage::update_message_content(&system_response_clone.message_id, &error_message, &state_clone).await {
-                        tracing::error!("❌ Error updating message with error: {:?}", update_err);
+                    if let Err(update_err) = WorkshopMessage::update_message_with_streaming_events(&system_response_clone.message_id, &error_message, &streaming_events, &state_clone).await {
+                        tracing::error!("❌ Error updating message with error and streaming events: {:?}", update_err);
                     } else {
-                        tracing::info!("📝 Updated message with error content");
+                        tracing::info!("📝 Updated message with error content and streaming events");
                     }
                 }
             }

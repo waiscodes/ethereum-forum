@@ -745,6 +745,12 @@ impl OngoingPrompt {
             None => Err("No content available".to_string()),
         }
     }
+
+    /// Get all streaming events that were collected during completion
+    pub async fn get_all_events(&self) -> Vec<StreamingEntry> {
+        let buffer = self.state.buffer.read().await;
+        buffer.iter().cloned().collect()
+    }
 }
 
 /// Manager for ongoing prompts with request coalescing

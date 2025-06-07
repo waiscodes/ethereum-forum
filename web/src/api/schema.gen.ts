@@ -1471,6 +1471,7 @@ export interface components {
             created_at: string;
             /** Format: uuid */
             parent_message_id?: string;
+            streaming_events?: unknown;
         };
         /** YoutubeMeetingData */
         YoutubeMeetingData: {

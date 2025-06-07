@@ -1,10 +1,12 @@
 use crate::state::AppState;
+use crate::modules::workshop::prompts::StreamingEntry;
 use chrono::{DateTime, Utc};
 use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage, ChatCompletionRequestAssistantMessage};
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
 use uuid::Uuid;
+use serde_json;
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize, Object)]
 pub struct WorkshopMessage {
@@ -14,6 +16,8 @@ pub struct WorkshopMessage {
     pub message: String,
     pub created_at: DateTime<Utc>,
     pub parent_message_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub streaming_events: Option<serde_json::Value>,
 }
 
 #[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
@@ -126,6 +130,22 @@ impl WorkshopMessage {
             .await
     }
 
+    pub async fn update_message_with_streaming_events(
+        message_id: &Uuid, 
+        content: &str, 
+        streaming_events: &[StreamingEntry], 
+        state: &AppState
+    ) -> Result<Self, sqlx::Error> {
+        let events_json = serde_json::to_value(streaming_events).unwrap_or(serde_json::Value::Null);
+        query_as!(Self, "UPDATE workshop_messages SET message = $1, streaming_events = $2 WHERE message_id = $3 RETURNING *",
+            content,
+            events_json,
+            message_id
+        )
+            .fetch_one(&state.database.pool)
+            .await
+    }
+
     pub async fn get_messages_by_chat_id(
         chat_id: &Uuid,
         state: &AppState,
@@ -160,6 +180,56 @@ impl WorkshopMessage {
         .fetch_all(&state.database.pool)
         .await
     }
+
+    /// Get streaming events as a Vec<StreamingEntry> if they exist
+    pub fn get_streaming_events(&self) -> Option<Vec<StreamingEntry>> {
+        self.streaming_events.as_ref().and_then(|v| {
+            serde_json::from_value(v.clone()).ok()
+        })
+    }
+
+    /// Set streaming events from a Vec<StreamingEntry>
+    pub fn set_streaming_events(&mut self, events: Vec<StreamingEntry>) {
+        self.streaming_events = serde_json::to_value(events).ok();
+    }
+
+    /// Extract OpenAI-compatible tool calls from streaming events for reuse in subsequent requests
+    pub fn get_openai_tool_calls(&self) -> Option<Vec<async_openai::types::ChatCompletionMessageToolCall>> {
+        let events = self.get_streaming_events()?;
+        let mut tool_calls = std::collections::HashMap::new();
+
+        // Process events to build complete tool calls
+        for event in events {
+            if let Some(tool_call_entry) = event.tool_call {
+                let tool_call_id = tool_call_entry.tool_id.clone();
+                
+                // Get or create the tool call
+                let tool_call = tool_calls.entry(tool_call_id.clone()).or_insert_with(|| {
+                    async_openai::types::ChatCompletionMessageToolCall {
+                        id: tool_call_id.clone(),
+                        function: async_openai::types::FunctionCall {
+                            name: tool_call_entry.tool_name.clone(),
+                            arguments: tool_call_entry.arguments.clone().unwrap_or_default(),
+                        },
+                        r#type: async_openai::types::ChatCompletionToolType::Function,
+                    }
+                });
+
+                // Update with any new information (tool calls can be updated across multiple events)
+                if let Some(args) = &tool_call_entry.arguments {
+                    if !args.is_empty() {
+                        tool_call.function.arguments = args.clone();
+                    }
+                }
+            }
+        }
+
+        if tool_calls.is_empty() {
+            None
+        } else {
+            Some(tool_calls.into_values().collect())
+        }
+    }
 }
 
 impl Into<ChatCompletionRequestMessage> for WorkshopMessage {
@@ -169,15 +239,20 @@ impl Into<ChatCompletionRequestMessage> for WorkshopMessage {
                 content: self.message.into(),
                 name: None,
             }),
-            "assistant" => ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
-                content: Some(self.message.into()),
-                name: None,
-                tool_calls: None,
-                #[allow(deprecated)]
-                function_call: None,
-                refusal: None,
-                audio: None,
-            }),
+            "assistant" => {
+                // Extract tool calls from streaming events if available
+                let tool_calls = self.get_openai_tool_calls();
+                
+                ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
+                    content: if self.message.is_empty() { None } else { Some(self.message.into()) },
+                    name: None,
+                    tool_calls,
+                    #[allow(deprecated)]
+                    function_call: None,
+                    refusal: None,
+                    audio: None,
+                })
+            },
             "system" => ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
                 content: self.message.into(),
                 name: None,
