@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
+import { CommandMenu } from '@/components/command/CommandMenu';
 import { Navbar } from '@/components/Navbar';
 import { Sidebar } from '@/components/Sidebar';
 import { AppWrapper } from '@/hooks/context';
@@ -12,6 +13,7 @@ export const Route = createRootRoute({
 function RootComponent() {
     return (
         <AppWrapper>
+            <CommandMenu />
             <Navbar />
             <div className="flex flex-col gap-1 pb-16 max-w-screen">
                 <Sidebar />
