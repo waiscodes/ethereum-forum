@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import classNames from 'classnames';
 import React from 'react';
 import {
+    LuActivity,
     LuBrain,
     LuChevronLeft,
     LuChevronRight,
@@ -434,58 +435,65 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
             </div>
 
             {/* Branch navigation and actions */}
-            <div className="text-sm text-primary/50 flex justify-end gap-2 items-center">
-                {/* Branch navigation arrows - only show if using tree interface */}
-                {node && siblings.length > 1 && (
-                    <>
-                        <button
-                            className={classNames(
-                                'button aspect-square size-8 flex justify-center items-center',
-                                !hasPrevSibling && 'opacity-30 cursor-not-allowed'
-                            )}
-                            onClick={handlePrevSibling}
-                            disabled={!hasPrevSibling}
-                            title="Previous branch"
-                        >
-                            <LuChevronLeft />
-                        </button>
-                        <span className="text-xs px-1">
-                            {currentSiblingIndex + 1}/{siblings.length}
-                        </span>
-                        <button
-                            className={classNames(
-                                'button aspect-square size-8 flex justify-center items-center',
-                                !hasNextSibling && 'opacity-30 cursor-not-allowed'
-                            )}
-                            onClick={handleNextSibling}
-                            disabled={!hasNextSibling}
-                            title="Next branch"
-                        >
-                            <LuChevronRight />
-                        </button>
-                    </>
-                )}
+            <div className="text-sm text-primary/50 flex justify-between gap-2 items-center">
+                {/* Token usage display */}
+                <div className="flex-1">
+                    <TokenUsageDisplay message={messageData} />
+                </div>
 
-                {/* Standard actions */}
-                <button
-                    className="button gap-2 aspect-square size-8 flex justify-center items-center"
-                    onClick={handleCopy}
-                    title="Copy message"
-                >
-                    <LuCopy />
-                </button>
-                {match(messageData.sender_role)
-                    .with('user', () => (
-                        <button
-                            className="button gap-2 aspect-square size-8 flex justify-center items-center"
-                            onClick={handleEdit}
-                            title="Edit message"
-                            disabled={!onEdit}
-                        >
-                            <LuPencil />
-                        </button>
-                    ))
-                    .otherwise(() => null)}
+                <div className="flex gap-2 items-center">
+                    {/* Branch navigation arrows - only show if using tree interface */}
+                    {node && siblings.length > 1 && (
+                        <>
+                            <button
+                                className={classNames(
+                                    'button aspect-square size-8 flex justify-center items-center',
+                                    !hasPrevSibling && 'opacity-30 cursor-not-allowed'
+                                )}
+                                onClick={handlePrevSibling}
+                                disabled={!hasPrevSibling}
+                                title="Previous branch"
+                            >
+                                <LuChevronLeft />
+                            </button>
+                            <span className="text-xs px-1">
+                                {currentSiblingIndex + 1}/{siblings.length}
+                            </span>
+                            <button
+                                className={classNames(
+                                    'button aspect-square size-8 flex justify-center items-center',
+                                    !hasNextSibling && 'opacity-30 cursor-not-allowed'
+                                )}
+                                onClick={handleNextSibling}
+                                disabled={!hasNextSibling}
+                                title="Next branch"
+                            >
+                                <LuChevronRight />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Standard actions */}
+                    <button
+                        className="button gap-2 aspect-square size-8 flex justify-center items-center"
+                        onClick={handleCopy}
+                        title="Copy message"
+                    >
+                        <LuCopy />
+                    </button>
+                    {match(messageData.sender_role)
+                        .with('user', () => (
+                            <button
+                                className="button gap-2 aspect-square size-8 flex justify-center items-center"
+                                onClick={handleEdit}
+                                title="Edit message"
+                                disabled={!onEdit}
+                            >
+                                <LuPencil />
+                            </button>
+                        ))
+                        .otherwise(() => null)}
+                </div>
             </div>
         </div>
     );
@@ -538,5 +546,85 @@ export const ChatDataStream = ({ chatId, messageId }: { chatId: string; messageI
             </div>
             {!isComplete && !error && <span className="animate-pulse">▋</span>}
         </>
+    );
+};
+
+// Token Usage Display Component
+const TokenUsageDisplay = ({ message }: { message: WorkshopMessage }) => {
+    // Only show for assistant messages that have token data
+    if (message.sender_role !== 'assistant' || !message.total_tokens) {
+        return null;
+    }
+
+    const formatNumber = (num: number) => num.toLocaleString();
+
+    const tokenInfo = [];
+
+    if (message.prompt_tokens) {
+        tokenInfo.push(`${formatNumber(message.prompt_tokens)} input`);
+    }
+
+    if (message.completion_tokens) {
+        tokenInfo.push(`${formatNumber(message.completion_tokens)} output`);
+    }
+
+    if (message.reasoning_tokens) {
+        tokenInfo.push(`${formatNumber(message.reasoning_tokens)} reasoning`);
+    }
+
+    const tooltipContent = (
+        <div className="p-3 space-y-2">
+            <div className="font-semibold text-sm">Token Usage</div>
+            <div className="space-y-1 text-xs">
+                {message.prompt_tokens && (
+                    <div className="flex justify-between gap-4">
+                        <span>Input tokens:</span>
+                        <span className="font-mono">{formatNumber(message.prompt_tokens)}</span>
+                    </div>
+                )}
+                {message.completion_tokens && (
+                    <div className="flex justify-between gap-4">
+                        <span>Output tokens:</span>
+                        <span className="font-mono">{formatNumber(message.completion_tokens)}</span>
+                    </div>
+                )}
+                {message.reasoning_tokens && (
+                    <div className="flex justify-between gap-4">
+                        <span>Reasoning tokens:</span>
+                        <span className="font-mono">{formatNumber(message.reasoning_tokens)}</span>
+                    </div>
+                )}
+                <div className="border-t pt-1 mt-2">
+                    <div className="flex justify-between gap-4 font-semibold">
+                        <span>Total:</span>
+                        <span className="font-mono">{formatNumber(message.total_tokens)}</span>
+                    </div>
+                </div>
+                {message.model_used && (
+                    <div className="border-t pt-1 mt-2">
+                        <div className="flex justify-between gap-4">
+                            <span>Model:</span>
+                            <span className="font-mono text-xs">{message.model_used}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    return (
+        <Tooltip
+            trigger={
+                <div className="inline-flex items-center gap-1 text-xs text-primary/60 bg-secondary/50 px-2 py-1 rounded-full border border-primary/10">
+                    <LuActivity size={12} />
+                    <span>{formatNumber(message.total_tokens)} tokens</span>
+                    {tokenInfo.length > 0 && (
+                        <span className="text-primary/40">({tokenInfo.join(', ')})</span>
+                    )}
+                </div>
+            }
+        >
+            {tooltipContent}
+        </Tooltip>
     );
 };

@@ -18,6 +18,17 @@ pub struct WorkshopMessage {
     pub parent_message_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub streaming_events: Option<serde_json::Value>,
+    // Token usage tracking (only populated for assistant messages)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_tokens: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completion_tokens: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_tokens: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning_tokens: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_used: Option<String>,
 }
 
 #[derive(Debug, sqlx::FromRow, Serialize, Deserialize, Object)]
@@ -95,7 +106,7 @@ impl WorkshopMessage {
             }
         };
 
-        query_as!(Self, "INSERT INTO workshop_messages (chat_id, sender_role, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING *",
+        query_as!(Self, "INSERT INTO workshop_messages (chat_id, sender_role, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used",
             chat_id,
             "user",
             message,
@@ -111,7 +122,7 @@ impl WorkshopMessage {
         message: String,
         state: &AppState,
     ) -> Result<Self, sqlx::Error> {
-        query_as!(Self, "INSERT INTO workshop_messages (chat_id, sender_role, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING *",
+        query_as!(Self, "INSERT INTO workshop_messages (chat_id, sender_role, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used",
             chat_id,
             "assistant",
             message,
@@ -122,7 +133,7 @@ impl WorkshopMessage {
     }
 
     pub async fn update_message_content(message_id: &Uuid, content: &str, state: &AppState) -> Result<Self, sqlx::Error> {
-        query_as!(Self, "UPDATE workshop_messages SET message = $1 WHERE message_id = $2 RETURNING *",
+        query_as!(Self, "UPDATE workshop_messages SET message = $1 WHERE message_id = $2 RETURNING message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used",
             content,
             message_id
         )
@@ -137,9 +148,46 @@ impl WorkshopMessage {
         state: &AppState
     ) -> Result<Self, sqlx::Error> {
         let events_json = serde_json::to_value(streaming_events).unwrap_or(serde_json::Value::Null);
-        query_as!(Self, "UPDATE workshop_messages SET message = $1, streaming_events = $2 WHERE message_id = $3 RETURNING *",
+        query_as!(Self, "UPDATE workshop_messages SET message = $1, streaming_events = $2 WHERE message_id = $3 RETURNING message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used",
             content,
             events_json,
+            message_id
+        )
+            .fetch_one(&state.database.pool)
+            .await
+    }
+
+    pub async fn update_message_with_token_usage(
+        message_id: &Uuid,
+        content: &str,
+        streaming_events: &[StreamingEntry],
+        usage: Option<&async_openai::types::CompletionUsage>,
+        model_used: &str,
+        state: &AppState
+    ) -> Result<Self, sqlx::Error> {
+        let events_json = serde_json::to_value(streaming_events).unwrap_or(serde_json::Value::Null);
+        
+        let (prompt_tokens, completion_tokens, total_tokens, reasoning_tokens) = if let Some(usage) = usage {
+            (
+                Some(usage.prompt_tokens as i32),
+                Some(usage.completion_tokens as i32),
+                Some(usage.total_tokens as i32),
+                // reasoning_tokens might be available in newer API versions
+                None::<i32>, // For now, we don't have access to reasoning tokens in the current async-openai version
+            )
+        } else {
+            (None, None, None, None)
+        };
+
+        query_as!(Self, 
+            "UPDATE workshop_messages SET message = $1, streaming_events = $2, prompt_tokens = $3, completion_tokens = $4, total_tokens = $5, reasoning_tokens = $6, model_used = $7 WHERE message_id = $8 RETURNING message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used",
+            content,
+            events_json,
+            prompt_tokens,
+            completion_tokens,
+            total_tokens,
+            reasoning_tokens,
+            model_used,
             message_id
         )
             .fetch_one(&state.database.pool)
@@ -152,7 +200,7 @@ impl WorkshopMessage {
     ) -> Result<Vec<Self>, sqlx::Error> {
         query_as!(
             Self,
-            "SELECT * FROM workshop_messages WHERE chat_id = $1 ORDER BY created_at ASC",
+            "SELECT message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used FROM workshop_messages WHERE chat_id = $1 ORDER BY created_at ASC",
             chat_id
         )
         .fetch_all(&state.database.pool)
@@ -168,12 +216,12 @@ impl WorkshopMessage {
     ) -> Result<Vec<Self>, sqlx::Error> {
         query_as(
             r#"WITH RECURSIVE message_tree AS (
-            SELECT * FROM workshop_messages WHERE message_id = $1
+            SELECT message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used FROM workshop_messages WHERE message_id = $1
             UNION ALL
-            SELECT m.* FROM workshop_messages m
+            SELECT m.message_id, m.chat_id, m.sender_role, m.message, m.created_at, m.parent_message_id, m.streaming_events, m.prompt_tokens, m.completion_tokens, m.total_tokens, m.reasoning_tokens, m.model_used FROM workshop_messages m
             INNER JOIN message_tree mt ON m.message_id = mt.parent_message_id
         )
-        SELECT * FROM message_tree
+        SELECT message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used FROM message_tree
         ORDER BY created_at ASC"#,
         )
         .bind(message_id)

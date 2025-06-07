@@ -82,6 +82,131 @@ pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-pro-preview";
 pub const SHORTSUM_PROMPT: &str = include_str!("./shortsum.md");
 pub const SHORTSUM_MODEL: &str = "mistralai/mistral-7b-instruct:free";
 
+/// Constants for token limits
+const MAX_INPUT_TOKENS: usize = 32000; // Limit input to 32k tokens to prevent excessive costs
+const TOKENS_PER_MESSAGE_OVERHEAD: usize = 4; // Overhead tokens per message (role, formatting, etc.)
+const TOKENS_PER_NAME: usize = 1; // Additional tokens if name is present
+
+/// Simple token estimation function
+/// This is a rough estimate - for exact counts you'd need the actual tokenizer
+/// But this is good enough for preventing runaway costs
+fn estimate_tokens_in_text(text: &str) -> usize {
+    // Rough estimate: ~4 characters per token for English text
+    // This errs on the side of overestimating to be safe
+    (text.len() as f64 / 3.5).ceil() as usize
+}
+
+fn estimate_tokens_in_message(message: &ChatCompletionRequestMessage) -> usize {
+    let mut token_count = TOKENS_PER_MESSAGE_OVERHEAD;
+    
+    match message {
+        ChatCompletionRequestMessage::User(user_msg) => {
+            let content = match &user_msg.content {
+                async_openai::types::ChatCompletionRequestUserMessageContent::Text(text) => text,
+                async_openai::types::ChatCompletionRequestUserMessageContent::Array(_) => "[Complex content]",
+            };
+            token_count += estimate_tokens_in_text(content);
+            if user_msg.name.is_some() {
+                token_count += TOKENS_PER_NAME;
+            }
+        },
+        ChatCompletionRequestMessage::Assistant(assistant_msg) => {
+            if let Some(content) = &assistant_msg.content {
+                let text = match content {
+                    async_openai::types::ChatCompletionRequestAssistantMessageContent::Text(text) => text,
+                    async_openai::types::ChatCompletionRequestAssistantMessageContent::Array(_) => "[Complex content]",
+                };
+                token_count += estimate_tokens_in_text(text);
+            }
+            if assistant_msg.name.is_some() {
+                token_count += TOKENS_PER_NAME;
+            }
+            // Add tokens for tool calls if present
+            if let Some(tool_calls) = &assistant_msg.tool_calls {
+                for tool_call in tool_calls {
+                    token_count += estimate_tokens_in_text(&tool_call.function.name);
+                    token_count += estimate_tokens_in_text(&tool_call.function.arguments);
+                    token_count += 4; // Overhead for tool call structure
+                }
+            }
+        },
+        ChatCompletionRequestMessage::System(system_msg) => {
+            let content = match &system_msg.content {
+                async_openai::types::ChatCompletionRequestSystemMessageContent::Text(text) => text,
+                async_openai::types::ChatCompletionRequestSystemMessageContent::Array(_) => "[Complex content]",
+            };
+            token_count += estimate_tokens_in_text(content);
+            if system_msg.name.is_some() {
+                token_count += TOKENS_PER_NAME;
+            }
+        },
+        ChatCompletionRequestMessage::Tool(tool_msg) => {
+            let content_text = match &tool_msg.content {
+                async_openai::types::ChatCompletionRequestToolMessageContent::Text(text) => text,
+                async_openai::types::ChatCompletionRequestToolMessageContent::Array(_) => "[Complex content]",
+            };
+            token_count += estimate_tokens_in_text(content_text);
+            token_count += estimate_tokens_in_text(&tool_msg.tool_call_id);
+        },
+        _ => {
+            // For any other message types, add a conservative estimate
+            token_count += 50;
+        }
+    }
+    
+    token_count
+}
+
+pub fn truncate_messages_to_token_limit(mut messages: Vec<ChatCompletionRequestMessage>, tools: &Option<Vec<ChatCompletionTool>>) -> Vec<ChatCompletionRequestMessage> {
+    // First, estimate tokens for tools if present
+    let mut tool_tokens = 0;
+    if let Some(tools_vec) = tools {
+        for _tool in tools_vec {
+            // Rough estimate for tool definitions
+            tool_tokens += 100; // Conservative estimate per tool
+        }
+    }
+    
+    let mut total_tokens = tool_tokens;
+    let mut kept_messages = Vec::new();
+    let mut truncated_count = 0;
+    
+    // Always keep the system message first if it exists
+    if let Some(first_message) = messages.first() {
+        if matches!(first_message, ChatCompletionRequestMessage::System(_)) {
+            let system_message = messages.remove(0);
+            total_tokens += estimate_tokens_in_message(&system_message);
+            kept_messages.push(system_message);
+        }
+    }
+    
+    // Keep messages from the end (most recent) while staying under limit
+    // Work backwards to keep the most recent conversation
+    for message in messages.into_iter().rev() {
+        let message_tokens = estimate_tokens_in_message(&message);
+        
+        if total_tokens + message_tokens <= MAX_INPUT_TOKENS {
+            total_tokens += message_tokens;
+            kept_messages.insert(if kept_messages.is_empty() { 0 } else { 1 }, message); // Insert after system message if present
+        } else {
+            truncated_count += 1;
+        }
+    }
+    
+    if truncated_count > 0 {
+        tracing::warn!(
+            "🔪 Truncated {} message(s) to stay under {}-token limit. Current estimate: {} tokens",
+            truncated_count,
+            MAX_INPUT_TOKENS,
+            total_tokens
+        );
+    } else {
+        tracing::info!("✅ Messages within token limit. Estimated tokens: {}", total_tokens);
+    }
+    
+    kept_messages
+}
+
 /// Enhanced state for streaming with tool call support
 #[derive(Clone)]
 pub struct OngoingPromptState {
@@ -92,6 +217,8 @@ pub struct OngoingPromptState {
     pub final_content: Arc<RwLock<Option<String>>>,
     pub conversation_history: Arc<RwLock<Vec<ChatCompletionRequestMessage>>>,
     pub tools: Arc<RwLock<Option<Vec<ChatCompletionTool>>>>,
+    pub usage_data: Arc<RwLock<Option<async_openai::types::CompletionUsage>>>,
+    pub model_used: Arc<RwLock<Option<String>>>,
 }
 
 /// Streaming entry types to support different kinds of streaming content
@@ -207,6 +334,8 @@ impl OngoingPrompt {
         let final_content = Arc::new(RwLock::new(None));
         let conversation_history = Arc::new(RwLock::new(messages.clone()));
         let tools_arc = Arc::new(RwLock::new(tools.clone()));
+        let usage_data = Arc::new(RwLock::new(None));
+        let model_used = Arc::new(RwLock::new(Some(model.clone())));
         
         let ongoing_state = OngoingPromptState {
             buffer: buffer.clone(),
@@ -216,6 +345,8 @@ impl OngoingPrompt {
             final_content: final_content.clone(),
             conversation_history: conversation_history.clone(),
             tools: tools_arc.clone(),
+            usage_data: usage_data.clone(),
+            model_used: model_used.clone(),
         };
 
         // Clone everything needed for the background task
@@ -227,6 +358,8 @@ impl OngoingPrompt {
         let final_content_clone = final_content.clone();
         let conversation_history_clone = conversation_history.clone();
         let tools_clone = tools_arc.clone();
+        let usage_data_clone = usage_data.clone();
+        let model_used_clone = model_used.clone();
         
         task::spawn(async move {
             let mut accumulated_content = String::new();
@@ -247,13 +380,17 @@ impl OngoingPrompt {
                     tools_lock.clone()
                 };
 
+                // Apply token limits to prevent excessive costs
+                let truncated_messages = truncate_messages_to_token_limit(current_messages, &current_tools);
+
                 // Create request for this iteration
                 let request = CreateChatCompletionRequest {
                     model: WORKSHOP_MODEL.to_string(),
-                    messages: current_messages,
+                    messages: truncated_messages,
                     tools: current_tools,
                     tool_choice: None,
                     stream: Some(true),
+                    max_completion_tokens: Some(4000), // Limit output tokens to 4k to prevent excessive generation costs
                     ..Default::default()
                 };
 
@@ -283,6 +420,14 @@ impl OngoingPrompt {
                     match result {
                         Ok(chunk) => {
                             // tracing::debug!("📦 Received chunk #{}: {:?}", chunk_count, chunk);
+                            
+                            // Capture usage data if present
+                            if let Some(usage) = &chunk.usage {
+                                let mut usage_lock = usage_data_clone.write().await;
+                                *usage_lock = Some(usage.clone());
+                                tracing::info!("💰 Captured usage data: prompt_tokens={}, completion_tokens={}, total_tokens={}", 
+                                    usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
+                            }
                             
                             for choice in &chunk.choices {
                                 // Handle content
@@ -750,6 +895,18 @@ impl OngoingPrompt {
     pub async fn get_all_events(&self) -> Vec<StreamingEntry> {
         let buffer = self.state.buffer.read().await;
         buffer.iter().cloned().collect()
+    }
+
+    /// Get the usage data captured from the API response
+    pub async fn get_usage_data(&self) -> Option<async_openai::types::CompletionUsage> {
+        let usage_lock = self.state.usage_data.read().await;
+        usage_lock.clone()
+    }
+
+    /// Get the model used for this request
+    pub async fn get_model_used(&self) -> Option<String> {
+        let model_lock = self.state.model_used.read().await;
+        model_lock.clone()
     }
 }
 

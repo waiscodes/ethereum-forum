@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE workshop_messages SET message = $1 WHERE message_id = $2 RETURNING *",
+  "query": "SELECT message_id, chat_id, sender_role, message, created_at, parent_message_id, streaming_events, prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, model_used FROM workshop_messages WHERE chat_id = $1 ORDER BY created_at ASC",
   "describe": {
     "columns": [
       {
@@ -37,11 +37,35 @@
         "ordinal": 6,
         "name": "streaming_events",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "prompt_tokens",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "completion_tokens",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "total_tokens",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "reasoning_tokens",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "model_used",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
         "Uuid"
       ]
     },
@@ -52,8 +76,13 @@
       false,
       false,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "4167471ec72e5842488802762484be4bcb9f8f5e3c1266cbdc0594f4a4e2164b"
+  "hash": "72dfcfced0ceb48bc24c2d6e99e9d5633b005f234be37181431fdb54db2e1dc8"
 }

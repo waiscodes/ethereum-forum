@@ -14,7 +14,7 @@ use crate::{
     models::{
         topics::{Post, Topic},
         workshop::{WorkshopChat, WorkshopMessage},
-    }, modules::workshop::prompts::{OngoingPrompt, OngoingPromptManager, SHORTSUM_MODEL, SUMMARY_MODEL}, state::AppState
+    }, modules::workshop::prompts::{OngoingPrompt, OngoingPromptManager, SHORTSUM_MODEL, SUMMARY_MODEL, truncate_messages_to_token_limit}, state::AppState
 };
 
 pub mod prompts;
@@ -104,9 +104,13 @@ impl WorkshopService {
             }),
         ];
 
+        // Apply token limits to prevent excessive costs
+        let truncated_messages = truncate_messages_to_token_limit(messages, &None);
+
         let request = CreateChatCompletionRequest {
             model: SUMMARY_MODEL.to_string(),
-            messages,
+            messages: truncated_messages,
+            max_completion_tokens: Some(2000), // Limit output to 2k tokens for summaries
             ..Default::default()
         };
 
@@ -116,6 +120,12 @@ impl WorkshopService {
             .await?;
 
         let response = chat_completion.choices.first().unwrap().message.clone();
+
+        // Log usage data if available
+        if let Some(usage) = &chat_completion.usage {
+            tracing::info!("💰 Summary generation usage - prompt: {}, completion: {}, total: {}", 
+                usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
+        }
 
         Ok(response.content.unwrap_or_default())
     }
@@ -176,12 +186,6 @@ impl WorkshopService {
             Ok(mut tools) if !tools.is_empty() => {
                 tracing::info!("✅ Got {} MCP tools", tools.len());
                 
-                // TEMPORARY: Limit tools to first 5 to debug 400 error
-                // Some LLM models have issues with large numbers of tools
-                if tools.len() > 5 {
-                    tracing::warn!("🔧 Limiting tools from {} to 5 for debugging", tools.len());
-                    tools.truncate(5);
-                }
                 
                 Some(tools)
             },
@@ -236,11 +240,26 @@ impl WorkshopService {
                     let streaming_events = prompt_clone.get_all_events().await;
                     tracing::info!("📊 Collected {} streaming events", streaming_events.len());
                     
-                    // Update the message content and streaming events
-                    if let Err(e) = WorkshopMessage::update_message_with_streaming_events(&system_response_clone.message_id, &content, &streaming_events, &state_clone).await {
-                        tracing::error!("❌ Error updating message with streaming events: {:?}", e);
+                    // Get usage data and model information
+                    let usage_data = prompt_clone.get_usage_data().await;
+                    let model_used = prompt_clone.get_model_used().await.unwrap_or_else(|| "unknown".to_string());
+                    
+                    // Update the message content and streaming events with token usage
+                    if let Err(e) = WorkshopMessage::update_message_with_token_usage(
+                        &system_response_clone.message_id, 
+                        &content, 
+                        &streaming_events,
+                        usage_data.as_ref(),
+                        &model_used,
+                        &state_clone
+                    ).await {
+                        tracing::error!("❌ Error updating message with token usage: {:?}", e);
                     } else {
-                        tracing::info!("✅ Updated message content and streaming events successfully");
+                        tracing::info!("✅ Updated message content, streaming events, and token usage successfully");
+                        if let Some(usage) = &usage_data {
+                            tracing::info!("💰 Token usage saved - prompt: {}, completion: {}, total: {}", 
+                                usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
+                        }
                     }
 
                     // Update the chat's last message
@@ -260,12 +279,27 @@ impl WorkshopService {
                     let streaming_events = prompt_clone.get_all_events().await;
                     tracing::info!("📊 Collected {} streaming events (with error)", streaming_events.len());
                     
-                    // Update the message with error and any streaming events that were collected
+                    // Get usage data and model information even on error
+                    let usage_data = prompt_clone.get_usage_data().await;
+                    let model_used = prompt_clone.get_model_used().await.unwrap_or_else(|| "unknown".to_string());
+                    
+                    // Update the message with error and any streaming events/token usage that were collected
                     let error_message = format!("Error: stream failed: {}", e);
-                    if let Err(update_err) = WorkshopMessage::update_message_with_streaming_events(&system_response_clone.message_id, &error_message, &streaming_events, &state_clone).await {
-                        tracing::error!("❌ Error updating message with error and streaming events: {:?}", update_err);
+                    if let Err(update_err) = WorkshopMessage::update_message_with_token_usage(
+                        &system_response_clone.message_id, 
+                        &error_message, 
+                        &streaming_events,
+                        usage_data.as_ref(),
+                        &model_used,
+                        &state_clone
+                    ).await {
+                        tracing::error!("❌ Error updating message with error and token usage: {:?}", update_err);
                     } else {
-                        tracing::info!("📝 Updated message with error content and streaming events");
+                        tracing::info!("📝 Updated message with error content, streaming events, and token usage");
+                        if let Some(usage) = &usage_data {
+                            tracing::info!("💰 Token usage saved (error case) - prompt: {}, completion: {}, total: {}", 
+                                usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
+                        }
                     }
                 }
             }
@@ -306,12 +340,15 @@ impl WorkshopService {
             }),
         ];
 
+        // Apply token limits to prevent excessive costs
+        let truncated_messages = truncate_messages_to_token_limit(messages, &None);
+
         // Use topic_id as the coalescing key for summaries
         let key = format!("summary-{}", topic.topic_id);
         
         // Get or create the ongoing prompt (no tools needed for summaries)
         let ongoing_prompt = state.workshop.ongoing_prompts
-            .get_or_create(key, state, messages, None)
+            .get_or_create(key, state, truncated_messages, None)
             .await?;
 
         Ok(ongoing_prompt)
@@ -408,10 +445,13 @@ impl WorkshopService {
             }),
         ];
 
+        // Apply token limits to prevent excessive costs
+        let truncated_summary_messages = truncate_messages_to_token_limit(summary_messages, &None);
+
         // Generate the summary using async-openai
         let request = CreateChatCompletionRequest {
             model: SHORTSUM_MODEL.to_string(),
-            messages: summary_messages,
+            messages: truncated_summary_messages,
             max_completion_tokens: Some(10),
             ..Default::default()
         };
@@ -427,6 +467,12 @@ impl WorkshopService {
             .and_then(|choice| choice.message.content.as_ref())
             .unwrap_or(&"Unable to generate summary".to_string())
             .clone();
+
+        // Log usage data if available
+        if let Some(usage) = &chat_completion.usage {
+            tracing::info!("💰 Short summary generation usage - prompt: {}, completion: {}, total: {}", 
+                usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
+        }
 
         tracing::info!("📝 Generated summary for chat {}: {}", chat_id, &summary[..summary.len().min(100)]);
         

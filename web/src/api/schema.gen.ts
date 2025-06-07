@@ -1472,6 +1472,15 @@ export interface components {
             /** Format: uuid */
             parent_message_id?: string;
             streaming_events?: unknown;
+            /** Format: int32 */
+            prompt_tokens?: number;
+            /** Format: int32 */
+            completion_tokens?: number;
+            /** Format: int32 */
+            total_tokens?: number;
+            /** Format: int32 */
+            reasoning_tokens?: number;
+            model_used?: string;
         };
         /** YoutubeMeetingData */
         YoutubeMeetingData: {
