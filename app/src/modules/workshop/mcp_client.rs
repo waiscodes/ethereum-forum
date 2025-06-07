@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 use tracing;
 use std::time::{Duration, Instant};
 use reqwest::Client;
+use async_std::task::sleep;
 
 #[derive(Debug, thiserror::Error)]
 pub enum McpError {
@@ -74,51 +75,121 @@ impl McpClientManager {
         }
     }
 
-    /// Initialize the MCP connection with the server
+    /// Check if an error is retryable
+    fn is_retryable_error(error: &McpError) -> bool {
+        match error {
+            McpError::Http(req_error) => {
+                // Retry on connection errors, timeouts, etc.
+                req_error.is_connect() || req_error.is_timeout() || req_error.is_request()
+            }
+            McpError::Connection(_) => true,
+            McpError::Protocol(msg) => {
+                // Retry on 404, 503, 502, 500 errors
+                msg.contains("404") || msg.contains("503") || msg.contains("502") || msg.contains("500")
+            }
+            _ => false,
+        }
+    }
+
+    /// Retry logic with exponential backoff
+    async fn retry_with_backoff<F, Fut, T>(
+        &self,
+        operation: F,
+        operation_name: &str,
+    ) -> Result<T, McpError>
+    where
+        F: Fn() -> Fut,
+        Fut: std::future::Future<Output = Result<T, McpError>>,
+    {
+        const MAX_RETRIES: u32 = 3;
+        const BASE_DELAY_MS: u64 = 1000;
+
+        let mut last_error = None;
+
+        for attempt in 0..MAX_RETRIES {
+            match operation().await {
+                Ok(result) => return Ok(result),
+                Err(error) => {
+                    if !Self::is_retryable_error(&error) {
+                        tracing::warn!("❌ {} failed with non-retryable error: {}", operation_name, error);
+                        return Err(error);
+                    }
+
+                    last_error = Some(error);
+
+                    if attempt < MAX_RETRIES - 1 {
+                        let delay = Duration::from_millis(BASE_DELAY_MS * 2_u64.pow(attempt));
+                        tracing::warn!(
+                            "⚠️ {} failed (attempt {}/{}), retrying in {:?}...", 
+                            operation_name, 
+                            attempt + 1, 
+                            MAX_RETRIES, 
+                            delay
+                        );
+                        sleep(delay).await;
+                    }
+                }
+            }
+        }
+
+        Err(last_error.unwrap_or_else(|| McpError::Other("All retries exhausted".to_string())))
+    }
+
+    /// Initialize the MCP connection with the server (with retries)
     async fn initialize_connection(&mut self) -> Result<(), McpError> {
         tracing::info!("🔗 Initializing MCP connection to {}", self.server_url);
 
-        let init_request = json!({
-            "jsonrpc": "2.0",
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2025-03-26",
-                "capabilities": {
-                    "roots": {"listChanged": true},
-                    "sampling": {}
-                },
-                "clientInfo": {
-                    "name": "ethereum-forum-workshop",
-                    "version": "0.1.0"
+        let server_url = self.server_url.clone();
+        let client = self.client.clone();
+
+        let result = self.retry_with_backoff(
+            || async {
+                let init_request = json!({
+                    "jsonrpc": "2.0",
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {
+                            "roots": {"listChanged": true},
+                            "sampling": {}
+                        },
+                        "clientInfo": {
+                            "name": "ethereum-forum-workshop",
+                            "version": "0.1.0"
+                        }
+                    },
+                    "id": 1
+                });
+
+                let response = client
+                    .post(&server_url)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json, text/event-stream")
+                    .json(&init_request)
+                    .send()
+                    .await?;
+
+                if !response.status().is_success() {
+                    return Err(McpError::Protocol(format!(
+                        "Initialization failed with status: {}", 
+                        response.status()
+                    )));
                 }
+
+                Ok(response)
             },
-            "id": 1
-        });
-
-        let response = self.client
-            .post(&self.server_url)
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json, text/event-stream")
-            .json(&init_request)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            return Err(McpError::Initialization(format!(
-                "Initialization failed with status: {}", 
-                response.status()
-            )));
-        }
+            "MCP initialization"
+        ).await?;
 
         // Extract session ID from headers
-        self.session_id = response
+        self.session_id = result
             .headers()
             .get("Mcp-Session-Id")
-            .or_else(|| response.headers().get("mcp-session-id"))
+            .or_else(|| result.headers().get("mcp-session-id"))
             .and_then(|h| h.to_str().ok())
             .map(|s| s.to_string());
 
-        let response_text = response.text().await?;
+        let response_text = result.text().await?;
         let response_json: Value = serde_json::from_str(&response_text)?;
 
         if let Some(result) = response_json.get("result") {
@@ -166,7 +237,7 @@ impl McpClientManager {
         !self.server_url.is_empty()
     }
 
-    /// Get tools using direct HTTP requests
+    /// Get tools using direct HTTP requests (with retries)
     pub async fn get_tools(&mut self) -> Result<Vec<McpTool>, McpError> {
         // Check cache
         if let (Some(cached_tools), Some(last_update)) = (&self.tools_cache, self.last_update) {
@@ -183,65 +254,76 @@ impl McpClientManager {
             self.initialize_connection().await?;
         }
 
-        let tools_request = json!({
-            "jsonrpc": "2.0",
-            "method": "tools/list",
-            "params": {},
-            "id": 2
-        });
+        let server_url = self.server_url.clone();
+        let client = self.client.clone();
+        let session_id = self.session_id.clone();
 
-        let mut request_builder = self.client
-            .post(&self.server_url)
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json, text/event-stream");
+        let response_json = self.retry_with_backoff(
+            || async {
+                let tools_request = json!({
+                    "jsonrpc": "2.0",
+                    "method": "tools/list",
+                    "params": {},
+                    "id": 2
+                });
 
-        if let Some(ref session_id) = self.session_id {
-            request_builder = request_builder.header("Mcp-Session-Id", session_id);
-        }
+                let mut request_builder = client
+                    .post(&server_url)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json, text/event-stream");
 
-        let response = request_builder
-            .json(&tools_request)
-            .send()
-            .await?;
-
-        let status = response.status();
-        if !status.is_success() {
-            let response_text = response.text().await?;
-            return Err(McpError::Protocol(format!(
-                "Tools list request failed with status: {}\nResponse: {}", 
-                status, 
-                response_text
-            )));
-        }
-
-        // Handle both JSON and SSE responses
-        let content_type = response.headers()
-            .get("content-type")
-            .and_then(|h| h.to_str().ok())
-            .unwrap_or("");
-
-        let response_json: Value = if content_type.starts_with("text/event-stream") {
-            // Handle Server-Sent Events response
-            let response_text = response.text().await?;
-            
-            // Parse SSE events to extract JSON-RPC response
-            let mut json_response = None;
-            for line in response_text.lines() {
-                if line.starts_with("data: ") {
-                    let json_data = &line[6..]; // Remove "data: " prefix
-                    if let Ok(parsed) = serde_json::from_str::<Value>(json_data) {
-                        json_response = Some(parsed);
-                        break;
-                    }
+                if let Some(ref session_id) = session_id {
+                    request_builder = request_builder.header("Mcp-Session-Id", session_id);
                 }
-            }
-            
-            json_response.ok_or_else(|| McpError::Protocol("No valid JSON found in SSE response".to_string()))?
-        } else {
-            // Handle regular JSON response
-            let response_text = response.text().await?;
-            serde_json::from_str(&response_text)?
-        };
+
+                let response = request_builder
+                    .json(&tools_request)
+                    .send()
+                    .await?;
+
+                let status = response.status();
+                if !status.is_success() {
+                    let response_text = response.text().await?;
+                    return Err(McpError::Protocol(format!(
+                        "Tools list request failed with status: {}\nResponse: {}", 
+                        status, 
+                        response_text
+                    )));
+                }
+
+                // Handle both JSON and SSE responses
+                let content_type = response.headers()
+                    .get("content-type")
+                    .and_then(|h| h.to_str().ok())
+                    .unwrap_or("");
+
+                let response_json: Value = if content_type.starts_with("text/event-stream") {
+                    // Handle Server-Sent Events response
+                    let response_text = response.text().await?;
+                    
+                    // Parse SSE events to extract JSON-RPC response
+                    let mut json_response = None;
+                    for line in response_text.lines() {
+                        if line.starts_with("data: ") {
+                            let json_data = &line[6..]; // Remove "data: " prefix
+                            if let Ok(parsed) = serde_json::from_str::<Value>(json_data) {
+                                json_response = Some(parsed);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    json_response.ok_or_else(|| McpError::Protocol("No valid JSON found in SSE response".to_string()))?
+                } else {
+                    // Handle regular JSON response
+                    let response_text = response.text().await?;
+                    serde_json::from_str(&response_text)?
+                };
+
+                Ok(response_json)
+            },
+            "MCP tools fetch"
+        ).await?;
 
         // Handle the response - it might be an array or a single object
         let tools_result = if response_json.is_array() {
@@ -292,7 +374,7 @@ impl McpClientManager {
         Ok(openai_tools)
     }
 
-    /// Call a tool using direct HTTP requests
+    /// Call a tool using direct HTTP requests (with retries)
     pub async fn call_tool(&mut self, name: &str, arguments: Value) -> Result<McpToolResponse, McpError> {
         tracing::info!("🔧 Calling MCP tool: {} with arguments: {}", name, arguments);
         
@@ -301,68 +383,80 @@ impl McpClientManager {
             self.initialize_connection().await?;
         }
 
-        let tool_request = json!({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {
-                "name": name,
-                "arguments": arguments
-            },
-            "id": 3
-        });
+        let tool_name = name.to_string();
+        let server_url = self.server_url.clone();
+        let client = self.client.clone();
+        let session_id = self.session_id.clone();
 
-        let mut request_builder = self.client
-            .post(&self.server_url)
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json, text/event-stream");
+        let response_json = self.retry_with_backoff(
+            || async {
+                let tool_request = json!({
+                    "jsonrpc": "2.0",
+                    "method": "tools/call",
+                    "params": {
+                        "name": &tool_name,
+                        "arguments": &arguments
+                    },
+                    "id": 3
+                });
 
-        if let Some(ref session_id) = self.session_id {
-            request_builder = request_builder.header("Mcp-Session-Id", session_id);
-        }
+                let mut request_builder = client
+                    .post(&server_url)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json, text/event-stream");
 
-        let response = request_builder
-            .json(&tool_request)
-            .send()
-            .await?;
-
-        let status = response.status();
-        if !status.is_success() {
-            let response_text = response.text().await?;
-            return Err(McpError::Protocol(format!(
-                "Tool call failed with status: {}\nResponse: {}", 
-                status, 
-                response_text
-            )));
-        }
-
-        // Handle both JSON and SSE responses
-        let content_type = response.headers()
-            .get("content-type")
-            .and_then(|h| h.to_str().ok())
-            .unwrap_or("");
-
-        let response_json: Value = if content_type.starts_with("text/event-stream") {
-            // Handle Server-Sent Events response
-            let response_text = response.text().await?;
-            
-            // Parse SSE events to extract JSON-RPC response
-            let mut json_response = None;
-            for line in response_text.lines() {
-                if line.starts_with("data: ") {
-                    let json_data = &line[6..]; // Remove "data: " prefix
-                    if let Ok(parsed) = serde_json::from_str::<Value>(json_data) {
-                        json_response = Some(parsed);
-                        break;
-                    }
+                if let Some(ref session_id) = session_id {
+                    request_builder = request_builder.header("Mcp-Session-Id", session_id);
                 }
-            }
-            
-            json_response.ok_or_else(|| McpError::Protocol("No valid JSON found in SSE response".to_string()))?
-        } else {
-            // Handle regular JSON response
-            let response_text = response.text().await?;
-            serde_json::from_str(&response_text)?
-        };
+
+                let response = request_builder
+                    .json(&tool_request)
+                    .send()
+                    .await?;
+
+                let status = response.status();
+                if !status.is_success() {
+                    let response_text = response.text().await?;
+                    return Err(McpError::Protocol(format!(
+                        "Tool call failed with status: {}\nResponse: {}", 
+                        status, 
+                        response_text
+                    )));
+                }
+
+                // Handle both JSON and SSE responses
+                let content_type = response.headers()
+                    .get("content-type")
+                    .and_then(|h| h.to_str().ok())
+                    .unwrap_or("");
+
+                let response_json: Value = if content_type.starts_with("text/event-stream") {
+                    // Handle Server-Sent Events response
+                    let response_text = response.text().await?;
+                    
+                    // Parse SSE events to extract JSON-RPC response
+                    let mut json_response = None;
+                    for line in response_text.lines() {
+                        if line.starts_with("data: ") {
+                            let json_data = &line[6..]; // Remove "data: " prefix
+                            if let Ok(parsed) = serde_json::from_str::<Value>(json_data) {
+                                json_response = Some(parsed);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    json_response.ok_or_else(|| McpError::Protocol("No valid JSON found in SSE response".to_string()))?
+                } else {
+                    // Handle regular JSON response
+                    let response_text = response.text().await?;
+                    serde_json::from_str(&response_text)?
+                };
+
+                Ok(response_json)
+            },
+            "MCP tool call"
+        ).await?;
 
         // Handle the response - it might be an array or a single object
         let (response_obj, result) = if response_json.is_array() {

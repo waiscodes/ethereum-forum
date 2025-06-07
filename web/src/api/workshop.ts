@@ -41,7 +41,7 @@ export const getWorkshopChat = (chatId: string) =>
                     typeof lastMessage.message === 'string' &&
                     lastMessage.message.length === 0
                 ) {
-                    return 1000;
+                    return 5000;
                 }
             }
         },
