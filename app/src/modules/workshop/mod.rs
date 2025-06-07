@@ -169,7 +169,10 @@ impl WorkshopService {
 
         // Get available MCP tools for the chat completion
         tracing::info!("🔧 Getting MCP tools...");
-        let tools = match state.workshop.mcp_client.write().await.get_openai_tools().await {
+        let mut mcp_client_lock_result = state.workshop.mcp_client.write().await;
+        tracing::info!("🔓 MCP client lock acquired successfully");
+        
+        let tools = match mcp_client_lock_result.get_openai_tools().await {
             Ok(mut tools) if !tools.is_empty() => {
                 tracing::info!("✅ Got {} MCP tools", tools.len());
                 
@@ -191,6 +194,9 @@ impl WorkshopService {
                 None
             }
         };
+        
+        drop(mcp_client_lock_result); // Explicitly drop the lock
+        tracing::info!("🔒 MCP client lock released");
 
         // Use chat_id + message_id as the coalescing key
         let key = format!("{}-{}", chat_id, message_id);

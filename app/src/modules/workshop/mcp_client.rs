@@ -262,6 +262,8 @@ impl McpClientManager {
 
     /// Get tools using direct HTTP requests (with retries)
     pub async fn get_tools(&mut self) -> Result<Vec<McpTool>, McpError> {
+        tracing::info!("🔧 get_tools called, server_url: {}", self.server_url);
+        
         // Check cache
         if let (Some(cached_tools), Some(last_update)) = (&self.tools_cache, self.last_update) {
             if last_update.elapsed() < self.cache_duration {
@@ -272,10 +274,11 @@ impl McpClientManager {
 
         tracing::info!("🔄 Fetching fresh MCP tools from server");
         
-        // Initialize connection if not already done
-        if self.session_id.is_none() {
-            self.initialize_connection().await?;
-        }
+        // Always ensure we have a fresh connection for tools requests
+        // This fixes issues with stale session IDs
+        tracing::info!("🔄 Ensuring fresh MCP session for tools request...");
+        self.reset_connection().await;
+        self.initialize_connection().await?;
 
         let server_url = self.server_url.clone();
         let client = self.client.clone();
@@ -321,6 +324,17 @@ impl McpClientManager {
                 if !status.is_success() {
                     let response_text = response.text().await.unwrap_or_default();
                     tracing::error!("❌ Tools fetch failed - Status: {}, Body: {}", status, response_text);
+                    
+                    // If we get 404, the session might be invalid - try reinitializing once
+                    if status == 404 {
+                        tracing::warn!("🔄 Got 404 for tools request, session might be invalid");
+                        return Err(McpError::Protocol(format!(
+                            "Session invalid (404) - Tools list request failed with status: {}\nResponse: {}", 
+                            status, 
+                            response_text
+                        )));
+                    }
+                    
                     return Err(McpError::Protocol(format!(
                         "Tools list request failed with status: {}\nResponse: {}", 
                         status, 
@@ -398,7 +412,9 @@ impl McpClientManager {
 
     /// Convert MCP tools to OpenAI function format
     pub async fn get_openai_tools(&mut self) -> Result<Vec<ChatCompletionTool>, McpError> {
+        tracing::info!("🔧 get_openai_tools called, getting MCP tools...");
         let tools = self.get_tools().await?;
+        tracing::info!("📋 Retrieved {} MCP tools from get_tools()", tools.len());
         
         let openai_tools: Vec<ChatCompletionTool> = tools.into_iter().map(|tool| {
             ChatCompletionTool {
@@ -412,6 +428,7 @@ impl McpClientManager {
             }
         }).collect();
 
+        tracing::info!("🔧 Converted {} MCP tools to OpenAI format", openai_tools.len());
         Ok(openai_tools)
     }
 

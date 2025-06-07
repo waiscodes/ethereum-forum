@@ -785,13 +785,15 @@ impl OngoingPromptManager {
         {
             let prompts = self.prompts.read().await;
             if let Some(existing) = prompts.get(&key) {
-                tracing::info!("🔄 Returning existing prompt for key: {}", key);
+                tracing::info!("🔄 Returning existing prompt for key: {} (tools provided: {})", 
+                    key, tools.as_ref().map(|t| t.len()).unwrap_or(0));
                 return Ok(existing.clone());
             }
         }
 
         // Create new prompt
-        tracing::info!("🆕 Creating new prompt for key: {}", key);
+        tracing::info!("🆕 Creating new prompt for key: {} (tools provided: {})", 
+            key, tools.as_ref().map(|t| t.len()).unwrap_or(0));
         let prompt = OngoingPrompt::new(state, messages, tools).await?;
         
         // Store it
