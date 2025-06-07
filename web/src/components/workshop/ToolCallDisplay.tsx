@@ -62,7 +62,8 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({ toolCall }) =>
     };
 
     // Show entire content expanded by default for completed calls, collapsed for unknown status
-    const shouldExpandByDefault = toolCall.status === 'Success' || toolCall.status === 'Error';
+    const shouldExpandByDefault =
+        toolCall.status.toLowerCase() === 'success' || toolCall.status.toLowerCase() === 'error';
     const [isExpanded, setIsExpanded] = useState(shouldExpandByDefault);
     const [isResultExpanded, setIsResultExpanded] = useState(false);
 
