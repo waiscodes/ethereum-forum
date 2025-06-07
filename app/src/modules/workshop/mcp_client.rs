@@ -64,6 +64,9 @@ impl McpClientManager {
         let server_url = std::env::var("MCP_SERVER_URL")
             .unwrap_or_else(|_| "https://ethereum.forum/mcp".to_string());
 
+        tracing::info!("🔧 MCP Client initialized with URL: {}", server_url);
+        tracing::debug!("🔧 MCP_SERVER_URL environment variable: {:?}", std::env::var("MCP_SERVER_URL"));
+
         Self {
             client: Client::builder().use_rustls_tls().build().unwrap(),
             server_url,
@@ -144,6 +147,8 @@ impl McpClientManager {
 
         let result = self.retry_with_backoff(
             || async {
+                tracing::debug!("🌐 Attempting MCP initialization to URL: {}", &server_url);
+                
                 let init_request = json!({
                     "jsonrpc": "2.0",
                     "method": "initialize",
@@ -161,18 +166,29 @@ impl McpClientManager {
                     "id": 1
                 });
 
+                tracing::debug!("📤 Sending initialization request: {}", serde_json::to_string_pretty(&init_request).unwrap_or_default());
+
                 let response = client
                     .post(&server_url)
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json, text/event-stream")
+                    .header("User-Agent", "ethereum-forum-workshop/0.1.0")
                     .json(&init_request)
                     .send()
                     .await?;
 
-                if !response.status().is_success() {
+                let status = response.status();
+                let headers = response.headers().clone();
+                
+                tracing::debug!("📥 Response status: {}", status);
+                tracing::debug!("📥 Response headers: {:?}", headers);
+
+                if !status.is_success() {
+                    let response_text = response.text().await.unwrap_or_default();
+                    tracing::error!("❌ Initialization failed - Status: {}, Body: {}", status, response_text);
                     return Err(McpError::Protocol(format!(
-                        "Initialization failed with status: {}", 
-                        response.status()
+                        "Initialization failed with status: {} - Response: {}", 
+                        status, response_text
                     )));
                 }
 
@@ -190,6 +206,8 @@ impl McpClientManager {
             .map(|s| s.to_string());
 
         let response_text = result.text().await?;
+        tracing::debug!("📥 Initialization response body: {}", response_text);
+        
         let response_json: Value = serde_json::from_str(&response_text)?;
 
         if let Some(result) = response_json.get("result") {
@@ -218,6 +236,11 @@ impl McpClientManager {
     /// Initialize the MCP client with direct HTTP transport
     pub async fn init(&mut self) -> Result<(), McpError> {
         tracing::info!("🔧 Testing MCP connection...");
+        
+        // Run connectivity test first
+        if let Err(e) = self.test_connectivity().await {
+            tracing::warn!("⚠️ Connectivity test failed, but continuing: {}", e);
+        }
         
         // Initialize the connection
         self.initialize_connection().await?;
@@ -260,6 +283,8 @@ impl McpClientManager {
 
         let response_json = self.retry_with_backoff(
             || async {
+                tracing::debug!("🌐 Attempting tools fetch to URL: {}", &server_url);
+                
                 let tools_request = json!({
                     "jsonrpc": "2.0",
                     "method": "tools/list",
@@ -267,13 +292,19 @@ impl McpClientManager {
                     "id": 2
                 });
 
+                tracing::debug!("📤 Sending tools request: {}", serde_json::to_string_pretty(&tools_request).unwrap_or_default());
+
                 let mut request_builder = client
                     .post(&server_url)
                     .header("Content-Type", "application/json")
-                    .header("Accept", "application/json, text/event-stream");
+                    .header("Accept", "application/json, text/event-stream")
+                    .header("User-Agent", "ethereum-forum-workshop/0.1.0");
 
                 if let Some(ref session_id) = session_id {
                     request_builder = request_builder.header("Mcp-Session-Id", session_id);
+                    tracing::debug!("🔑 Using session ID: {}", session_id);
+                } else {
+                    tracing::warn!("⚠️ No session ID available for tools request");
                 }
 
                 let response = request_builder
@@ -282,8 +313,14 @@ impl McpClientManager {
                     .await?;
 
                 let status = response.status();
+                let headers = response.headers().clone();
+                
+                tracing::debug!("📥 Tools response status: {}", status);
+                tracing::debug!("📥 Tools response headers: {:?}", headers);
+
                 if !status.is_success() {
-                    let response_text = response.text().await?;
+                    let response_text = response.text().await.unwrap_or_default();
+                    tracing::error!("❌ Tools fetch failed - Status: {}, Body: {}", status, response_text);
                     return Err(McpError::Protocol(format!(
                         "Tools list request failed with status: {}\nResponse: {}", 
                         status, 
@@ -297,9 +334,12 @@ impl McpClientManager {
                     .and_then(|h| h.to_str().ok())
                     .unwrap_or("");
 
+                tracing::debug!("📥 Content-Type: {}", content_type);
+
                 let response_json: Value = if content_type.starts_with("text/event-stream") {
                     // Handle Server-Sent Events response
                     let response_text = response.text().await?;
+                    tracing::debug!("📥 SSE response body: {}", response_text);
                     
                     // Parse SSE events to extract JSON-RPC response
                     let mut json_response = None;
@@ -317,6 +357,7 @@ impl McpClientManager {
                 } else {
                     // Handle regular JSON response
                     let response_text = response.text().await?;
+                    tracing::debug!("📥 JSON response body: {}", response_text);
                     serde_json::from_str(&response_text)?
                 };
 
@@ -536,6 +577,90 @@ impl McpClientManager {
     /// List all available tools
     pub async fn list_all_tools(&mut self) -> Result<Vec<McpTool>, McpError> {
         self.get_tools().await
+    }
+
+    /// Test connectivity to the MCP server
+    pub async fn test_connectivity(&self) -> Result<(), McpError> {
+        tracing::info!("🔍 Testing MCP server connectivity to: {}", self.server_url);
+        
+        // First, test if the URL is reachable at all with a simple GET
+        let get_response = self.client
+            .get(&self.server_url)
+            .header("User-Agent", "ethereum-forum-workshop/0.1.0")
+            .send()
+            .await;
+
+        match get_response {
+            Ok(response) => {
+                let status = response.status();
+                let headers = response.headers().clone();
+                tracing::info!("🌐 GET request to MCP URL succeeded - Status: {}", status);
+                tracing::debug!("🌐 GET response headers: {:?}", headers);
+                
+                // Read response body
+                let body = response.text().await.unwrap_or_default();
+                if body.len() > 500 {
+                    tracing::debug!("🌐 GET response body (truncated): {}...", &body[..500]);
+                } else {
+                    tracing::debug!("🌐 GET response body: {}", body);
+                }
+            }
+            Err(e) => {
+                tracing::error!("❌ GET request to MCP URL failed: {}", e);
+                return Err(McpError::Connection(format!("Basic connectivity test failed: {}", e)));
+            }
+        }
+
+        // Test OPTIONS request to check CORS/method support
+        let options_response = self.client
+            .request(reqwest::Method::OPTIONS, &self.server_url)
+            .header("User-Agent", "ethereum-forum-workshop/0.1.0")
+            .send()
+            .await;
+
+        match options_response {
+            Ok(response) => {
+                let status = response.status();
+                let headers = response.headers().clone();
+                tracing::info!("🔍 OPTIONS request to MCP URL - Status: {}", status);
+                tracing::debug!("🔍 OPTIONS response headers: {:?}", headers);
+            }
+            Err(e) => {
+                tracing::warn!("⚠️ OPTIONS request to MCP URL failed: {}", e);
+            }
+        }
+
+        // Test basic POST to see what happens
+        let test_post = self.client
+            .post(&self.server_url)
+            .header("Content-Type", "application/json")
+            .header("User-Agent", "ethereum-forum-workshop/0.1.0")
+            .json(&json!({"test": "connectivity"}))
+            .send()
+            .await;
+
+        match test_post {
+            Ok(response) => {
+                let status = response.status();
+                let headers = response.headers().clone();
+                tracing::info!("📤 Test POST to MCP URL - Status: {}", status);
+                tracing::debug!("📤 Test POST response headers: {:?}", headers);
+                
+                let body = response.text().await.unwrap_or_default();
+                if body.len() > 200 {
+                    tracing::debug!("📤 Test POST response body (truncated): {}...", &body[..200]);
+                } else {
+                    tracing::debug!("📤 Test POST response body: {}", body);
+                }
+            }
+            Err(e) => {
+                tracing::error!("❌ Test POST to MCP URL failed: {}", e);
+                return Err(McpError::Connection(format!("POST connectivity test failed: {}", e)));
+            }
+        }
+
+        tracing::info!("✅ MCP server connectivity tests completed");
+        Ok(())
     }
 }
 
