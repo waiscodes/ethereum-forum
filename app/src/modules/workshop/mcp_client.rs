@@ -65,7 +65,7 @@ impl McpClientManager {
             .unwrap_or_else(|_| "https://ethereum.forum/mcp".to_string());
 
         Self {
-            client: Client::new(),
+            client: Client::builder().use_rustls_tls().build().unwrap(),
             server_url,
             session_id: None,
             server_info: None,
