@@ -1,6 +1,25 @@
 import { WorkshopMessage } from '@/api/workshop';
 import { MessageTreeNode } from '@/components/workshop/ChatMessage';
 
+// Helper function to safely convert unknown streaming_events to typed version
+const convertToExtendedMessage = (message: WorkshopMessage) => {
+    const { streaming_events, ...rest } = message;
+    let typedStreamingEvents: any[] | undefined;
+
+    // Type guard for streaming events
+    if (streaming_events && Array.isArray(streaming_events)) {
+        typedStreamingEvents = streaming_events.filter(
+            (event: any) =>
+                event && typeof event.content === 'string' && typeof event.type === 'string'
+        );
+    }
+
+    return {
+        ...rest,
+        streaming_events: typedStreamingEvents,
+    };
+};
+
 export interface MessagePath {
     [messageId: string]: string; // messageId -> selected child messageId
 }
@@ -29,9 +48,9 @@ export function buildMessageTree(messages: WorkshopMessage[]): {
         const currentSiblingIndex = siblings.findIndex((s) => s.message_id === message.message_id);
 
         const node: MessageTreeNode = {
-            message,
+            message: convertToExtendedMessage(message),
             children: children.map((child) => buildNode(child, children)),
-            siblings,
+            siblings: siblings.map(convertToExtendedMessage),
             currentSiblingIndex,
         };
 

@@ -36,6 +36,7 @@ const RouteComponent: FC = () => {
 
     const modifyAvatarUrl = (url: string | undefined) => {
         if (!url) return '/default-avatar.png'; // Fallback avatar
+
         return 'https://ethereum-magicians.org' + url.replace('{size}', '200');
     };
 
@@ -96,14 +97,14 @@ const RouteComponent: FC = () => {
                         <span className="font-semibold">{userData.user.profile_view_count}</span>
                     </span>
                 )}
-                                 {userSummary?.user_summary?.likes_given !== undefined && (
-                     <span>
-                         Likes given:{' '}
-                         <span className="font-semibold">
-                             {userSummary.user_summary.likes_given}
-                         </span>
-                     </span>
-                 )}
+                {userSummary?.user_summary?.likes_given !== undefined && (
+                    <span>
+                        Likes given:{' '}
+                        <span className="font-semibold">
+                            {userSummary.user_summary.likes_given}
+                        </span>
+                    </span>
+                )}
                 {userSummary?.user_summary?.likes_received !== undefined && (
                     <span>
                         Likes received:{' '}
