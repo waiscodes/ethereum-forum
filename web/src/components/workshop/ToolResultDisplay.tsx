@@ -366,14 +366,19 @@ const SearchPostCard: React.FC<{ entity: SearchEntity }> = ({ entity }) => (
 );
 
 // Component to handle the raw search entity format from the API
-const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName: string }> = ({
-    entities,
-    toolName,
-}) => {
+const SearchEntityResultsDisplay: React.FC<{
+    entities: SearchEntity[];
+    toolName: string;
+    isExpanded: boolean;
+}> = ({ entities, toolName, isExpanded }) => {
     // Separate topics and posts
     const topics = entities.filter((entity) => entity.entity_type === 'topic');
     const posts = entities.filter((entity) => entity.entity_type === 'post');
     const totalHits = entities.length;
+
+    // Topic truncation logic
+    const hasManyTopics = topics.length > 5;
+    const topicsToShow = hasManyTopics && !isExpanded ? topics.slice(0, 5) : topics;
 
     return (
         <div className="space-y-4">
@@ -399,7 +404,7 @@ const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName:
             </div>
 
             {/* Topics */}
-            {topics.length > 0 && (
+            {topics.length > 0 && isExpanded && (
                 <div className="space-y-3">
                     {topics.length > 1 && (
                         <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
@@ -407,8 +412,13 @@ const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName:
                             Topics ({topics.length})
                         </h4>
                     )}
-                    <div className="space-y-3">
-                        {topics.map((entity) => (
+                    <div
+                        className={classNames(
+                            'space-y-3 transition-all duration-300',
+                            isExpanded && hasManyTopics ? 'max-h-96 overflow-y-auto' : ''
+                        )}
+                    >
+                        {topicsToShow.map((entity) => (
                             <SearchTopicCard key={entity.entity_id} entity={entity} />
                         ))}
                     </div>
@@ -435,13 +445,18 @@ const SearchEntityResultsDisplay: React.FC<{ entities: SearchEntity[]; toolName:
     );
 };
 
-const SearchResultsDisplay: React.FC<{ data: SearchResult; toolName: string }> = ({
-    data,
-    toolName,
-}) => {
+const SearchResultsDisplay: React.FC<{
+    data: SearchResult;
+    toolName: string;
+    isExpanded: boolean;
+}> = ({ data, toolName, isExpanded }) => {
     const topicCount = data.topics?.length || 0;
     const postCount = data.posts?.length || 0;
     const totalHits = data.hits || topicCount + postCount;
+
+    // Topic truncation logic
+    const hasManyTopics = topicCount > 5;
+    const topicsToShow = hasManyTopics && !isExpanded ? data.topics?.slice(0, 5) : data.topics;
 
     return (
         <div className="space-y-4">
@@ -467,16 +482,21 @@ const SearchResultsDisplay: React.FC<{ data: SearchResult; toolName: string }> =
             </div>
 
             {/* Topics */}
-            {data.topics && data.topics.length > 0 && (
+            {topicsToShow && topicsToShow.length > 0 && isExpanded && (
                 <div className="space-y-3">
-                    {data.topics.length > 1 && (
+                    {topicCount > 1 && (
                         <h4 className="text-sm font-semibold text-primary/80 flex items-center gap-2">
                             <LuHash size={14} />
-                            Topics ({data.topics.length})
+                            Topics ({topicCount})
                         </h4>
                     )}
-                    <div className="space-y-3">
-                        {data.topics.map((topic) => (
+                    <div
+                        className={classNames(
+                            'space-y-3 transition-all duration-300',
+                            isExpanded && hasManyTopics ? 'max-h-96 overflow-y-auto' : ''
+                        )}
+                    >
+                        {topicsToShow.map((topic) => (
                             <TopicCard key={topic.id} topic={topic} />
                         ))}
                     </div>
@@ -603,10 +623,18 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
             .with('search_forum', 'search_topics', 'search_posts', 'search_posts_in_topic', () => {
                 // Check if data is an array of search entities (new format) or structured data (old format)
                 if (Array.isArray(data)) {
-                    return <SearchEntityResultsDisplay entities={data} toolName={toolName} />;
+                    return (
+                        <SearchEntityResultsDisplay
+                            entities={data}
+                            toolName={toolName}
+                            isExpanded={isExpanded}
+                        />
+                    );
                 }
 
-                return <SearchResultsDisplay data={data} toolName={toolName} />;
+                return (
+                    <SearchResultsDisplay data={data} toolName={toolName} isExpanded={isExpanded} />
+                );
             })
             .with('get_user_profile', 'get_user_summary', () => {
                 const user = data as UserProfile;
@@ -614,7 +642,9 @@ export const ToolResultDisplay: React.FC<ToolResultDisplayProps> = ({
                 return <UserProfileCard user={user} />;
             })
             .with('search_by_user', 'search_by_username', 'search_by_username_mention', () => {
-                return <SearchResultsDisplay data={data} toolName={toolName} />;
+                return (
+                    <SearchResultsDisplay data={data} toolName={toolName} isExpanded={isExpanded} />
+                );
             })
             .with('username_to_user_id', () => {
                 const userId = data as number;
