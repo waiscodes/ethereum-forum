@@ -20,7 +20,7 @@ html.light {
     --theme-text-primary: 101 123 131;
     --theme-text-secondary: 38 139 210;
     --theme-border: 101 123 131;
-    --theme-border-secondary: 238 232 213;
+    --theme-border-secondary: 177 185 179;
     --theme-code-shadow: 1px;
     --theme-success: 16 185 129;
     --theme-error: 239 68 68;
@@ -53,7 +53,7 @@ html.dark {
         --theme-text-primary: 101 123 131;
         --theme-text-secondary: 38 139 210;
         --theme-border: 101 123 131;
-        --theme-border-secondary: 238 232 213;
+        --theme-border-secondary: 177 185 179;
         --theme-code-shadow: 1px;
         --theme-success: 16 185 129;
         --theme-error: 239 68 68;

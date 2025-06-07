@@ -4,7 +4,6 @@ import { Link } from '@tanstack/react-router';
 import classNames from 'classnames';
 import React from 'react';
 import {
-    LuActivity,
     LuBrain,
     LuChevronLeft,
     LuChevronRight,
@@ -18,11 +17,13 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { match } from 'ts-pattern';
 
+import { extractModelId, useUsageCost } from '@/api/openrouter';
 import { components } from '@/api/schema.gen';
 import { useTopic } from '@/api/topics';
 import { useUser } from '@/api/user';
 import { useWorkshopStreamMessage, WorkshopMessage } from '@/api/workshop';
 import { Tooltip } from '@/components/tooltip/Tooltip';
+import { UsageTooltip } from '@/components/usage/UsageTooltip';
 
 import { ToolCallDisplay } from './ToolCallDisplay';
 
@@ -556,75 +557,59 @@ const TokenUsageDisplay = ({ message }: { message: WorkshopMessage }) => {
         return null;
     }
 
-    const formatNumber = (num: number) => num.toLocaleString();
+    const formatCompact = (num: number) => {
+        if (num >= 1000) {
+            return `${(num / 1000).toFixed(1)}k`;
+        }
 
-    const tokenInfo = [];
+        return num.toString();
+    };
 
-    if (message.prompt_tokens) {
-        tokenInfo.push(`${formatNumber(message.prompt_tokens)} input`);
-    }
-
-    if (message.completion_tokens) {
-        tokenInfo.push(`${formatNumber(message.completion_tokens)} output`);
-    }
-
-    if (message.reasoning_tokens) {
-        tokenInfo.push(`${formatNumber(message.reasoning_tokens)} reasoning`);
-    }
-
-    const tooltipContent = (
-        <div className="p-3 space-y-2">
-            <div className="font-semibold text-sm">Token Usage</div>
-            <div className="space-y-1 text-xs">
-                {message.prompt_tokens && (
-                    <div className="flex justify-between gap-4">
-                        <span>Input tokens:</span>
-                        <span className="font-mono">{formatNumber(message.prompt_tokens)}</span>
-                    </div>
-                )}
-                {message.completion_tokens && (
-                    <div className="flex justify-between gap-4">
-                        <span>Output tokens:</span>
-                        <span className="font-mono">{formatNumber(message.completion_tokens)}</span>
-                    </div>
-                )}
-                {message.reasoning_tokens && (
-                    <div className="flex justify-between gap-4">
-                        <span>Reasoning tokens:</span>
-                        <span className="font-mono">{formatNumber(message.reasoning_tokens)}</span>
-                    </div>
-                )}
-                <div className="border-t pt-1 mt-2">
-                    <div className="flex justify-between gap-4 font-semibold">
-                        <span>Total:</span>
-                        <span className="font-mono">{formatNumber(message.total_tokens)}</span>
-                    </div>
-                </div>
-                {message.model_used && (
-                    <div className="border-t pt-1 mt-2">
-                        <div className="flex justify-between gap-4">
-                            <span>Model:</span>
-                            <span className="font-mono text-xs">{message.model_used}</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
+    // Extract model ID and calculate costs
+    const modelId = extractModelId(message.model_used);
+    const usageCost = useUsageCost(
+        {
+            prompt_tokens: message.prompt_tokens,
+            completion_tokens: message.completion_tokens,
+            reasoning_tokens: message.reasoning_tokens,
+            total_tokens: message.total_tokens,
+        },
+        modelId
     );
+
+    const inputTokens = message.prompt_tokens || 0;
+    const outputTokens = message.completion_tokens || 0;
+    const reasoningTokens = message.reasoning_tokens || 0;
 
     return (
         <Tooltip
             trigger={
-                <div className="inline-flex items-center gap-1 text-xs text-primary/60 bg-secondary/50 px-2 py-1 rounded-full border border-primary/10">
-                    <LuActivity size={12} />
-                    <span>{formatNumber(message.total_tokens)} tokens</span>
-                    {tokenInfo.length > 0 && (
-                        <span className="text-primary/40">({tokenInfo.join(', ')})</span>
+                <div className="inline-flex items-center gap-2 text-xs text-primary/60 bg-secondary/30 px-2 py-1 rounded-full border border-secondary/50 hover:bg-secondary/50 transition-colors">
+                    {/* Total tokens */}
+                    <span className="font-medium">
+                        {formatCompact(message.total_tokens)} tokens
+                    </span>
+
+                    {/* Cost with gap */}
+                    {usageCost && (
+                        <>
+                            <div className="w-px h-3 bg-primary/20"></div>
+                            <span className="text-green-700 font-medium text-xs">
+                                {usageCost.formattedTotalCost}
+                            </span>
+                        </>
                     )}
                 </div>
             }
         >
-            {tooltipContent}
+            <UsageTooltip
+                inputTokens={inputTokens}
+                outputTokens={outputTokens}
+                reasoningTokens={reasoningTokens}
+                totalTokens={message.total_tokens}
+                usageCost={usageCost}
+                modelUsed={message.model_used}
+            />
         </Tooltip>
     );
 };

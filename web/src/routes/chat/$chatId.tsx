@@ -297,7 +297,7 @@ const Chat = ({
                                         editingMessage={editingMessage}
                                         onCancelEdit={cancelEdit}
                                     />
-                                    <div className="text-center text-sm py-1">
+                                    <div className="text-center text-sm py-1 hidden md:block">
                                         This is a demo. Check important info.
                                     </div>
                                 </div>
@@ -357,9 +357,9 @@ const InputBox = ({
     onCancelEdit?: () => void;
 }) => {
     return (
-        <div className="w-full relative">
+        <div className="w-full h-fit relative">
             {editingMessage && (
-                <div className="bg-yellow-100 border border-yellow-300 rounded-md p-2 mb-2 text-sm">
+                <div className="bg-yellow-100 border border-yellow-300 rounded-md p-2 text-sm">
                     <div className="flex justify-between items-center">
                         <span>Editing message - this will create a new branch</span>
                         <button
@@ -375,7 +375,7 @@ const InputBox = ({
                 name="chatbox"
                 id="chatbox"
                 placeholder="Type your message here..."
-                className="w-full h-full bg-primary border-primary/50 border rounded-md p-3 focus:border-primary focus:ring-primary/50 focus:ring-2 outline-none max-h-80 min-h-32"
+                className="w-full h-full bg-primary border-primary/50 border rounded-md p-3 focus:border-primary focus:ring-primary/50 focus:ring-2 outline-none max-h-80 min-h-32 block"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
