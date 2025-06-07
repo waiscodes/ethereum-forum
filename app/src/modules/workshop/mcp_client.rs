@@ -280,6 +280,10 @@ impl McpClientManager {
         self.reset_connection().await;
         self.initialize_connection().await?;
 
+        // Store session info for debugging
+        let session_id_for_debug = self.session_id.clone();
+        tracing::info!("🔑 About to use session ID for tools request: {:?}", session_id_for_debug);
+
         let server_url = self.server_url.clone();
         let client = self.client.clone();
         let session_id = self.session_id.clone();
@@ -325,9 +329,16 @@ impl McpClientManager {
                     let response_text = response.text().await.unwrap_or_default();
                     tracing::error!("❌ Tools fetch failed - Status: {}, Body: {}", status, response_text);
                     
-                    // If we get 404, the session might be invalid - try reinitializing once
+                    // Enhanced debugging for 404 errors in production
                     if status == 404 {
-                        tracing::warn!("🔄 Got 404 for tools request, session might be invalid");
+                        tracing::error!("🚨 404 Error Details:");
+                        tracing::error!("  - Session ID used: {:?}", session_id);
+                        tracing::error!("  - Server URL: {}", server_url);
+                        tracing::error!("  - Request headers sent: Content-Type: application/json, Accept: application/json, text/event-stream");
+                        tracing::error!("  - Response headers: {:?}", headers);
+                        tracing::error!("  - Response body: {}", response_text);
+                        
+                        // Return a specific 404 error that can be handled differently
                         return Err(McpError::Protocol(format!(
                             "Session invalid (404) - Tools list request failed with status: {}\nResponse: {}", 
                             status, 
@@ -378,7 +389,97 @@ impl McpClientManager {
                 Ok(response_json)
             },
             "MCP tools fetch"
-        ).await?;
+        ).await;
+
+        // Handle the result with automatic session refresh on 404
+        let response_json = match response_json {
+            Ok(json) => json,
+            Err(McpError::Protocol(ref msg)) if msg.contains("Session invalid (404)") => {
+                tracing::warn!("🔄 Got session invalid error, attempting session refresh and retry...");
+                
+                // Force a complete reset and re-initialization
+                self.reset_connection().await;
+                
+                // Add a small delay to ensure any server-side cleanup is complete
+                sleep(Duration::from_millis(500)).await;
+                
+                // Re-initialize with fresh session
+                self.initialize_connection().await?;
+                
+                let fresh_session_id = self.session_id.clone();
+                tracing::info!("🆕 Retrying with fresh session ID: {:?}", fresh_session_id);
+                
+                // Retry the tools request with fresh session
+                let server_url = self.server_url.clone();
+                let client = self.client.clone();
+                
+                self.retry_with_backoff(
+                    || async {
+                        let tools_request = json!({
+                            "jsonrpc": "2.0",
+                            "method": "tools/list",
+                            "params": {},
+                            "id": 2
+                        });
+
+                        let mut request_builder = client
+                            .post(&server_url)
+                            .header("Content-Type", "application/json")
+                            .header("Accept", "application/json, text/event-stream")
+                            .header("User-Agent", "ethereum-forum-workshop/0.1.0");
+
+                        if let Some(ref session_id) = fresh_session_id {
+                            request_builder = request_builder.header("Mcp-Session-Id", session_id);
+                            tracing::debug!("🔑 Retry using fresh session ID: {}", session_id);
+                        }
+
+                        let response = request_builder
+                            .json(&tools_request)
+                            .send()
+                            .await?;
+
+                        let status = response.status();
+                        
+                        if !status.is_success() {
+                            let response_text = response.text().await.unwrap_or_default();
+                            tracing::error!("❌ Tools fetch retry failed - Status: {}, Body: {}", status, response_text);
+                            return Err(McpError::Protocol(format!(
+                                "Tools list retry failed with status: {}\nResponse: {}", 
+                                status, 
+                                response_text
+                            )));
+                        }
+
+                        let content_type = response.headers()
+                            .get("content-type")
+                            .and_then(|h| h.to_str().ok())
+                            .unwrap_or("");
+
+                        let response_json: Value = if content_type.starts_with("text/event-stream") {
+                            let response_text = response.text().await?;
+                            let mut json_response = None;
+                            for line in response_text.lines() {
+                                if line.starts_with("data: ") {
+                                    let json_data = &line[6..];
+                                    if let Ok(parsed) = serde_json::from_str::<Value>(json_data) {
+                                        json_response = Some(parsed);
+                                        break;
+                                    }
+                                }
+                            }
+                            json_response.ok_or_else(|| McpError::Protocol("No valid JSON found in SSE response".to_string()))?
+                        } else {
+                            let response_text = response.text().await?;
+                            serde_json::from_str(&response_text)?
+                        };
+
+                        Ok(response_json)
+                    },
+                    "MCP tools fetch retry"
+                ).await?
+            }
+            Err(e) => return Err(e),
+        };
 
         // Handle the response - it might be an array or a single object
         let tools_result = if response_json.is_array() {

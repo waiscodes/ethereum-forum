@@ -308,12 +308,12 @@ const StoredStreamingEvents = ({ events }: { events: StreamingEvent[] }) => {
             entry_type: event.type as any,
             tool_call: event.tool_call
                 ? {
-                    tool_name: event.tool_call.tool_name,
-                    tool_id: event.tool_call.tool_id,
-                    arguments: event.tool_call.arguments || undefined,
-                    result: event.tool_call.result || undefined,
-                    status: event.tool_call.status as any,
-                }
+                      tool_name: event.tool_call.tool_name,
+                      tool_id: event.tool_call.tool_id,
+                      arguments: event.tool_call.arguments || undefined,
+                      result: event.tool_call.result || undefined,
+                      status: event.tool_call.status as any,
+                  }
                 : undefined,
         })
     );
