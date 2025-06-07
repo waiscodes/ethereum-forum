@@ -1,30 +1,32 @@
 import { useNavigate } from '@tanstack/react-router';
 import * as React from 'react';
+import { createContext, useContext } from 'react';
 
-import {
-    CommandDialog,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandSeparator,
-} from './Command';
+import { CommandDialog, CommandInput, CommandList } from './Command';
+import { Navigation } from './groups/Navigation';
+// import { Suggested } from './groups/Suggested';
+import { UpcomingCalendarEvent } from './groups/Upcoming';
+import { WorkshopIdea } from './groups/Workshop';
 
-// Navigation items from Sidebar
-const navItems = [
-    { title: 'Index', href: '/', short: 'Everything' },
-    { title: 'Roadmap', href: '/r', short: 'Hardforks' },
-    { title: 'Standards', href: '/s', short: 'EIPs & ERCs' },
-    { title: 'Protocol Agenda', href: '/c', short: 'Calendar' },
-    { title: 'Workshop', href: '/chat/new' },
-];
+interface CommandContextType {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSelect?: (item: { title: string; href: string; short?: string }) => void;
+    search: string;
+    setSearch: React.Dispatch<React.SetStateAction<string>>;
+    handleSelect: (item: { title: string; href: string; short?: string }) => void;
+    handleClose: () => void;
+}
 
-// Suggested items (dummy for now)
-const suggestedItems = [
-    { title: 'Trending Topics', href: '/trending' },
-    { title: 'Recent Discussions', href: '/recent' },
-];
+const CommandContext = createContext<CommandContextType | undefined>(undefined);
+
+export function useCommand() {
+    const ctx = useContext(CommandContext);
+
+    if (!ctx) throw new Error('useCommand must be used within a CommandMenu');
+
+    return ctx;
+}
 
 export const CommandMenu: React.FC<{
     open: boolean;
@@ -32,8 +34,8 @@ export const CommandMenu: React.FC<{
     onSelect?: (item: { title: string; href: string; short?: string }) => void;
 }> = ({ open, onOpenChange, onSelect }) => {
     const navigate = useNavigate();
+    const [search, setSearch] = React.useState('');
 
-    // Helper to handle selection
     const handleSelect = (item: { title: string; href: string; short?: string }) => {
         if (onSelect) {
             onSelect(item);
@@ -41,35 +43,38 @@ export const CommandMenu: React.FC<{
             navigate({ to: item.href });
         }
 
-        onOpenChange(false); // Close menu after selection
+        handleClose();
+    };
+
+    const handleClose = () => {
+        onOpenChange(false);
+    };
+
+    const contextValue: CommandContextType = {
+        open,
+        onOpenChange,
+        onSelect,
+        search,
+        setSearch,
+        handleSelect,
+        handleClose,
     };
 
     return (
-        <CommandDialog open={open} onOpenChange={onOpenChange}>
-            <CommandInput placeholder="Type a command or search..." />
-            <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup heading="Suggested">
-                    {suggestedItems.map((item) => (
-                        <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
-                            {item.title}
-                        </CommandItem>
-                    ))}
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup heading="Navigation">
-                    {navItems.map((item) => (
-                        <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
-                            {item.title}
-                            {item.short && (
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                    {item.short}
-                                </span>
-                            )}
-                        </CommandItem>
-                    ))}
-                </CommandGroup>
-            </CommandList>
-        </CommandDialog>
+        <CommandContext.Provider value={contextValue}>
+            <CommandDialog open={open} onOpenChange={onOpenChange}>
+                <CommandInput
+                    placeholder="Type a command or search..."
+                    value={search}
+                    onValueChange={setSearch}
+                />
+                <CommandList>
+                    <UpcomingCalendarEvent />
+                    {/* <Suggested /> */}
+                    <Navigation />
+                    <WorkshopIdea />
+                </CommandList>
+            </CommandDialog>
+        </CommandContext.Provider>
     );
 };
