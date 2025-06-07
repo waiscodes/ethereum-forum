@@ -619,7 +619,7 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
                 {match(messageData.sender_role)
                     .with('user', () => (
                         <button
-                            className="button flex items-center gap-2"
+                            className="button gap-2 aspect-square size-8 flex justify-center items-center"
                             onClick={handleEdit}
                             title="Edit message"
                             disabled={!onEdit}
