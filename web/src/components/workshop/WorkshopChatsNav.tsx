@@ -38,7 +38,7 @@ const AuthenticatedWorkshopChats = () => {
     return (
         <div className="max-h-[50vh] overflow-y-auto space-y-1">
             {/* Usage Statistics Link */}
-            <div className="border-b border-border pb-1 mb-2">
+            <div className="border-b border-primary pb-1 mb-2">
                 <Link
                     to="/chat/usage"
                     className={classNames(
