@@ -355,7 +355,7 @@ const TokenUsageDisplay = ({ message }: { message: WorkshopMessage }) => {
                         <>
                             <div className="w-px h-3 bg-primary/20"></div>
                             <span className="text-green-700 font-medium text-xs">
-                                {usageCost.formattedTotalCost}
+                                {usageCost.totalCost === 0n ? 'Free' : usageCost.formattedTotalCost}
                             </span>
                         </>
                     )}

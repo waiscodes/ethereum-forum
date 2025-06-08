@@ -23,6 +23,7 @@ pub struct WorkshopApi;
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct WorkshopChatInput {
     pub message: String,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object)]
@@ -83,6 +84,20 @@ pub enum ToolCallStatus {
     Executing,
     Success,
     Error,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct AvailableModel {
+    pub id: String,
+    pub name: String,
+    pub provider: String,
+    pub is_default: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct AvailableModelsResponse {
+    pub models: Vec<AvailableModel>,
+    pub default_model: String,
 }
 
 // Conversion functions
@@ -181,6 +196,69 @@ impl WorkshopApi {
             })?;
 
         Ok(Json(chats))
+    }
+
+    /// /ws/models
+    ///
+    /// Get available models for the user
+    #[oai(path = "/ws/models", method = "get", tag = "ApiTags::Workshop")]
+    async fn get_available_models(
+        &self,
+        _state: Data<&AppState>,
+        _auth_user: AuthUser,
+    ) -> Result<Json<AvailableModelsResponse>> {
+        // For now, return a hardcoded list of available models
+        // In the future, this could be dynamically fetched from the LLM provider
+        // or based on user permissions/subscription level
+        let models = vec![
+            AvailableModel {
+                id: "google/gemini-2.5-flash-preview-05-20".to_string(),
+                name: "Gemini 2.5 Flash Preview".to_string(),
+                provider: "Google".to_string(),
+                is_default: true,
+            },
+            AvailableModel {
+                id: "google/gemini-2.0-flash-001".to_string(),
+                name: "Gemini 2.0 Flash".to_string(),
+                provider: "Google".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "google/gemini-2.5-pro-preview".to_string(),
+                name: "Gemini 2.5 Pro Preview".to_string(),
+                provider: "Google".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "mistralai/ministral-3b".to_string(),
+                name: "Ministral 3B".to_string(),
+                provider: "Mistral AI".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "mistralai/mistral-7b-instruct:free".to_string(),
+                name: "Mistral 7B Instruct (Free)".to_string(),
+                provider: "Mistral AI".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "deepseek/deepseek-r1:free".to_string(),
+                name: "DeepSeek R1 (Free)".to_string(),
+                provider: "DeepSeek".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "deepseek/deepseek-chat-v3-0324".to_string(),
+                name: "DeepSeek V3 0324".to_string(),
+                provider: "DeepSeek".to_string(),
+                is_default: false,
+            },
+        ];
+
+        Ok(Json(AvailableModelsResponse {
+            default_model: "google/gemini-2.5-flash-preview-05-20".to_string(),
+            models,
+        }))
     }
 
     /// /ws/chat/:chat_id
@@ -293,9 +371,12 @@ impl WorkshopApi {
                 poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
             })?;
 
+        // Extract the model from the payload, or use default if not specified
+        let model = payload.model.clone();
+
         // Start processing the next message (this will create an OngoingPrompt)
         let (_ongoing_prompt, created_message) =
-            WorkshopService::process_next_message(message.chat_id, message.message_id, &state)
+            WorkshopService::process_next_message_with_model(message.chat_id, message.message_id, model, &state)
                 .await
                 .map_err(|e| {
                     tracing::error!("Error processing next message: {:?}", e);

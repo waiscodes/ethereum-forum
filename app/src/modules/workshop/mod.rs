@@ -130,13 +130,26 @@ impl WorkshopService {
         Ok(response.content.unwrap_or_default())
     }
 
-    /// Process next message
+    /// Process next message with default model
     ///
     /// Fetches the entire chat history from chat_id upwards and processes it with the LLM
     /// Returns the next message from the LLM using request coalescing
     pub async fn process_next_message(
         chat_id: Uuid,
         message_id: Uuid,
+        state: &AppState,
+    ) -> Result<(OngoingPrompt, WorkshopMessage), Box<dyn std::error::Error + Send + Sync>> {
+        Self::process_next_message_with_model(chat_id, message_id, None, state).await
+    }
+
+    /// Process next message with specified model
+    ///
+    /// Fetches the entire chat history from chat_id upwards and processes it with the LLM
+    /// Returns the next message from the LLM using request coalescing
+    pub async fn process_next_message_with_model(
+        chat_id: Uuid,
+        message_id: Uuid,
+        model: Option<String>,
         state: &AppState,
     ) -> Result<(OngoingPrompt, WorkshopMessage), Box<dyn std::error::Error + Send + Sync>> {
         tracing::info!("🔄 Starting process_next_message for chat: {}, message: {}", chat_id, message_id);
@@ -209,7 +222,7 @@ impl WorkshopService {
         // Get or create the ongoing prompt
         tracing::info!("🚀 Creating OngoingPrompt...");
         let ongoing_prompt = state.workshop.ongoing_prompts
-            .get_or_create(key.clone(), state, messages, tools)
+            .get_or_create(key.clone(), state, messages, tools, model)
             .await
             .map_err(|e| {
                 tracing::error!("❌ Failed to create OngoingPrompt: {}", e);
@@ -348,7 +361,7 @@ impl WorkshopService {
         
         // Get or create the ongoing prompt (no tools needed for summaries)
         let ongoing_prompt = state.workshop.ongoing_prompts
-            .get_or_create(key, state, truncated_messages, None)
+            .get_or_create(key, state, truncated_messages, None, Some(SUMMARY_MODEL.to_string()))
             .await?;
 
         Ok(ongoing_prompt)

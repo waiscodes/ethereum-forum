@@ -656,6 +656,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/models
+         * @description Get available models for the user
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AvailableModelsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ws/chat/{chat_id}": {
         parameters: {
             query?: never;
@@ -1029,6 +1067,18 @@ export interface components {
             user: components["schemas"]["User"];
             /** Format: int64 */
             expires_at: number;
+        };
+        /** AvailableModel */
+        AvailableModel: {
+            id: string;
+            name: string;
+            provider: string;
+            is_default: boolean;
+        };
+        /** AvailableModelsResponse */
+        AvailableModelsResponse: {
+            models: components["schemas"]["AvailableModel"][];
+            default_model: string;
         };
         /** DailyUsage */
         DailyUsage: {
@@ -1608,6 +1658,7 @@ export interface components {
         /** WorkshopChatInput */
         WorkshopChatInput: {
             message: string;
+            model?: string;
         };
         /** WorkshopChatPayload */
         WorkshopChatPayload: {

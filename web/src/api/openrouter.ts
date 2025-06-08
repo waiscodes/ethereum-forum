@@ -177,9 +177,8 @@ export const useUsageCost = (
 export const extractModelId = (modelUsed?: string): string | undefined => {
     if (!modelUsed) return undefined;
 
-    // Handle various model format patterns
-    // e.g., "google/gemini-2.5-pro-preview", "openai/gpt-4", etc.
-    const match = modelUsed.match(/^([^/]+\/[^/]+)/);
-
-    return match ? match[1] : modelUsed;
+    // Return the full model identifier to ensure correct pricing
+    // This preserves important suffixes like ":free" that affect pricing
+    // e.g., "mistralai/mistral-7b-instruct:free" should remain intact
+    return modelUsed.trim();
 };

@@ -13,6 +13,7 @@ import { WorkshopAuthGuard } from '@/components/AuthGuard';
 import { UpDownScroller } from '@/components/UpDown';
 import { ChatMessage } from '@/components/workshop/ChatMessage';
 import { ConversationGraph } from '@/components/workshop/ConversationGraph';
+import { ModelSelector } from '@/components/workshop/ModelSelector';
 import {
     buildMessageTree,
     buildPathToMessage,
@@ -171,9 +172,25 @@ const Chat = ({
 }) => {
     const [input, setInput] = useState('');
     const [editingMessage, setEditingMessage] = useState<WorkshopMessage | null>(null);
+    const [selectedModel, setSelectedModel] = useState<string>('');
     const { mutate: sendMessage, isPending: sending } = useWorkshopSendMessage(chatId);
     const navigate = useNavigate();
     const { hash } = useLocation();
+
+    // Load selected model from localStorage on mount
+    useEffect(() => {
+        const savedModel = localStorage.getItem('workshop_selected_model');
+
+        if (savedModel) {
+            setSelectedModel(savedModel);
+        }
+    }, []);
+
+    // Save selected model to localStorage when it changes
+    const handleModelChange = (modelId: string) => {
+        setSelectedModel(modelId);
+        localStorage.setItem('workshop_selected_model', modelId);
+    };
 
     // Get the last message from the currently visible branch (for replying)
     const lastVisibleMessage =
@@ -211,7 +228,11 @@ const Chat = ({
             : lastVisibleMessage?.message_id;
 
         sendMessage(
-            { message, parent_message: parentMessageId },
+            {
+                message,
+                parent_message: parentMessageId,
+                model: selectedModel || undefined,
+            },
             {
                 onSuccess(data, variables) {
                     setInput('');
@@ -239,8 +260,8 @@ const Chat = ({
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-                ? 'Good Afternoon'
-                : 'Good Evening';
+              ? 'Good Afternoon'
+              : 'Good Evening';
 
     // Determine which messages to show
     const messageCount = useTreeView ? visibleMessages.length : chat?.messages?.length || 0;
@@ -278,22 +299,22 @@ const Chat = ({
                                 <div className="space-y-2 pb-80 relative">
                                     {useTreeView
                                         ? visibleMessages.map((node) => (
-                                            <ChatMessage
-                                                key={node.message.message_id}
-                                                node={node}
-                                                onEdit={handleEditMessage}
-                                                onNavigate={onNavigateToMessage}
-                                            />
-                                        ))
+                                              <ChatMessage
+                                                  key={node.message.message_id}
+                                                  node={node}
+                                                  onEdit={handleEditMessage}
+                                                  onNavigate={onNavigateToMessage}
+                                              />
+                                          ))
                                         : chat?.messages?.map((message: WorkshopMessage) => (
-                                            <ChatMessage
-                                                key={message.message_id}
-                                                message={message}
-                                                onEdit={handleEditMessage}
-                                            />
-                                        ))}
+                                              <ChatMessage
+                                                  key={message.message_id}
+                                                  message={message}
+                                                  onEdit={handleEditMessage}
+                                              />
+                                          ))}
                                 </div>
-                                <div className="w-full fixed max-w-screen-lg bottom-0 inset-x-0 mx-auto">
+                                <div className="w-full fixed prose-width px-4 bottom-2 inset-x-0 mx-auto">
                                     <InputBox
                                         input={input}
                                         setInput={setInput}
@@ -301,6 +322,8 @@ const Chat = ({
                                         sending={sending}
                                         editingMessage={editingMessage}
                                         onCancelEdit={cancelEdit}
+                                        selectedModel={selectedModel}
+                                        onModelChange={handleModelChange}
                                     />
                                     <div className="text-center text-sm py-1 hidden md:block">
                                         This is a demo. Check important info.
@@ -335,6 +358,8 @@ const Chat = ({
                                             sending={sending}
                                             editingMessage={null}
                                             onCancelEdit={cancelEdit}
+                                            selectedModel={selectedModel}
+                                            onModelChange={handleModelChange}
                                         />
                                     </div>
                                 </div>
@@ -353,6 +378,8 @@ const InputBox = ({
     sending,
     editingMessage,
     onCancelEdit,
+    selectedModel,
+    onModelChange,
 }: {
     input: string;
     setInput: (input: string) => void;
@@ -360,6 +387,8 @@ const InputBox = ({
     sending: boolean;
     editingMessage?: WorkshopMessage | null;
     onCancelEdit?: () => void;
+    selectedModel?: string;
+    onModelChange?: (modelId: string) => void;
 }) => {
     return (
         <div className="w-full h-fit relative">
@@ -374,6 +403,15 @@ const InputBox = ({
                             Cancel
                         </button>
                     </div>
+                </div>
+            )}
+            {onModelChange && (
+                <div className="mb-2">
+                    <ModelSelector
+                        selectedModel={selectedModel}
+                        onModelChange={onModelChange}
+                        className="w-fit"
+                    />
                 </div>
             )}
             <textarea

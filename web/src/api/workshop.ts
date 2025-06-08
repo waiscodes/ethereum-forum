@@ -7,6 +7,9 @@ import { useApi } from './api';
 import { components } from './schema.gen';
 
 export type WorkshopMessage = components['schemas']['WorkshopMessage'];
+export type WorkshopChat = components['schemas']['WorkshopChat'];
+export type AvailableModel = components['schemas']['AvailableModel'];
+export type AvailableModelsResponse = components['schemas']['AvailableModelsResponse'];
 
 export const getWorkshopChats = () =>
     queryOptions({
@@ -49,18 +52,30 @@ export const getWorkshopChat = (chatId: string) =>
 
 export const useWorkshopChat = (chatId: string) => useQuery(getWorkshopChat(chatId));
 
+export const getAvailableModels = () =>
+    queryOptions({
+        queryKey: ['workshop', 'models'],
+        queryFn: async (): Promise<AvailableModelsResponse> => {
+            const response = await useApi('/ws/models', 'get', {});
+
+            return response.data;
+        },
+    });
+
 export const useWorkshopSendMessage = <T>(chatId: string, options?: T) => {
     return useMutation({
         mutationFn: async ({
             message,
             parent_message,
+            model,
         }: {
             message: string;
             parent_message?: string;
+            model?: string;
         }) => {
             const response = await useApi('/ws/chat/{chat_id}', 'post', {
                 path: { chat_id: chatId },
-                data: { message },
+                data: { message, model },
                 query: { parent_message },
                 contentType: 'application/json; charset=utf-8',
             });

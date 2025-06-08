@@ -78,9 +78,11 @@ pub const SUMMARY_MODEL: &str = "mistralai/ministral-3b";
 
 pub const WORKSHOP_PROMPT: &str = include_str!("./workshop.md");
 pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-flash-preview-05-20";
-// pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-flash-preview-05-20:thinking";
 // pub const WORKSHOP_MODEL: &str = "google/gemini-2.0-flash-001";
 // pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-pro-preview";
+
+// TODO: for consideration when we implementing reasoning decoding
+// pub const WORKSHOP_MODEL: &str = "google/gemini-2.5-flash-preview-05-20:thinking";
 
 pub const SHORTSUM_PROMPT: &str = include_str!("./shortsum.md");
 pub const SHORTSUM_MODEL: &str = "mistralai/mistral-7b-instruct:free";
@@ -267,11 +269,11 @@ pub struct OngoingPrompt {
 }
 
 impl OngoingPrompt {
-    pub async fn new(state: &AppState, messages: Vec<ChatCompletionRequestMessage>, tools: Option<Vec<ChatCompletionTool>>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(state: &AppState, messages: Vec<ChatCompletionRequestMessage>, tools: Option<Vec<ChatCompletionTool>>, model: Option<String>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         tracing::info!("🚀 Creating new OngoingPrompt with {} messages and {} tools", 
             messages.len(), tools.as_ref().map(|t| t.len()).unwrap_or(0));
         
-        let model = WORKSHOP_MODEL.to_string();
+        let model = model.unwrap_or_else(|| WORKSHOP_MODEL.to_string());
         
         tracing::info!("📡 API Request Details:");
         tracing::info!("  Model: {}", model);
@@ -388,7 +390,7 @@ impl OngoingPrompt {
 
                 // Create request for this iteration
                 let request = CreateChatCompletionRequest {
-                    model: WORKSHOP_MODEL.to_string(),
+                    model: model.clone(),
                     messages: truncated_messages,
                     tools: current_tools,
                     tool_choice: None,
@@ -940,6 +942,7 @@ impl OngoingPromptManager {
         state: &AppState,
         messages: Vec<ChatCompletionRequestMessage>,
         tools: Option<Vec<ChatCompletionTool>>,
+        model: Option<String>,
     ) -> Result<OngoingPrompt, Box<dyn std::error::Error + Send + Sync>> {
         // First check if we already have this prompt
         {
@@ -954,7 +957,7 @@ impl OngoingPromptManager {
         // Create new prompt
         tracing::info!("🆕 Creating new prompt for key: {} (tools provided: {})", 
             key, tools.as_ref().map(|t| t.len()).unwrap_or(0));
-        let prompt = OngoingPrompt::new(state, messages, tools).await?;
+        let prompt = OngoingPrompt::new(state, messages, tools, model).await?;
         
         // Store it
         {
