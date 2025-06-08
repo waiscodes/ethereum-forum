@@ -25,7 +25,12 @@ import { queryClient } from '@/util/query';
 const suggestions = [
     'Find topics related to risc-v in the evm and evaluate me the opinions of all parties involved.',
     'Summarize EIP-7702, who it affects, and what I can do to understand it better',
-    'What is currently being talked about?',
+    'What are the main concerns with EIP-4844 blob transactions according to the community?',
+    'Find discussions about MEV and explain the current consensus on solutions',
+    // 'Compare community opinions on different Layer 2 scaling approaches',
+    'Analyze the debate around account abstraction implementations',
+    'What are researchers saying about zkEVM developments?',
+    // 'Find all discussions about gas optimization techniques in smart contracts',
 ];
 
 const isUuid = (value: string) => {
@@ -234,8 +239,8 @@ const Chat = ({
         new Date().getHours() < 12
             ? 'Good Morning'
             : new Date().getHours() < 18
-              ? 'Good Afternoon'
-              : 'Good Evening';
+                ? 'Good Afternoon'
+                : 'Good Evening';
 
     // Determine which messages to show
     const messageCount = useTreeView ? visibleMessages.length : chat?.messages?.length || 0;
@@ -273,20 +278,20 @@ const Chat = ({
                                 <div className="space-y-2 pb-80 relative">
                                     {useTreeView
                                         ? visibleMessages.map((node) => (
-                                              <ChatMessage
-                                                  key={node.message.message_id}
-                                                  node={node}
-                                                  onEdit={handleEditMessage}
-                                                  onNavigate={onNavigateToMessage}
-                                              />
-                                          ))
+                                            <ChatMessage
+                                                key={node.message.message_id}
+                                                node={node}
+                                                onEdit={handleEditMessage}
+                                                onNavigate={onNavigateToMessage}
+                                            />
+                                        ))
                                         : chat?.messages?.map((message: WorkshopMessage) => (
-                                              <ChatMessage
-                                                  key={message.message_id}
-                                                  message={message}
-                                                  onEdit={handleEditMessage}
-                                              />
-                                          ))}
+                                            <ChatMessage
+                                                key={message.message_id}
+                                                message={message}
+                                                onEdit={handleEditMessage}
+                                            />
+                                        ))}
                                 </div>
                                 <div className="w-full fixed max-w-screen-lg bottom-0 inset-x-0 mx-auto">
                                     <InputBox
@@ -314,7 +319,7 @@ const Chat = ({
                                             {suggestions.map((suggestion) => (
                                                 <button
                                                     key={suggestion}
-                                                    className="button button-primary whitespace-nowrap max-w-64 overflow-hidden text-ellipsis"
+                                                    className="button button-primary whitespace-wrap max-w-64 md:max-w-72 md:px-2 md:py-1 max-h-24 line-clamp-2 h-12 text-ellipsis text-start text-sm flex justify-start"
                                                     onClick={() => setInput(suggestion)}
                                                 >
                                                     {suggestion}
