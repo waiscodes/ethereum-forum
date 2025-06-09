@@ -236,8 +236,8 @@ impl WorkshopApi {
                 is_default: false,
             },
             AvailableModel {
-                id: "openai/o4-mini-high".to_string(),
-                name: "OpenAI o4 Mini High".to_string(),
+                id: "openai/o4-mini".to_string(),
+                name: "OpenAI o4 Mini".to_string(),
                 provider: "OpenAI".to_string(),
                 is_default: false,
             },
