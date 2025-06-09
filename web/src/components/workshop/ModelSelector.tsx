@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { LuBot, LuCheck, LuChevronDown } from 'react-icons/lu';
-import { SiGoogle, SiOpenai } from 'react-icons/si';
+import { SiAnthropic, SiGoogle, SiOpenai } from 'react-icons/si';
 
 import { getAvailableModels } from '@/api/workshop';
 import { DeepSeekIcon } from '@/components/icons/DeepSeekIcon';
@@ -20,6 +20,8 @@ const getProviderIcon = (provider: string) => {
             return <MistralIcon className="w-4 h-4" />;
         case 'deepseek':
             return <DeepSeekIcon className="w-4 h-4" />;
+        case 'anthropic':
+            return <SiAnthropic className="w-4 h-4" />;
         default:
             return <LuBot className="w-4 h-4" />;
     }
