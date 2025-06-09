@@ -230,21 +230,21 @@ impl WorkshopApi {
                 is_default: false,
             },
             AvailableModel {
-                id: "mistralai/ministral-3b".to_string(),
-                name: "Ministral 3B".to_string(),
-                provider: "Mistral AI".to_string(),
+                id: "anthropic/claude-sonnet-4".to_string(),
+                name: "Claude Sonnet 4".to_string(),
+                provider: "Anthropic".to_string(),
+                is_default: false,
+            },
+            AvailableModel {
+                id: "openai/o4-mini-high".to_string(),
+                name: "OpenAI o4 Mini High".to_string(),
+                provider: "OpenAI".to_string(),
                 is_default: false,
             },
             AvailableModel {
                 id: "mistralai/mistral-7b-instruct:free".to_string(),
                 name: "Mistral 7B Instruct (Free)".to_string(),
                 provider: "Mistral AI".to_string(),
-                is_default: false,
-            },
-            AvailableModel {
-                id: "deepseek/deepseek-r1:free".to_string(),
-                name: "DeepSeek R1 (Free)".to_string(),
-                provider: "DeepSeek".to_string(),
                 is_default: false,
             },
             AvailableModel {
