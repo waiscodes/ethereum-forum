@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 
 import { getTopic, usePostsInfinite, useTopic, useTopicRefresh } from '@/api/topics';
 import { CategoryTag } from '@/components/CategoryTag';
+import { DiscourseInstanceName } from '@/components/DiscourseInstanceIcon';
 import { ExpandableList } from '@/components/list/ExpandableList';
 import { TimeAgo } from '@/components/TimeAgo';
 import { ImageLightbox } from '@/components/topic/Prose';
@@ -46,10 +47,12 @@ interface DiscourseUser {
     avatar_template: string;
 }
 
-export const Route = createFileRoute('/t/$topicId/')({
+export const Route = createFileRoute('/t/$discourseId/$topicId/')({
     component: RouteComponent,
     beforeLoad: async ({ params }) => {
-        const topic = await queryClient.ensureQueryData(getTopic(params.topicId));
+        const topic = await queryClient.ensureQueryData(
+            getTopic(params.discourseId, params.topicId)
+        );
 
         return {
             title: topic?.title,
@@ -69,11 +72,13 @@ type RelevantLink = {
 };
 
 function RouteComponent() {
-    const { topicId } = Route.useParams();
-    const { data: topic } = useTopic(topicId);
+    const { discourseId, topicId } = Route.useParams();
+    const { data: topic } = useTopic(discourseId, topicId);
 
-    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-        usePostsInfinite(topicId);
+    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = usePostsInfinite(
+        discourseId,
+        topicId
+    );
 
     const extra = topic?.extra as Record<string, unknown>;
     const tags = decodeCategory(extra?.['category_id'] as number);
@@ -155,9 +160,10 @@ function RouteComponent() {
                                     rel="noreferrer"
                                     className="hover:underline"
                                 >
-                                    ethmag/{topic?.topic_id}
+                                    <DiscourseInstanceName discourse_id={discourseId} />/
+                                    {topic?.topic_id}
                                 </a>
-                                <RefreshTopicButton topicId={topicId} />
+                                <RefreshTopicButton discourseId={discourseId} topicId={topicId} />
                             </div>
                         </li>
                         {topic?.topic_id && (
@@ -175,7 +181,10 @@ function RouteComponent() {
                                                 <Dialog.Title className="text-xl font-bold">
                                                     Topic Summary
                                                 </Dialog.Title>
-                                                <StreamingSummary topicId={topic.topic_id} />
+                                                <StreamingSummary
+                                                    discourseId={discourseId}
+                                                    topicId={topic.topic_id}
+                                                />
                                                 <Dialog.Close className="absolute top-2 right-2 -translate-y-1/2 hover:bg-secondary rounded-full p-1">
                                                     <LuX className="size-5" />
                                                 </Dialog.Close>
@@ -345,8 +354,8 @@ const RelevantLink = ({ link }: { link: RelevantLink }) => {
     );
 };
 
-const RefreshTopicButton = ({ topicId }: { topicId: string }) => {
-    const { mutate: refreshTopic, isPending } = useTopicRefresh(topicId);
+const RefreshTopicButton = ({ discourseId, topicId }: { discourseId: string; topicId: string }) => {
+    const { mutate: refreshTopic, isPending } = useTopicRefresh(discourseId, topicId);
 
     return (
         <button

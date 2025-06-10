@@ -7,6 +7,7 @@ import { LuHammer, LuShield } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 
 import { Post } from '@/api/topics';
+import { useUser } from '@/api/user';
 
 import { TimeAgo } from '../TimeAgo';
 import { Tooltip } from '../tooltip/Tooltip';
@@ -18,7 +19,6 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const displayName = (extra?.['display_username'] ||
         extra?.['name'] ||
         extra?.['username']) as string;
-    const username = extra?.['username'] as string;
     const avatar = extra?.['avatar_template'] as string;
     const actions_summary = (extra?.['actions_summary'] as { id: number; count: number }[]) || [];
     // like count is action id 2 (my guess)
@@ -31,6 +31,8 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
 
     const actionCode = extra?.['action_code'] as string;
 
+    const username = extra?.['username'] as string;
+
     return (
         <div
             key={post.post_id}
@@ -39,8 +41,9 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
         >
             <div className="flex items-center justify-between gap-2">
                 <Link
-                    to={'/u/$userId'}
+                    to="/u/$discourseId/$userId"
                     params={{
+                        discourseId: post.discourse_id,
                         userId: username,
                     }}
                     className="flex items-center gap-2"

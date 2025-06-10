@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM topics WHERE topic_id = $1",
+  "query": "SELECT * FROM topics WHERE discourse_id = $1 AND topic_id = $2",
   "describe": {
     "columns": [
       {
@@ -62,10 +62,16 @@
         "ordinal": 11,
         "name": "pm_issue",
         "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "discourse_id",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Int4"
       ]
     },
@@ -81,8 +87,9 @@
       true,
       true,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "cb4b4f8003c1e1ef1fcad113a558e97cdcf84b4f4295618eec5e0ccbaf2272aa"
+  "hash": "494481d65f5783f1ee672dcefb79b8b7f9425672cfe470ee2d2df33150512d7d"
 }

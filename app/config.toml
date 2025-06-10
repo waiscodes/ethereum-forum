@@ -1,0 +1,7 @@
+[discourse.magicians]
+url = "https://ethereum-magicians.org"
+scrape_interval = "30m"
+
+[discourse.research]
+url = "https://ethresear.ch"
+scrape_interval = "30m"

@@ -81,18 +81,23 @@ impl UserApi {
         }))
     }
 
-    /// /user/:username
+    /// /du/:discourse_id/:username
     ///
     /// Get user profile
-    #[oai(path = "/user/:username", method = "get", tag = "ApiTags::User")]
+    #[oai(path = "/du/:discourse_id/:username", method = "get", tag = "ApiTags::User")]
     async fn get_user(
         &self,
         state: Data<&AppState>,
+        #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] username: Path<String>,
     ) -> Result<Json<DiscourseUserProfile>> {
-        let user = match state.discourse.fetch_discourse_user_cached(&username).await {
-            LResult::Success(user) => user,
-            LResult::Failed(e) => {
+        let user = match state.discourse.fetch_discourse_user_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(user)) => user,
+            Ok(LResult::Failed(error)) => {
+                tracing::error!("Error fetching user: {}", error);
+                return Err(poem::Error::from_status(StatusCode::NOT_FOUND));
+            }
+            Err(e) => {
                 tracing::error!("Error fetching user: {:?}", e);
                 return Err(poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
             }
@@ -101,18 +106,23 @@ impl UserApi {
         Ok(Json(user))
     }
 
-    /// /user/:username/summary
+    /// /du/:discourse_id/:username/summary
     ///
     /// Get user summary
-    #[oai(path = "/user/:username/summary", method = "get", tag = "ApiTags::User")]
+    #[oai(path = "/du/:discourse_id/:username/summary", method = "get", tag = "ApiTags::User")]
     async fn get_user_summary(
         &self,
         state: Data<&AppState>,
+        #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] username: Path<String>,
     ) -> Result<Json<DiscourseUserSummaryResponse>> {
-        let summary = match state.discourse.fetch_discourse_user_summary_cached(&username).await {
-            LResult::Success(summary) => summary,
-            LResult::Failed(e) => {
+        let summary = match state.discourse.fetch_discourse_user_summary_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(summary)) => summary,
+            Ok(LResult::Failed(error)) => {
+                tracing::error!("Error fetching user summary: {}", error);
+                return Err(poem::Error::from_status(StatusCode::NOT_FOUND));
+            }
+            Err(e) => {
                 tracing::error!("Error fetching user summary: {:?}", e);
                 return Err(poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR));
             }

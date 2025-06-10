@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM topic_summaries WHERE topic_id = $1 ORDER BY based_on DESC LIMIT 1",
+  "query": "SELECT * FROM topic_summaries WHERE discourse_id = $1 AND topic_id = $2 ORDER BY based_on DESC LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -36,6 +36,7 @@
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Int4"
       ]
     },
@@ -48,5 +49,5 @@
       false
     ]
   },
-  "hash": "b6339f870a685404dd21432c0a362fe9d7f5c001aa90b64ff541c5846af03a42"
+  "hash": "f5c63e3516ff3f803f92e428db314f5591dbe4df6981388293164171f2577209"
 }

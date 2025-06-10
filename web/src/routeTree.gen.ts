@@ -17,11 +17,11 @@ import { Route as RIndexImport } from './routes/r/index'
 import { Route as CIndexImport } from './routes/c/index'
 import { Route as ChatUsageImport } from './routes/chat/usage'
 import { Route as ChatChatIdImport } from './routes/chat/$chatId'
-import { Route as UUserIdIndexImport } from './routes/u/$userId/index'
-import { Route as TTopicIdIndexImport } from './routes/t/$topicId/index'
 import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
 import { Route as ChatUsageIndexImport } from './routes/chat/usage/index'
 import { Route as SsoProviderIdCallbackImport } from './routes/sso/$providerId/callback'
+import { Route as UDiscourseIdUserIdIndexImport } from './routes/u/$discourseId/$userId/index'
+import { Route as TDiscourseIdTopicIdIndexImport } from './routes/t/$discourseId/$topicId/index'
 
 // Create/Update Routes
 
@@ -61,18 +61,6 @@ const ChatChatIdRoute = ChatChatIdImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const UUserIdIndexRoute = UUserIdIndexImport.update({
-  id: '/u/$userId/',
-  path: '/u/$userId/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const TTopicIdIndexRoute = TTopicIdIndexImport.update({
-  id: '/t/$topicId/',
-  path: '/t/$topicId/',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const PmIssueIdIndexRoute = PmIssueIdIndexImport.update({
   id: '/pm/$issueId/',
   path: '/pm/$issueId/',
@@ -88,6 +76,18 @@ const ChatUsageIndexRoute = ChatUsageIndexImport.update({
 const SsoProviderIdCallbackRoute = SsoProviderIdCallbackImport.update({
   id: '/sso/$providerId/callback',
   path: '/sso/$providerId/callback',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UDiscourseIdUserIdIndexRoute = UDiscourseIdUserIdIndexImport.update({
+  id: '/u/$discourseId/$userId/',
+  path: '/u/$discourseId/$userId/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const TDiscourseIdTopicIdIndexRoute = TDiscourseIdTopicIdIndexImport.update({
+  id: '/t/$discourseId/$topicId/',
+  path: '/t/$discourseId/$topicId/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -158,18 +158,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PmIssueIdIndexImport
       parentRoute: typeof rootRoute
     }
-    '/t/$topicId/': {
-      id: '/t/$topicId/'
-      path: '/t/$topicId'
-      fullPath: '/t/$topicId'
-      preLoaderRoute: typeof TTopicIdIndexImport
+    '/t/$discourseId/$topicId/': {
+      id: '/t/$discourseId/$topicId/'
+      path: '/t/$discourseId/$topicId'
+      fullPath: '/t/$discourseId/$topicId'
+      preLoaderRoute: typeof TDiscourseIdTopicIdIndexImport
       parentRoute: typeof rootRoute
     }
-    '/u/$userId/': {
-      id: '/u/$userId/'
-      path: '/u/$userId'
-      fullPath: '/u/$userId'
-      preLoaderRoute: typeof UUserIdIndexImport
+    '/u/$discourseId/$userId/': {
+      id: '/u/$discourseId/$userId/'
+      path: '/u/$discourseId/$userId'
+      fullPath: '/u/$discourseId/$userId'
+      preLoaderRoute: typeof UDiscourseIdUserIdIndexImport
       parentRoute: typeof rootRoute
     }
   }
@@ -199,8 +199,8 @@ export interface FileRoutesByFullPath {
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage/': typeof ChatUsageIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
-  '/t/$topicId': typeof TTopicIdIndexRoute
-  '/u/$userId': typeof UUserIdIndexRoute
+  '/t/$discourseId/$topicId': typeof TDiscourseIdTopicIdIndexRoute
+  '/u/$discourseId/$userId': typeof UDiscourseIdUserIdIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -212,8 +212,8 @@ export interface FileRoutesByTo {
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage': typeof ChatUsageIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
-  '/t/$topicId': typeof TTopicIdIndexRoute
-  '/u/$userId': typeof UUserIdIndexRoute
+  '/t/$discourseId/$topicId': typeof TDiscourseIdTopicIdIndexRoute
+  '/u/$discourseId/$userId': typeof UDiscourseIdUserIdIndexRoute
 }
 
 export interface FileRoutesById {
@@ -227,8 +227,8 @@ export interface FileRoutesById {
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage/': typeof ChatUsageIndexRoute
   '/pm/$issueId/': typeof PmIssueIdIndexRoute
-  '/t/$topicId/': typeof TTopicIdIndexRoute
-  '/u/$userId/': typeof UUserIdIndexRoute
+  '/t/$discourseId/$topicId/': typeof TDiscourseIdTopicIdIndexRoute
+  '/u/$discourseId/$userId/': typeof UDiscourseIdUserIdIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -243,8 +243,8 @@ export interface FileRouteTypes {
     | '/sso/$providerId/callback'
     | '/chat/usage/'
     | '/pm/$issueId'
-    | '/t/$topicId'
-    | '/u/$userId'
+    | '/t/$discourseId/$topicId'
+    | '/u/$discourseId/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -255,8 +255,8 @@ export interface FileRouteTypes {
     | '/sso/$providerId/callback'
     | '/chat/usage'
     | '/pm/$issueId'
-    | '/t/$topicId'
-    | '/u/$userId'
+    | '/t/$discourseId/$topicId'
+    | '/u/$discourseId/$userId'
   id:
     | '__root__'
     | '/'
@@ -268,8 +268,8 @@ export interface FileRouteTypes {
     | '/sso/$providerId/callback'
     | '/chat/usage/'
     | '/pm/$issueId/'
-    | '/t/$topicId/'
-    | '/u/$userId/'
+    | '/t/$discourseId/$topicId/'
+    | '/u/$discourseId/$userId/'
   fileRoutesById: FileRoutesById
 }
 
@@ -282,8 +282,8 @@ export interface RootRouteChildren {
   SIndexRoute: typeof SIndexRoute
   SsoProviderIdCallbackRoute: typeof SsoProviderIdCallbackRoute
   PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
-  TTopicIdIndexRoute: typeof TTopicIdIndexRoute
-  UUserIdIndexRoute: typeof UUserIdIndexRoute
+  TDiscourseIdTopicIdIndexRoute: typeof TDiscourseIdTopicIdIndexRoute
+  UDiscourseIdUserIdIndexRoute: typeof UDiscourseIdUserIdIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -295,8 +295,8 @@ const rootRouteChildren: RootRouteChildren = {
   SIndexRoute: SIndexRoute,
   SsoProviderIdCallbackRoute: SsoProviderIdCallbackRoute,
   PmIssueIdIndexRoute: PmIssueIdIndexRoute,
-  TTopicIdIndexRoute: TTopicIdIndexRoute,
-  UUserIdIndexRoute: UUserIdIndexRoute,
+  TDiscourseIdTopicIdIndexRoute: TDiscourseIdTopicIdIndexRoute,
+  UDiscourseIdUserIdIndexRoute: UDiscourseIdUserIdIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -317,8 +317,8 @@ export const routeTree = rootRoute
         "/s/",
         "/sso/$providerId/callback",
         "/pm/$issueId/",
-        "/t/$topicId/",
-        "/u/$userId/"
+        "/t/$discourseId/$topicId/",
+        "/u/$discourseId/$userId/"
       ]
     },
     "/": {
@@ -352,11 +352,11 @@ export const routeTree = rootRoute
     "/pm/$issueId/": {
       "filePath": "pm/$issueId/index.tsx"
     },
-    "/t/$topicId/": {
-      "filePath": "t/$topicId/index.tsx"
+    "/t/$discourseId/$topicId/": {
+      "filePath": "t/$discourseId/$topicId/index.tsx"
     },
-    "/u/$userId/": {
-      "filePath": "u/$userId/index.tsx"
+    "/u/$discourseId/$userId/": {
+      "filePath": "u/$discourseId/$userId/index.tsx"
     }
   }
 }

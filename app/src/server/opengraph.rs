@@ -54,11 +54,14 @@ where
         let mut opengraph_image: Option<String> = None;
 
         if route.starts_with("/t/") {
-            let topic_id = route.split("/").nth(2).unwrap_or_default();
+            let split = route.split("/").collect::<Vec<&str>>();
+            // TODO: Update parsing of parameters
+            let discourse_id = split.get(2).unwrap_or(&"magicians").to_string();
+            let topic_id = split.get(3).unwrap_or(&"").to_string();
             let topic_id = topic_id.parse::<i32>().ok();
             info!("Topic ID: {:?}", topic_id);
             if let Some(topic_id) = topic_id {
-                let topic = Topic::get_by_topic_id(topic_id, &self.state).await;
+                let topic = Topic::get_by_topic_id("magicians", topic_id, &self.state).await;
 
                 if let Ok(topic) = topic {
                     let first_post = topic.get_first_post(&self.state).await.ok();

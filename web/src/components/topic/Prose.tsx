@@ -16,14 +16,25 @@ import 'prismjs/components/prism-go';
 
 import { FC, useEffect, useRef, useState } from 'react';
 
-const trackLinkClick = async (url: string, topicId: number, postId: number) => {
+const trackLinkClick = async (
+    url: string,
+    discourseId: string,
+    topicId: number,
+    postId: number
+) => {
     const formData = new FormData();
 
     formData.append('url', url);
     formData.append('post_id', postId.toString());
     formData.append('topic_id', topicId.toString());
 
-    await fetch('https://ethereum-magicians.org/clicks/track', {
+    // TODO: map discourse_id to url
+    const mapping = {
+        magicians: 'https://ethereum-magicians.org/clicks/track',
+        research: 'https://ethresear.ch/clicks/track',
+    };
+
+    await fetch(mapping[discourseId as keyof typeof mapping], {
         body: formData,
         method: 'POST',
         mode: 'no-cors',

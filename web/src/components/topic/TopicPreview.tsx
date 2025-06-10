@@ -8,6 +8,7 @@ import { decodeCategory } from '@/util/category';
 import { formatBigNumber } from '@/util/numbers';
 
 import { CategoryTag } from '../CategoryTag';
+import { DiscourseInstanceIcon } from '../DiscourseInstanceIcon';
 import { TimeAgo } from '../TimeAgo';
 
 type Participant = {
@@ -35,12 +36,17 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
 
     return (
         <Link
-            to="/t/$topicId"
-            params={{ topicId: topic.topic_id.toString() }}
+            to="/t/$discourseId/$topicId"
+            params={{ discourseId: topic.discourse_id, topicId: topic.topic_id.toString() }}
             className="card hover:border-primary border border-transparent gap-1 flex flex-col"
         >
             <div className="grow space-y-1">
-                <div className="font-bold">{topic.title}</div>
+                <div className="flex items-start gap-2 justify-between">
+                    <div className="font-bold">{topic.title}</div>
+                    <div>
+                        <DiscourseInstanceIcon discourse_id={topic.discourse_id} />
+                    </div>
+                </div>
                 <div className="flex gap-2 whitespace-nowrap overflow-x-hidden">
                     {tags?.map((tag) => <CategoryTag key={tag} tag={tag} />)}
                 </div>

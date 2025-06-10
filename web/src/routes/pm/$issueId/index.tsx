@@ -115,8 +115,8 @@ const RouteComponent = () => {
             <div className="flex flex-row gap-2">
                 {occurence?.discourse_topic_id && (
                     <Link
-                        to="/t/$topicId"
-                        params={{ topicId: occurence.discourse_topic_id }}
+                        to="/t/$discourseId/$topicId"
+                        params={{ discourseId: 'magicians', topicId: occurence.discourse_topic_id }}
                         className="button flex w-fit items-center gap-2"
                     >
                         <SiEthereum />

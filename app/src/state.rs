@@ -1,7 +1,7 @@
 use crate::{
     database::Database,
     modules::{
-        discourse::DiscourseService,
+        discourse::{self, DiscourseService},
         ical::{self, ICalConfig},
         meili,
         pm::PMModule,
@@ -51,7 +51,8 @@ impl AppStateInner {
 
         let ical = ical::init_ical(Figment::new()).await;
 
-        let discourse = DiscourseService::default();
+        let discourse_configs = discourse::create_discourse_configs();
+        let discourse = DiscourseService::new(discourse_configs);
 
         let pm = PMModule::default();
 

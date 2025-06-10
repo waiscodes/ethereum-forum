@@ -32,6 +32,7 @@ impl ForumTools {
     ) -> ForumSearchDocument {
         ForumSearchDocument {
             entity_type: "error".to_string(),
+            discourse_id: None,
             topic_id,
             post_id: None,
             post_number: None,
@@ -69,8 +70,8 @@ impl ForumTools {
     /// **Example usage**: 
     /// - "What is topic 1234 about?" → Use this tool with topic_id=1234
     /// - "Can you summarize the discussion on EIP-4844?" → First search for the topic, then summarize it
-    async fn get_topic_summary(&self, topic_id: i32) -> Text<String> {
-        match Topic::get_summary_by_topic_id(topic_id, &self.state).await {
+    async fn get_topic_summary(&self, discourse_id: String, topic_id: i32) -> Text<String> {
+        match Topic::get_summary_by_topic_id(&discourse_id, topic_id, &self.state).await {
             Ok(summary) => Text(summary.summary_text),
             Err(err) => Text(format!("error: {err}")),
         }
@@ -102,14 +103,16 @@ impl ForumTools {
     /// - "Show me page 2 of the discussion" → get_posts(topic_id=1234, page=2)
     async fn get_posts(
         &self,
+        discourse_id: String,
         topic_id: i32,
         page: Option<i32>,
         size: Option<i32>,
     ) -> Json<Vec<Post>> {
         let page = page.unwrap_or(1);
-        match Post::find_by_topic_id(topic_id, page, size, &self.state).await {
+        match Post::find_by_topic_id(&discourse_id, topic_id, page, size, &self.state).await {
             Ok((posts, _)) => Json(posts),
             Err(err) => Json(vec![Post {
+                discourse_id,
                 post_id: -1,
                 topic_id,
                 user_id: 0,
@@ -489,10 +492,10 @@ impl ForumTools {
     /// - username (required): The forum username (not display name)
     /// 
     /// **Output**: User profile object with bio, stats, badges, and other profile information
-    async fn get_user_profile(&self, username: String) -> Json<Option<DiscourseUserProfile>> {
-        match self.state.discourse.fetch_discourse_user_cached(&username).await {
-            LResult::Success(profile) => Json(Some(profile)),
-            LResult::Failed(_) => Json(None),
+    async fn get_user_profile(&self, discourse_id: String, username: String) -> Json<Option<DiscourseUserProfile>> {
+        match self.state.discourse.fetch_discourse_user_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(profile)) => Json(Some(profile)),
+            Ok(LResult::Failed(_)) | Err(_) => Json(None),
         }
     }
 
@@ -511,10 +514,10 @@ impl ForumTools {
     /// - username (required): The forum username
     /// 
     /// **Output**: User summary object with activity statistics and metrics
-    async fn get_user_summary(&self, username: String) -> Json<Option<DiscourseUserSummaryResponse>> {
-        match self.state.discourse.fetch_discourse_user_summary_cached(&username).await {
-            LResult::Success(summary) => Json(Some(summary)),
-            LResult::Failed(_) => Json(None),
+    async fn get_user_summary(&self, discourse_id:String, username: String) -> Json<Option<DiscourseUserSummaryResponse>> {
+        match self.state.discourse.fetch_discourse_user_summary_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(summary)) => Json(Some(summary)),
+            Ok(LResult::Failed(_)) | Err(_) => Json(None),
         }
     }
 
@@ -534,10 +537,10 @@ impl ForumTools {
     /// **Output**: Numeric user ID (returns -1 if username not found)
     /// 
     /// **Workflow**: Use this tool first, then use the returned ID with search_by_user
-    async fn username_to_user_id(&self, username: String) -> Json<i32> {
-        match self.state.discourse.fetch_discourse_user_cached(&username).await {
-            LResult::Success(profile) => Json(profile.user.id),
-            LResult::Failed(_) => Json(-1),
+    async fn username_to_user_id(&self,discourse_id: String,  username: String) -> Json<i32> {
+        match self.state.discourse.fetch_discourse_user_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(profile)) => Json(profile.user.id),
+            Ok(LResult::Failed(_)) | Err(_) => Json(-1),
         }
     }
 
@@ -553,6 +556,7 @@ impl ForumTools {
     /// - You need to find expertise or insights from a particular community member
     /// 
     /// **Parameters**:
+    /// - discourse_id (required): The discourse instance ID
     /// - username (required): The forum username
     /// - query (optional): Additional search terms to filter the user's content
     /// - limit (optional, default=20): Maximum number of results to return
@@ -561,19 +565,20 @@ impl ForumTools {
     /// **Output**: Array of documents (topics and posts) created by the specified user
     /// 
     /// **Example usage**:
-    /// - "What has @vitalik posted about?" → search_by_username(username="vitalik")
-    /// - "Find posts by alice about scaling" → search_by_username(username="alice", query="scaling")
+    /// - "What has @vitalik posted about?" → search_by_username(discourse_id="magicians", username="vitalik")
+    /// - "Find posts by alice about scaling" → search_by_username(discourse_id="magicians", username="alice", query="scaling")
     async fn search_by_username(
         &self,
+        discourse_id: String,
         username: String,
         query: Option<String>,
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Json<Vec<ForumSearchDocument>> {
         // First get the user ID
-        let user_id = match self.state.discourse.fetch_discourse_user_cached(&username).await {
-            LResult::Success(profile) => profile.user.id,
-            LResult::Failed(_) => {
+        let user_id = match self.state.discourse.fetch_discourse_user_cached(&discourse_id, &username).await {
+            Ok(LResult::Success(profile)) => profile.user.id,
+            Ok(LResult::Failed(_)) | Err(_) => {
                 return Json(vec![Self::create_error_document(
                     format!("User '{}' not found", username),
                     None,
@@ -598,6 +603,7 @@ impl ForumTools {
     /// - User references someone using typical forum mention syntax
     /// 
     /// **Parameters**:
+    /// - discourse_id (required): The discourse instance ID
     /// - username_mention (required): Username with or without @, /u/ prefixes
     /// - query (optional): Additional search terms to filter the user's content
     /// - limit (optional, default=20): Maximum number of results
@@ -606,10 +612,11 @@ impl ForumTools {
     /// **Output**: Array of documents (topics and posts) created by the specified user
     /// 
     /// **Example usage**:
-    /// - User says "what did @vitalik say about sharding?" → search_by_username_mention(username_mention="@vitalik", query="sharding")
-    /// - User asks about "/u/alice" → search_by_username_mention(username_mention="/u/alice")
+    /// - User says "what did @vitalik say about sharding?" → search_by_username_mention(discourse_id="magicians", username_mention="@vitalik", query="sharding")
+    /// - User asks about "/u/alice" → search_by_username_mention(discourse_id="magicians", username_mention="/u/alice")
     async fn search_by_username_mention(
         &self,
+        discourse_id: String,
         username_mention: String,
         query: Option<String>,
         limit: Option<usize>,
@@ -624,7 +631,7 @@ impl ForumTools {
             username_mention
         };
 
-        self.search_by_username(clean_username, query, limit, offset).await
+        self.search_by_username(discourse_id, clean_username, query, limit, offset).await
     }
 }
 

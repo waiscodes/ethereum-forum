@@ -40,12 +40,13 @@ export const getTopicsTrending = () =>
 
 export const useTopicsTrending = () => useQuery(getTopicsTrending());
 
-export const getTopic = (topicId: string) =>
+export const getTopic = (discourse_id: string, topicId: string) =>
     queryOptions({
-        queryKey: ['topic', topicId],
+        queryKey: ['topic', discourse_id, topicId],
         queryFn: async () => {
-            const response = await useApi('/t/{topic_id}', 'get', {
+            const response = await useApi('/t/{discourse_id}/{topic_id}', 'get', {
                 path: {
+                    discourse_id,
                     topic_id: Number(topicId),
                 },
             });
@@ -54,13 +55,15 @@ export const getTopic = (topicId: string) =>
         },
     });
 
-export const useTopic = (topicId: string) => useQuery(getTopic(topicId));
+export const useTopic = (discourse_id: string, topicId: string) =>
+    useQuery(getTopic(discourse_id, topicId));
 
-export const useTopicRefresh = (topicId: string) =>
+export const useTopicRefresh = (discourse_id: string, topicId: string) =>
     useMutation({
         mutationFn: async () => {
-            const response = await useApi('/t/{topic_id}', 'post', {
+            const response = await useApi('/t/{discourse_id}/{topic_id}', 'post', {
                 path: {
+                    discourse_id,
                     topic_id: Number(topicId),
                 },
             });
@@ -69,12 +72,13 @@ export const useTopicRefresh = (topicId: string) =>
         },
     });
 
-export const getPosts = (topicId: string, page: number) =>
+export const getPosts = (discourse_id: string, topicId: string, page: number) =>
     queryOptions({
-        queryKey: ['posts', topicId, page],
+        queryKey: ['posts', discourse_id, topicId, page],
         queryFn: async () => {
-            const response = await useApi('/t/{topic_id}/posts', 'get', {
+            const response = await useApi('/t/{discourse_id}/{topic_id}/posts', 'get', {
                 path: {
+                    discourse_id,
                     topic_id: Number(topicId),
                 },
                 query: {
@@ -86,12 +90,13 @@ export const getPosts = (topicId: string, page: number) =>
         },
     });
 
-export const getTopicSummary = (topicId: number) =>
+export const getTopicSummary = (discourse_id: string, topicId: number) =>
     queryOptions({
-        queryKey: ['summary', topicId],
+        queryKey: ['summary', discourse_id, topicId],
         queryFn: async () => {
-            const response = await useApi('/t/{topic_id}/summary', 'get', {
+            const response = await useApi('/t/{discourse_id}/{topic_id}/summary', 'get', {
                 path: {
+                    discourse_id,
                     topic_id: topicId,
                 },
             });
@@ -100,16 +105,17 @@ export const getTopicSummary = (topicId: number) =>
         },
     });
 
-export const getPostsInfinite = (topicId: string) =>
+export const getPostsInfinite = (discourse_id: string, topicId: string) =>
     infiniteQueryOptions({
-        queryKey: ['posts', topicId, 'infinite'],
+        queryKey: ['posts', discourse_id, topicId, 'infinite'],
         initialPageParam: 1,
         getNextPageParam: (lastPage: { posts: Post[]; has_more: boolean }, allPages) => {
             return lastPage.has_more ? allPages.length + 1 : undefined;
         },
         queryFn: async ({ pageParam }) => {
-            const response = await useApi('/t/{topic_id}/posts', 'get', {
+            const response = await useApi('/t/{discourse_id}/{topic_id}/posts', 'get', {
                 path: {
+                    discourse_id,
                     topic_id: Number(topicId),
                 },
                 query: {
@@ -134,16 +140,25 @@ export const useGithubIssueComments = (issueId: number) =>
         },
     });
 
-export const usePosts = (topicId: string, page: number) => useQuery(getPosts(topicId, page));
+export const usePosts = (discourse_id: string, topicId: string, page: number) =>
+    useQuery(getPosts(discourse_id, topicId, page));
 
-export const useTopicSummary = (topicId: number) => useQuery(getTopicSummary(topicId));
+export const useTopicSummary = (discourse_id: string, topicId: number) =>
+    useQuery(getTopicSummary(discourse_id, topicId));
 
-export const usePostsInfinite = (topicId: string) => useInfiniteQuery(getPostsInfinite(topicId));
+export const usePostsInfinite = (discourse_id: string, topicId: string) =>
+    useInfiniteQuery(getPostsInfinite(discourse_id, topicId));
 
 export const useStartTopicSummaryStream = () =>
     useMutation({
-        mutationFn: async ({ topicId }: { topicId: number }) => {
-            const response = await fetch(`/api/ws/t/${topicId}/summary/stream`, {
+        mutationFn: async ({
+            discourse_id,
+            topicId,
+        }: {
+            discourse_id: string;
+            topicId: number;
+        }) => {
+            const response = await fetch(`/api/ws/t/${discourse_id}/${topicId}/summary/stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -165,7 +180,7 @@ export const useStartTopicSummaryStream = () =>
     });
 
 // Hook for streaming topic summary
-export const useTopicSummaryStream = (topicId: number) => {
+export const useTopicSummaryStream = (discourse_id: string, topicId: number) => {
     const [data, setData] = React.useState<components['schemas']['StreamingResponse'][]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
@@ -184,7 +199,7 @@ export const useTopicSummaryStream = (topicId: number) => {
         setIsStreaming(true);
         hasReceivedDataRef.current = false;
 
-        const eventSource = new EventSource(`/api/ws/t/${topicId}/summary/stream`);
+        const eventSource = new EventSource(`/api/ws/t/${discourse_id}/${topicId}/summary/stream`);
 
         eventSource.onopen = () => {
             console.log('Summary EventSource connection opened');

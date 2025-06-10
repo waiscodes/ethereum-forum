@@ -9,10 +9,10 @@ import { Tooltip } from '@/components/tooltip/Tooltip';
 import { formatBigNumber } from '@/util/numbers';
 
 const RouteComponent: FC = () => {
-    const { userId } = Route.useParams();
+    const { discourseId, userId } = Route.useParams();
 
-    const { data: userData, isLoading: userLoading } = useUser(userId);
-    const { data: userSummary, isLoading: summaryLoading } = useUserSummary(userId);
+    const { data: userData, isLoading: userLoading } = useUser(discourseId, userId);
+    const { data: userSummary, isLoading: summaryLoading } = useUserSummary(discourseId, userId);
 
     if (userLoading || summaryLoading) {
         return (
@@ -174,8 +174,11 @@ const RouteComponent: FC = () => {
                             return (
                                 <li key={i}>
                                     <Link
-                                        to="/t/$topicId"
-                                        params={{ topicId: reply.topic_id.toString() }}
+                                        to="/t/$discourseId/$topicId"
+                                        params={{
+                                            discourseId: 'magicians',
+                                            topicId: reply.topic_id.toString(),
+                                        }}
                                         className="underline"
                                     >
                                         {topic?.title || `Topic #${reply.topic_id}`}
@@ -198,8 +201,8 @@ const RouteComponent: FC = () => {
                     )}
                     {userSummary?.topics?.map((topic) => (
                         <Link
-                            to="/t/$topicId"
-                            params={{ topicId: topic.id.toString() }}
+                            to="/t/$discourseId/$topicId"
+                            params={{ discourseId: 'magicians', topicId: topic.id.toString() }}
                             key={topic.id}
                             className="card hover:border-primary border border-transparent gap-1 flex flex-col"
                         >
@@ -226,6 +229,6 @@ const RouteComponent: FC = () => {
     );
 };
 
-export const Route = createFileRoute('/u/$userId/')({
+export const Route = createFileRoute('/u/$discourseId/$userId/')({
     component: RouteComponent,
 });

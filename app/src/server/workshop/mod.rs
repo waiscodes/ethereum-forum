@@ -131,11 +131,11 @@ fn convert_tool_call_status(status: PromptsToolCallStatus) -> ToolCallStatus {
 
 #[OpenApi]
 impl WorkshopApi {
-    /// /ws/t/:topic_id/summary/to-chat
+    /// /ws/t/:discourse_id/:topic_id/summary/to-chat
     ///
     /// Create a new chat from a topic summary
     #[oai(
-        path = "/ws/t/:topic_id/summary/to-chat",
+        path = "/ws/t/:discourse_id/:topic_id/summary/to-chat",
         method = "post",
         tag = "ApiTags::Workshop"
     )]
@@ -143,6 +143,7 @@ impl WorkshopApi {
         &self,
         state: Data<&AppState>,
         auth_user: AuthUser,
+        #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<Json<WorkshopMessage>> {
         let user_id = auth_user.0.user.user_id;
@@ -156,7 +157,7 @@ impl WorkshopApi {
                     poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
-        let summary = Topic::get_summary_by_topic_id(topic_id.0, &state)
+        let summary = Topic::get_summary_by_topic_id(&discourse_id, topic_id.0, &state)
             .await
             .map_err(|e| {
                 tracing::error!("Error getting topic summary: {:?}", e);
@@ -530,21 +531,22 @@ impl WorkshopApi {
         Ok(EventStream::new(response_stream))
     }
 
-    /// /ws/t/:topic_id/summary/stream
+    /// /ws/t/:discourse_id/:topic_id/summary/stream
     ///
     /// Trigger summary generation and start streaming (or coalesce if already running)
     /// Endpoint does not require authentication
     #[oai(
-        path = "/ws/t/:topic_id/summary/stream",
+        path = "/ws/t/:discourse_id/:topic_id/summary/stream",
         method = "post",
         tag = "ApiTags::Workshop"
     )]
     async fn start_topic_summary_stream(
         &self,
         state: Data<&AppState>,
+        #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<Json<serde_json::Value>> {
-        let topic = Topic::get_by_topic_id(topic_id.0, &state)
+        let topic = Topic::get_by_topic_id(&discourse_id, topic_id.0, &state)
             .await
             .map_err(|e| {
                 tracing::error!("Error getting topic: {:?}", e);
@@ -578,7 +580,7 @@ impl WorkshopApi {
         }
 
         // Check if there's already an ongoing stream
-        if let Some(_existing_prompt) = state.workshop.get_ongoing_summary_prompt(topic_id.0).await
+        if let Some(_existing_prompt) = state.workshop.get_ongoing_summary_prompt(&discourse_id, topic_id.0).await
         {
             return Ok(Json(serde_json::json!({
                 "status": "ongoing",
@@ -601,7 +603,7 @@ impl WorkshopApi {
         task::spawn(async move {
             if let Some(ongoing_prompt) = state_clone
                 .workshop
-                .get_ongoing_summary_prompt(topic_clone.topic_id)
+                .get_ongoing_summary_prompt(&discourse_id, topic_clone.topic_id)
                 .await
             {
                 match ongoing_prompt.await_completion().await {
@@ -617,7 +619,8 @@ impl WorkshopApi {
                                 .unwrap_or_else(|| chrono::Utc::now());
 
                         if let Err(e) = sqlx::query!(
-                            "INSERT INTO topic_summaries (topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, NOW())",
+                            "INSERT INTO topic_summaries (discourse_id, topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, $4, NOW())",
+                            topic_clone.discourse_id,
                             topic_clone.topic_id,
                             based_on_datetime,
                             content
@@ -642,29 +645,30 @@ impl WorkshopApi {
         })))
     }
 
-    /// /ws/t/:topic_id/summary/stream
+    /// /ws/t/:discourse_id/:topic_id/summary/stream
     ///
     /// Get SSE stream for topic summary generation
     /// Endpoint does not require authentication
     #[oai(
-        path = "/ws/t/:topic_id/summary/stream",
+        path = "/ws/t/:discourse_id/:topic_id/summary/stream",
         method = "get",
         tag = "ApiTags::Workshop"
     )]
     async fn stream_topic_summary(
         &self,
         state: Data<&AppState>,
+        #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
-        tracing::info!("Summary stream request for topic: {}", topic_id.0);
+        tracing::info!("Summary stream request for topic: {} on {}", topic_id.0, discourse_id.0);
 
         // Try to get the ongoing summary prompt
         let ongoing_prompt = state
             .workshop
-            .get_ongoing_summary_prompt(topic_id.0)
+            .get_ongoing_summary_prompt(&discourse_id, topic_id.0)
             .await
             .ok_or_else(|| {
-                tracing::error!("No ongoing summary prompt found for topic {}", topic_id.0);
+                tracing::error!("No ongoing summary prompt found for topic {} on {}", topic_id.0, discourse_id.0);
                 poem::Error::from_status(StatusCode::NOT_FOUND)
             })?;
 

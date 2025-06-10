@@ -21,10 +21,10 @@ pub async fn main() -> Result<(), Error> {
 
     let discourse_state = state.clone();
     let discourse_handle = async_std::task::spawn(async move {
-        sleep(Duration::from_secs(30)).await;
-        discourse_state.clone().discourse.run(discourse_state).await;
+        sleep(Duration::from_secs(5)).await;
+        discourse_state.clone().discourse.start_all_indexers(discourse_state).await;
     });
-    let server_handle = async_std::task::spawn(server::start_http(state.clone()));
+    let server_handle = async_std::task::spawn(server::start_http(state));
 
     join!(server_handle, discourse_handle);
     Ok(())

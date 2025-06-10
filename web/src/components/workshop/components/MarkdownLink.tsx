@@ -5,6 +5,7 @@ import { TopicPreviewTooltip } from './TopicPreviewTooltip';
 import { UserProfileTooltip } from './UserProfileTooltip';
 
 // Custom Link Component for Markdown
+// TODO: fix this component to support any discourse
 export const MarkdownLink = (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     const { href, children, ...otherProps } = props;
 
@@ -44,8 +45,9 @@ export const MarkdownLink = (props: React.AnchorHTMLAttributes<HTMLAnchorElement
             return (
                 <TopicPreviewTooltip topicId={topicId}>
                     <Link
-                        to="/t/$topicId"
-                        params={{ topicId }}
+                        to="/t/$discourseId/$topicId"
+                        // TODO support any discourse
+                        params={{ discourseId: 'magicians', topicId }}
                         className="text-blue-600 hover:text-blue-800 underline"
                         {...otherProps}
                     >

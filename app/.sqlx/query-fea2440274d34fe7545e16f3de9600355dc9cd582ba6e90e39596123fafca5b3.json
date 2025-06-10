@@ -47,6 +47,11 @@
         "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "discourse_id",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -60,6 +65,7 @@
       true,
       true,
       true,
+      false,
       false,
       false
     ]

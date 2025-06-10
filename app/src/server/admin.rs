@@ -112,6 +112,7 @@ impl AdminApi {
         for topic in &topics {
             topic_docs.push(ForumSearchDocument {
                 entity_type: "topic".to_string(),
+                discourse_id: Some(topic.discourse_id.clone()),
                 topic_id: Some(topic.topic_id),
                 post_id: None,
                 post_number: None,
@@ -180,6 +181,7 @@ impl AdminApi {
 
                 post_docs.push(ForumSearchDocument {
                     entity_type: "post".to_string(),
+                    discourse_id: Some(post.discourse_id.clone()),
                     topic_id: Some(post.topic_id),
                     post_id: Some(post.post_id),
                     post_number: Some(post.post_number),

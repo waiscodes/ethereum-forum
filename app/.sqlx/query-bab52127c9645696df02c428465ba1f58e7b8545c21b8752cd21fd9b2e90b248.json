@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM posts WHERE topic_id = $1 ORDER BY post_number ASC LIMIT 1",
+  "query": "SELECT * FROM posts WHERE discourse_id = $1 AND topic_id = $2 ORDER BY post_number ASC LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -47,10 +47,16 @@
         "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "discourse_id",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Int4"
       ]
     },
@@ -63,8 +69,9 @@
       true,
       true,
       false,
+      false,
       false
     ]
   },
-  "hash": "83274655c568503764572b2151d4ac0406698c26422da3d8da539b357eb9a9b5"
+  "hash": "bab52127c9645696df02c428465ba1f58e7b8545c21b8752cd21fd9b2e90b248"
 }

@@ -90,7 +90,7 @@ impl WorkshopService {
         topic: &Topic,
         state: &AppState,
     ) -> Result<String, HttpError> {
-        let posts = Post::find_by_topic_id(topic.topic_id, 1, Some(512), state);
+        let posts = Post::find_by_topic_id(&topic.discourse_id, topic.topic_id, 1, Some(512), state);
 
         let messages = vec![
             state.workshop.prompts.summerize.clone(),
@@ -339,7 +339,7 @@ impl WorkshopService {
         topic: &Topic,
         state: &AppState,
     ) -> Result<OngoingPrompt, Box<dyn std::error::Error + Send + Sync>> {
-        let posts = Post::find_by_topic_id(topic.topic_id, 1, Some(512), state);
+        let posts = Post::find_by_topic_id(&topic.discourse_id, topic.topic_id, 1, Some(512), state);
 
         let messages = vec![
             state.workshop.prompts.summerize.clone(),
@@ -357,7 +357,7 @@ impl WorkshopService {
         let truncated_messages = truncate_messages_to_token_limit(messages, &None);
 
         // Use topic_id as the coalescing key for summaries
-        let key = format!("summary-{}", topic.topic_id);
+        let key = Self::summary_key(&topic.discourse_id, topic.topic_id);
         
         // Get or create the ongoing prompt (no tools needed for summaries)
         let ongoing_prompt = state.workshop.ongoing_prompts
@@ -367,9 +367,13 @@ impl WorkshopService {
         Ok(ongoing_prompt)
     }
 
+    fn summary_key(discourse_id: &str, topic_id: i32) -> String {
+        format!("summary-{}-{}", discourse_id, topic_id)
+    }
+
     /// Get an ongoing summary prompt for streaming (if it exists)
-    pub async fn get_ongoing_summary_prompt(&self, topic_id: i32) -> Option<OngoingPrompt> {
-        let key = format!("summary-{}", topic_id);
+    pub async fn get_ongoing_summary_prompt(&self, discourse_id: &str, topic_id: i32) -> Option<OngoingPrompt> {
+        let key = Self::summary_key(discourse_id, topic_id);
         info!("Getting ongoing summary prompt for key: {}", key);
         self.ongoing_prompts.get(&key).await
     }

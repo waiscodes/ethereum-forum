@@ -364,7 +364,6 @@ impl OngoingPrompt {
         let conversation_history_clone = conversation_history.clone();
         let tools_clone = tools_arc.clone();
         let usage_data_clone = usage_data.clone();
-        let model_used_clone = model_used.clone();
         
         task::spawn(async move {
             let mut accumulated_content = String::new();

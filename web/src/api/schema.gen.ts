@@ -80,7 +80,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/t/{topic_id}": {
+    "/t/{discourse_id}/{topic_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -88,13 +88,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /t/:topic_id
+         * /t/:discourse_id/:topic_id
          * @description Get information about a topic
          */
         get: operations["get_topic"];
         put?: never;
         /**
-         * /t/:topic_id
+         * /t/:discourse_id/:topic_id
          * @description Force refresh a topic
          */
         post: operations["refresh_topic"];
@@ -104,7 +104,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/t/{topic_id}/posts": {
+    "/t/{discourse_id}/{topic_id}/posts": {
         parameters: {
             query?: never;
             header?: never;
@@ -112,7 +112,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /t/:topic_id/posts
+         * /t/:discourse_id/:topic_id/posts
          * @description Get all posts for a topic
          *     This endpoint is paginated, and uses ?page=1 as the first page
          */
@@ -125,7 +125,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/t/{topic_id}/summary": {
+    "/t/{discourse_id}/{topic_id}/summary": {
         parameters: {
             query?: never;
             header?: never;
@@ -133,7 +133,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /t/:topic_id/summary
+         * /t/:discourse_id/:topic_id/summary
          * @description Get summaries from topic
          */
         get: operations["get_summary"];
@@ -221,7 +221,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/{username}": {
+    "/du/{discourse_id}/{username}": {
         parameters: {
             query?: never;
             header?: never;
@@ -229,7 +229,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /user/:username
+         * /du/:discourse_id/:username
          * @description Get user profile
          */
         get: {
@@ -237,6 +237,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    discourse_id: string;
                     username: string;
                 };
                 cookie?: never;
@@ -261,7 +262,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/{username}/summary": {
+    "/du/{discourse_id}/{username}/summary": {
         parameters: {
             query?: never;
             header?: never;
@@ -269,7 +270,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /user/:username/summary
+         * /du/:discourse_id/:username/summary
          * @description Get user summary
          */
         get: {
@@ -277,6 +278,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    discourse_id: string;
                     username: string;
                 };
                 cookie?: never;
@@ -578,7 +580,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ws/t/{topic_id}/summary/to-chat": {
+    "/ws/t/{discourse_id}/{topic_id}/summary/to-chat": {
         parameters: {
             query?: never;
             header?: never;
@@ -588,7 +590,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * /ws/t/:topic_id/summary/to-chat
+         * /ws/t/:discourse_id/:topic_id/summary/to-chat
          * @description Create a new chat from a topic summary
          */
         post: {
@@ -596,6 +598,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    discourse_id: string;
                     topic_id: number;
                 };
                 cookie?: never;
@@ -808,7 +811,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ws/t/{topic_id}/summary/stream": {
+    "/ws/t/{discourse_id}/{topic_id}/summary/stream": {
         parameters: {
             query?: never;
             header?: never;
@@ -816,7 +819,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * /ws/t/:topic_id/summary/stream
+         * /ws/t/:discourse_id/:topic_id/summary/stream
          * @description Get SSE stream for topic summary generation
          *     Endpoint does not require authentication
          */
@@ -825,6 +828,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    discourse_id: string;
                     topic_id: number;
                 };
                 cookie?: never;
@@ -843,7 +847,7 @@ export interface paths {
         };
         put?: never;
         /**
-         * /ws/t/:topic_id/summary/stream
+         * /ws/t/:discourse_id/:topic_id/summary/stream
          * @description Trigger summary generation and start streaming (or coalesce if already running)
          *     Endpoint does not require authentication
          */
@@ -852,6 +856,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    discourse_id: string;
                     topic_id: number;
                 };
                 cookie?: never;
@@ -1453,6 +1458,7 @@ export interface components {
         };
         /** Post */
         Post: {
+            discourse_id: string;
             /** Format: int32 */
             post_id: number;
             /** Format: int32 */
@@ -1535,6 +1541,7 @@ export interface components {
         ToolCallStatus: "Starting" | "Executing" | "Success" | "Error";
         /** Topic */
         Topic: {
+            discourse_id: string;
             /** Format: int32 */
             topic_id: number;
             title: string;
@@ -1560,6 +1567,7 @@ export interface components {
         TopicSummary: {
             /** Format: int32 */
             summary_id: number;
+            discourse_id: string;
             /** Format: int32 */
             topic_id: number;
             /** Format: date-time */
@@ -1714,6 +1722,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                discourse_id: string;
                 topic_id: number;
             };
             cookie?: never;
@@ -1735,6 +1744,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                discourse_id: string;
                 topic_id: number;
             };
             cookie?: never;
@@ -1759,6 +1769,7 @@ export interface operations {
             };
             header?: never;
             path: {
+                discourse_id: string;
                 topic_id: number;
             };
             cookie?: never;
@@ -1780,6 +1791,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                discourse_id: string;
                 topic_id: number;
             };
             cookie?: never;

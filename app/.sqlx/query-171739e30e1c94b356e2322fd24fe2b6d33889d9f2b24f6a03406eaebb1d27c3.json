@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO topic_summaries (topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *",
+  "query": "INSERT INTO topic_summaries (discourse_id, topic_id, based_on, summary_text, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *",
   "describe": {
     "columns": [
       {
@@ -27,10 +27,16 @@
         "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "discourse_id",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Int4",
         "Timestamptz",
         "Text"
@@ -41,8 +47,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "73e544dba95c51f0a157003db35d4f9bca6a300ebd8b0283c6799b4a4ad1904a"
+  "hash": "171739e30e1c94b356e2322fd24fe2b6d33889d9f2b24f6a03406eaebb1d27c3"
 }

@@ -9,13 +9,16 @@ import { useStartTopicSummaryStream, useTopicSummaryStream } from '@/api/topics'
 import { useWorkshopCreateChatFromSummary } from '@/api/workshop';
 
 interface StreamingSummaryProps {
+    discourseId: string;
     topicId: number;
 }
 
-export const StreamingSummary: React.FC<StreamingSummaryProps> = ({ topicId }) => {
+export const StreamingSummary: React.FC<StreamingSummaryProps> = ({ discourseId, topicId }) => {
     const { isAuthenticated } = useAuth();
-    const { combinedContent, isLoading, error, isComplete, startStream } =
-        useTopicSummaryStream(topicId);
+    const { combinedContent, isLoading, error, isComplete, startStream } = useTopicSummaryStream(
+        discourseId,
+        topicId
+    );
 
     const navigate = useNavigate();
     const { mutateAsync: createChatFromSummary } = useWorkshopCreateChatFromSummary();
@@ -33,7 +36,10 @@ export const StreamingSummary: React.FC<StreamingSummaryProps> = ({ topicId }) =
             try {
                 hasStartedRef.current = true;
                 // First trigger the summary generation on the backend
-                const response = await startSummaryGeneration({ topicId });
+                const response = await startSummaryGeneration({
+                    discourse_id: discourseId,
+                    topicId,
+                });
 
                 if (response.status === 'existing' && response.summary) {
                     // We have an existing summary, show it immediately
