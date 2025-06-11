@@ -32,3 +32,7 @@ You can easily add it to your favourite editor by adding the following to your `
 - [ ] github/ethereum/ercs (TODO)
   - data & prs
 - [ ] blog.ethereum.org (TODO)
+
+## Development and self-hosting
+
+If you're interested in development or self-hosting Ethereum Forum, please see [CONTRIBUTING.md].
