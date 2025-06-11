@@ -20,6 +20,8 @@ Prefer '&' over 'and'
 
 Try your best to extract what the user was trying to accomplish in the conversation.
 
+Avoid using special characters at the start such as open quotes or dashes.
+
 ## Examples
 
 - EIP-7702 Security Implications

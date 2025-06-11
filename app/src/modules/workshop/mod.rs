@@ -469,7 +469,7 @@ impl WorkshopService {
         let request = CreateChatCompletionRequest {
             model: SHORTSUM_MODEL.to_string(),
             messages: truncated_summary_messages,
-            max_completion_tokens: Some(10),
+            max_completion_tokens: Some(40),
             ..Default::default()
         };
 
