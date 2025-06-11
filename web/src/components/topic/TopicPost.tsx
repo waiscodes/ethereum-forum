@@ -7,12 +7,20 @@ import { LuHammer, LuShield } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 
 import { Post } from '@/api/topics';
-import { useUser } from '@/api/user';
 
 import { TimeAgo } from '../TimeAgo';
 import { Tooltip } from '../tooltip/Tooltip';
 import { TrustLevel } from '../TrustLevel';
 import { Prose } from './Prose';
+
+const mapInstanceUrl = (discourseId: string) => {
+    switch (discourseId) {
+        case 'magicians':
+            return 'https://ethereum-magicians.org';
+        case 'research':
+            return 'https://ethresear.ch';
+    }
+};
 
 export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const extra = post.extra as Record<string, unknown>;
@@ -111,7 +119,7 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     </a>
                     {post_url && (
                         <a
-                            href={'https://ethereum-magicians.org' + post_url}
+                            href={mapInstanceUrl(post.discourse_id) + post_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-gray-500 flex items-center gap-1 hover:bg-secondary p-1"
