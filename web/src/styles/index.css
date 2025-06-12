@@ -17,8 +17,10 @@ html.light {
     --theme-bg-primary: 253 246 227;
     --theme-bg-secondary: 238 232 213;
     --theme-bg-tertiary: 204 192 157;
+    --theme-bg-purple: 218 178 255;
     --theme-text-primary: 101 123 131;
     --theme-text-secondary: 38 139 210;
+    --theme-text-purple: 129 52 255;
     --theme-border: 101 123 131;
     --theme-border-secondary: 177 185 179;
     --theme-code-shadow: 1px;
@@ -31,8 +33,10 @@ html.dark {
     --theme-bg-primary: 0 0 0;
     --theme-bg-secondary: 13 13 13;
     --theme-bg-tertiary: 36 36 36;
+    --theme-bg-purple: 129 52 255;
     --theme-text-primary: 116 116 116;
     --theme-text-secondary: 38 139 210;
+    --theme-text-purple: 233 212 255;
     --theme-border: 36 36 36;
     --theme-border-secondary: 36 36 36;
     --theme-code-shadow: 6px;
@@ -50,8 +54,10 @@ html.dark {
         --theme-bg-primary: 253 246 227;
         --theme-bg-secondary: 238 232 213;
         --theme-bg-tertiary: 204 192 157;
+        --theme-bg-purple: 218 178 255;
         --theme-text-primary: 101 123 131;
         --theme-text-secondary: 38 139 210;
+        --theme-text-purple: 129 52 255;
         --theme-border: 101 123 131;
         --theme-border-secondary: 177 185 179;
         --theme-code-shadow: 1px;
@@ -65,8 +71,10 @@ html.dark {
         --theme-bg-primary: 0 0 0;
         --theme-bg-secondary: 13 13 13;
         --theme-bg-tertiary: 36 36 36;
+        --theme-bg-purple: 129 52 255;
         --theme-text-primary: 116 116 116;
         --theme-text-secondary: 38 139 210;
+        --theme-text-purple: 233 212 255;
         --theme-border: 36 36 36;
         --theme-border-secondary: 36 36 36;
         --theme-code-shadow: 6px;
@@ -168,6 +176,9 @@ body {
 
 .button-primary {
     @apply bg-secondary text-primary hover:bg-primary hover:text-secondary;
+}
+.button-purple {
+    @apply bg-purple/30 text-purple border-purple hover:bg-purple/70 hover:text-purple;
 }
 
 input.input {

@@ -8,16 +8,19 @@ export default {
                 secondary:
                     'rgb(var(--theme-bg-secondary) / <alpha-value>) /* rgb(238, 232, 213) */',
                 tertiary: 'rgb(var(--theme-bg-tertiary) / <alpha-value>) /* rgb(204, 192, 157) */',
+                purple: 'rgb(var(--theme-bg-purple) / <alpha-value>) /* rgb(129, 52, 255) */',
             },
             textColor: {
                 primary: 'rgb(var(--theme-text-primary) / <alpha-value>) /* rgb(101, 123, 131) */',
                 secondary:
                     'rgb(var(--theme-text-secondary) / <alpha-value>) /* rgb(38, 139, 210) */',
+                purple: 'rgb(var(--theme-text-purple) / <alpha-value>) /* rgb(103, 40, 185) */',
             },
             borderColor: {
                 primary: 'rgb(var(--theme-border) / <alpha-value>) /* rgb(101, 123, 131) */',
                 secondary:
                     'rgb(var(--theme-border-secondary) / <alpha-value>) /* rgb(238, 232, 213) */',
+                purple: 'rgb(var(--theme-text-purple) / <alpha-value>) /* rgb(103, 40, 185) */',
             },
             ringColor: {
                 primary: 'rgb(var(--theme-border) / <alpha-value>) /* rgb(101, 123, 131) */',
