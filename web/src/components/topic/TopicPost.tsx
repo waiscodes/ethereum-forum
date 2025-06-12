@@ -13,15 +13,6 @@ import { Tooltip } from '../tooltip/Tooltip';
 import { TrustLevel } from '../TrustLevel';
 import { Prose } from './Prose';
 
-const mapInstanceUrl = (discourseId: string) => {
-    switch (discourseId) {
-        case 'magicians':
-            return 'https://ethereum-magicians.org';
-        case 'research':
-            return 'https://ethresear.ch';
-    }
-};
-
 export const TopicPost: FC<{ post: Post }> = ({ post }) => {
     const extra = post.extra as Record<string, unknown>;
     const displayName = (extra?.['display_username'] ||
@@ -58,7 +49,10 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                 >
                     {avatar && (
                         <img
-                            src={'https://ethereum-magicians.org' + avatar.replace('{size}', '40')}
+                            src={
+                                mapDiscourseInstanceUrl(post.discourse_id) +
+                                avatar.replace('{size}', '40')
+                            }
                             alt={username}
                             className="w-7 h-7 rounded-sm"
                         />
@@ -119,7 +113,7 @@ export const TopicPost: FC<{ post: Post }> = ({ post }) => {
                     </a>
                     {post_url && (
                         <a
-                            href={mapInstanceUrl(post.discourse_id) + post_url}
+                            href={mapDiscourseInstanceUrl(post.discourse_id) + post_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-gray-500 flex items-center gap-1 hover:bg-secondary p-1"

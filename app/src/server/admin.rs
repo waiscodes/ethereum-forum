@@ -1,19 +1,19 @@
-use poem::web::Data;
+use crate::models::topics::{Post, Topic};
+use crate::models::workshop::usage::UserUsageOverview;
+use crate::models::workshop::usage::get_all_users_usage_overview;
+use crate::modules::discourse::{DiscourseService, ForumSearchDocument};
+use crate::server::ApiTags;
+use crate::state::AppState;
 use poem::Result;
+use poem::web::Data;
 use poem_openapi::param::Header;
 use poem_openapi::payload::Json;
 use poem_openapi::{Object, OpenApi};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
-use tracing::{error, info, warn};
-
-use crate::models::topics::{Post, Topic};
-use crate::models::workshop::{WorkshopMessage, UserUsageOverview};
-use crate::modules::discourse::{DiscourseService, ForumSearchDocument};
-use crate::server::ApiTags;
-use crate::state::AppState;
 use strip_tags::strip_tags;
+use tracing::{error, info, warn};
 
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct AdminApi;
@@ -48,7 +48,7 @@ impl AdminApi {
     fn verify_admin_key(api_key: Option<String>) -> Result<()> {
         let expected_key = std::env::var("ADMIN_API_KEY")
             .map_err(|_| poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))?;
-        
+
         match api_key {
             Some(key) if key == expected_key => Ok(()),
             _ => Err(poem::Error::from_status(StatusCode::UNAUTHORIZED)),
@@ -80,7 +80,7 @@ impl AdminApi {
         };
 
         info!("Starting full reindex of all topics and posts");
-        
+
         let mut topics_processed = 0i32;
         let mut posts_processed = 0i32;
         let mut errors = 0i32;
@@ -129,7 +129,10 @@ impl AdminApi {
 
         // Batch insert topics
         if !topic_docs.is_empty() {
-            match forum_index.add_documents(&topic_docs, Some("entity_id")).await {
+            match forum_index
+                .add_documents(&topic_docs, Some("entity_id"))
+                .await
+            {
                 Ok(_) => info!("Successfully indexed {} topics", topic_docs.len()),
                 Err(e) => {
                     error!("Failed to index topics: {}", e);
@@ -169,10 +172,11 @@ impl AdminApi {
 
         for batch in post_batches {
             let mut post_docs = Vec::new();
-            
+
             for post in batch {
                 // Try to get username from our mapping first, then fallback to API
-                let username = user_mapping.get(&post.user_id)
+                let username = user_mapping
+                    .get(&post.user_id)
                     .map(|u| u.clone())
                     .or_else(|| {
                         // Fallback to API lookup (currently returns None for efficiency)
@@ -198,7 +202,10 @@ impl AdminApi {
 
             // Batch insert posts
             if !post_docs.is_empty() {
-                match forum_index.add_documents(&post_docs, Some("entity_id")).await {
+                match forum_index
+                    .add_documents(&post_docs, Some("entity_id"))
+                    .await
+                {
                     Ok(_) => info!("Successfully indexed batch of {} posts", post_docs.len()),
                     Err(e) => {
                         error!("Failed to index post batch: {}", e);
@@ -210,9 +217,15 @@ impl AdminApi {
 
         let success = errors == 0;
         let message = if success {
-            format!("Successfully reindexed {} topics and {} posts", topics_processed, posts_processed)
+            format!(
+                "Successfully reindexed {} topics and {} posts",
+                topics_processed, posts_processed
+            )
         } else {
-            format!("Reindexing completed with {} errors. Processed {} topics and {} posts", errors, topics_processed, posts_processed)
+            format!(
+                "Reindexing completed with {} errors. Processed {} topics and {} posts",
+                errors, topics_processed, posts_processed
+            )
         };
 
         info!("{}", message);
@@ -293,12 +306,10 @@ impl AdminApi {
         Self::verify_admin_key(admin_key.0)?;
 
         // Get all users' usage overview
-        let users = WorkshopMessage::get_all_users_usage_overview(&state)
-            .await
-            .map_err(|e| {
-                error!("Failed to get usage overview: {}", e);
-                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-            })?;
+        let users = get_all_users_usage_overview(&state).await.map_err(|e| {
+            error!("Failed to get usage overview: {}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
 
         // Calculate totals
         let total_users = users.len() as i32;
@@ -328,7 +339,7 @@ async fn get_username_for_user_id(_user_id: i32, _discourse: &DiscourseService) 
 /// Build a comprehensive user mapping by extracting user info from post extras
 fn build_user_mapping_from_posts(posts: &[Post]) -> std::collections::HashMap<i32, String> {
     let mut user_map = std::collections::HashMap::new();
-    
+
     for post in posts {
         if let Some(extra) = &post.extra {
             // Try to extract username from the extra JSON data
@@ -337,6 +348,6 @@ fn build_user_mapping_from_posts(posts: &[Post]) -> std::collections::HashMap<i3
             }
         }
     }
-    
+
     user_map
-} 
+}

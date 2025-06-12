@@ -58,7 +58,7 @@ export const TopicPreview: FC<{ topic: Topic }> = ({ topic }) => {
                             <div className="size-6">
                                 <img
                                     src={
-                                        'https://ethereum-magicians.org' +
+                                        mapDiscourseInstanceUrl(topic.discourse_id) +
                                         participant.avatar_template.replace('{size}', '40')
                                     }
                                     alt={participant.username}

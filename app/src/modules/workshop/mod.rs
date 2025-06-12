@@ -13,7 +13,7 @@ use async_std::sync::RwLock;
 use crate::{
     models::{
         topics::{Post, Topic},
-        workshop::{WorkshopChat, WorkshopMessage},
+        workshop::{chat::WorkshopChat, message::WorkshopMessage},
     }, modules::workshop::prompts::{OngoingPrompt, OngoingPromptManager, SHORTSUM_MODEL, SUMMARY_MODEL, truncate_messages_to_token_limit}, state::AppState
 };
 

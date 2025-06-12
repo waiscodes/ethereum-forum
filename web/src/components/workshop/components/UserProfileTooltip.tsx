@@ -7,12 +7,14 @@ import { Tooltip } from '@/components/tooltip/Tooltip';
 // User Profile Tooltip Component
 export const UserProfileTooltip = ({
     username,
+    discourseId,
     children,
 }: {
     username: string;
+    discourseId: string;
     children: React.ReactNode;
 }) => {
-    const { data: user, isLoading, error } = useUser(username);
+    const { data: user, isLoading, error } = useUser(discourseId, username);
 
     const tooltipContent = () => {
         if (isLoading) {
@@ -36,7 +38,7 @@ export const UserProfileTooltip = ({
         const avatarUrl = user.user.avatar_template?.replace('{size}', '40') || '';
         const fullAvatarUrl = avatarUrl.startsWith('http')
             ? avatarUrl
-            : `https://ethereum-magicians.org${avatarUrl}`;
+            : `${mapDiscourseInstanceUrl()}${avatarUrl}`;
 
         return (
             <div className="p-3 max-w-xs">

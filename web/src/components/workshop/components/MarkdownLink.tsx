@@ -23,10 +23,10 @@ export const MarkdownLink = (props: React.AnchorHTMLAttributes<HTMLAnchorElement
         const topicMatch = href.match(/^\/t\/(?:[^/]+\/)?(\d+)(?:\/\d+)?$/);
 
         if (userMatch) {
-            const [, username] = userMatch;
+            const [discourseId, username] = userMatch;
 
             return (
-                <UserProfileTooltip username={username}>
+                <UserProfileTooltip discourseId={discourseId} username={username}>
                     <Link
                         to="/u/$userId"
                         params={{ userId: username }}

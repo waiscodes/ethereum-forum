@@ -1,7 +1,17 @@
 use crate::models::topics::Topic;
-use crate::models::workshop::{WorkshopChat, WorkshopMessage, UserUsageStats, ModelUsage, DailyUsage, UserUsageOverview};
+use crate::models::workshop::snapshot::{CreateChatSnapshotPayload, WorkshopSnapshotResponse};
+use crate::models::workshop::usage::{get_user_daily_usage, get_user_usage_by_model, get_user_usage_stats};
+use crate::models::workshop::{
+    chat::WorkshopChat,
+    message::WorkshopMessage,
+    snapshot::WorkshopSnapshot,
+    usage::{DailyUsage, ModelUsage, UserUsageOverview, UserUsageStats},
+};
 use crate::modules::workshop::WorkshopService;
-use crate::modules::workshop::prompts::{StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry, ToolCallStatus as PromptsToolCallStatus};
+use crate::modules::workshop::prompts::{
+    StreamingEntryType as PromptsStreamingEntryType, ToolCallEntry as PromptsToolCallEntry,
+    ToolCallStatus as PromptsToolCallStatus,
+};
 use crate::server::ApiTags;
 use crate::server::auth::AuthUser;
 use crate::state::AppState;
@@ -12,7 +22,7 @@ use poem::Result;
 use poem::web::Data;
 use poem_openapi::param::{Path, Query};
 use poem_openapi::payload::{EventStream, Json};
-use poem_openapi::{Object, OpenApi, Enum};
+use poem_openapi::{Enum, Object, OpenApi};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -376,13 +386,17 @@ impl WorkshopApi {
         let model = payload.model.clone();
 
         // Start processing the next message (this will create an OngoingPrompt)
-        let (_ongoing_prompt, created_message) =
-            WorkshopService::process_next_message_with_model(message.chat_id, message.message_id, model, &state)
-                .await
-                .map_err(|e| {
-                    tracing::error!("Error processing next message: {:?}", e);
-                    poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
-                })?;
+        let (_ongoing_prompt, created_message) = WorkshopService::process_next_message_with_model(
+            message.chat_id,
+            message.message_id,
+            model,
+            &state,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Error processing next message: {:?}", e);
+            poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+        })?;
 
         // Return the system response message that's being generated
         // Add debug logging to help with troubleshooting
@@ -506,15 +520,13 @@ impl WorkshopApi {
         // Convert to streaming response events
         let response_stream = stream
             .map(|result| match result {
-                Ok(entry) => {
-                    StreamingResponse {
-                        content: entry.content,
-                        is_complete: false,
-                        error: None,
-                        entry_type: convert_entry_type(entry.entry_type),
-                        tool_call: entry.tool_call.map(convert_tool_call_entry),
-                    }
-                }
+                Ok(entry) => StreamingResponse {
+                    content: entry.content,
+                    is_complete: false,
+                    error: None,
+                    entry_type: convert_entry_type(entry.entry_type),
+                    tool_call: entry.tool_call.map(convert_tool_call_entry),
+                },
                 Err(err) => {
                     tracing::error!("Stream error: {}", err);
                     StreamingResponse {
@@ -580,7 +592,10 @@ impl WorkshopApi {
         }
 
         // Check if there's already an ongoing stream
-        if let Some(_existing_prompt) = state.workshop.get_ongoing_summary_prompt(&discourse_id, topic_id.0).await
+        if let Some(_existing_prompt) = state
+            .workshop
+            .get_ongoing_summary_prompt(&discourse_id, topic_id.0)
+            .await
         {
             return Ok(Json(serde_json::json!({
                 "status": "ongoing",
@@ -660,7 +675,11 @@ impl WorkshopApi {
         #[oai(style = "simple")] discourse_id: Path<String>,
         #[oai(style = "simple")] topic_id: Path<i32>,
     ) -> Result<EventStream<BoxStream<'static, StreamingResponse>>> {
-        tracing::info!("Summary stream request for topic: {} on {}", topic_id.0, discourse_id.0);
+        tracing::info!(
+            "Summary stream request for topic: {} on {}",
+            topic_id.0,
+            discourse_id.0
+        );
 
         // Try to get the ongoing summary prompt
         let ongoing_prompt = state
@@ -668,7 +687,11 @@ impl WorkshopApi {
             .get_ongoing_summary_prompt(&discourse_id, topic_id.0)
             .await
             .ok_or_else(|| {
-                tracing::error!("No ongoing summary prompt found for topic {} on {}", topic_id.0, discourse_id.0);
+                tracing::error!(
+                    "No ongoing summary prompt found for topic {} on {}",
+                    topic_id.0,
+                    discourse_id.0
+                );
                 poem::Error::from_status(StatusCode::NOT_FOUND)
             })?;
 
@@ -680,15 +703,13 @@ impl WorkshopApi {
         // Convert to streaming response events
         let response_stream = stream
             .map(|result| match result {
-                Ok(entry) => {
-                    StreamingResponse {
-                        content: entry.content,
-                        is_complete: false,
-                        error: None,
-                        entry_type: convert_entry_type(entry.entry_type),
-                        tool_call: entry.tool_call.map(convert_tool_call_entry),
-                    }
-                }
+                Ok(entry) => StreamingResponse {
+                    content: entry.content,
+                    is_complete: false,
+                    error: None,
+                    entry_type: convert_entry_type(entry.entry_type),
+                    tool_call: entry.tool_call.map(convert_tool_call_entry),
+                },
                 Err(err) => {
                     tracing::error!("Summary stream error: {}", err);
                     StreamingResponse {
@@ -719,7 +740,7 @@ impl WorkshopApi {
         let days = days.0.unwrap_or(30); // Default to 30 days
 
         // Get overall stats
-        let stats = WorkshopMessage::get_user_usage_stats(user_id, &state)
+        let stats = get_user_usage_stats(user_id, &state)
             .await
             .map_err(|e| {
                 tracing::error!("Error getting user usage stats: {:?}", e);
@@ -727,7 +748,7 @@ impl WorkshopApi {
             })?;
 
         // Get usage by model
-        let by_model = WorkshopMessage::get_user_usage_by_model(user_id, &state)
+        let by_model = get_user_usage_by_model(user_id, &state)
             .await
             .map_err(|e| {
                 tracing::error!("Error getting user usage by model: {:?}", e);
@@ -735,7 +756,7 @@ impl WorkshopApi {
             })?;
 
         // Get daily usage
-        let daily_usage = WorkshopMessage::get_user_daily_usage(user_id, days, &state)
+        let daily_usage = get_user_daily_usage(user_id, days, &state)
             .await
             .map_err(|e| {
                 tracing::error!("Error getting user daily usage: {:?}", e);
@@ -749,5 +770,41 @@ impl WorkshopApi {
         }))
     }
 
-    // MCP endpoints removed - using direct integration in ongoing prompts
+    /// /ws/share
+    /// 
+    /// Creates a new chat snapshot
+    #[oai(path = "/ws/share", method = "post", tag = "ApiTags::Workshop")]
+    async fn create_chat_snapshot(
+        &self,
+        state: Data<&AppState>,
+        auth_user: AuthUser,
+        payload: Json<CreateChatSnapshotPayload>,
+    ) -> Result<Json<WorkshopSnapshot>> {
+        let user = auth_user.0.user_id();
+        let snapshot = WorkshopSnapshot::create(payload.chat_id, payload.message_id, user, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error creating chat snapshot: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+        Ok(Json(snapshot))
+    }
+
+    /// /ws/share/:snapshot_id
+    ///
+    /// Get a chat snapshot by snapshot ID
+    #[oai(path = "/ws/share/:snapshot_id", method = "get", tag = "ApiTags::Workshop")]
+    async fn get_chat_snapshot(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] snapshot_id: Path<Uuid>,
+    ) -> Result<Json<WorkshopSnapshotResponse>> {
+        let snapshot = WorkshopSnapshotResponse::get_snapshot_response(snapshot_id.0, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting chat snapshot: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+        Ok(Json(snapshot))
+    }
 }
