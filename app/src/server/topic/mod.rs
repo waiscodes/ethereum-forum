@@ -5,7 +5,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::models::topics::{Post, Topic, TopicSummary};
+use crate::models::topics::{post::Post, Topic, TopicSummary};
 use crate::server::ApiTags;
 use crate::state::AppState;
 

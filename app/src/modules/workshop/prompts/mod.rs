@@ -88,7 +88,7 @@ pub const SHORTSUM_PROMPT: &str = include_str!("./shortsum.md");
 pub const SHORTSUM_MODEL: &str = "mistralai/mistral-7b-instruct:free";
 
 /// Constants for token limits
-const MAX_INPUT_TOKENS: usize = 32000; // Limit input to 32k tokens to prevent excessive costs
+const MAX_INPUT_TOKENS: usize = 180000; // Limit input to 32k tokens to prevent excessive costs
 const TOKENS_PER_MESSAGE_OVERHEAD: usize = 4; // Overhead tokens per message (role, formatting, etc.)
 const TOKENS_PER_NAME: usize = 1; // Additional tokens if name is present
 

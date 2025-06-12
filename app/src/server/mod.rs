@@ -1,8 +1,8 @@
+use admin::AdminApi;
 use events::EventsApi;
 use governor::Quota;
 use opengraph::OpenGraph;
 use pm::PMApi;
-use admin::AdminApi;
 use poem::{
     EndpointExt, Route, Server,
     endpoint::StaticFilesEndpoint,
@@ -17,19 +17,23 @@ use topic::TopicApi;
 use tracing::info;
 use user::UserApi;
 
-use crate::{server::workshop::WorkshopApi, state::AppState};
+use crate::{
+    server::{search::SearchApi, workshop::WorkshopApi},
+    state::AppState,
+};
 // use tracing_mw::TraceId;
 
+pub mod admin;
+pub mod auth;
 pub mod events;
+pub mod mcp;
 pub mod opengraph;
+pub mod pm;
 pub mod ratelimit;
+pub mod search;
 pub mod topic;
 pub mod user;
-pub mod pm;
 pub mod workshop;
-pub mod auth;
-pub mod mcp;
-pub mod admin;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -41,12 +45,22 @@ pub enum ApiTags {
     Events,
     /// Workshop Related Operations
     Workshop,
+    /// Search Related Operations
+    Search,
     /// Admin Related Operations
     Admin,
 }
 
 fn get_api(_state: AppState) -> impl OpenApi {
-    (TopicApi, UserApi, EventsApi, PMApi, WorkshopApi, AdminApi)
+    (
+        TopicApi,
+        UserApi,
+        EventsApi,
+        PMApi,
+        WorkshopApi,
+        SearchApi,
+        AdminApi,
+    )
 }
 
 pub async fn start_http(state: AppState) {

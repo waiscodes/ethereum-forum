@@ -919,6 +919,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * /ws/share
+         * @description Creates a new chat snapshot
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["CreateChatSnapshotPayload"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopSnapshot"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ws/share/{snapshot_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /ws/share/:snapshot_id
+         * @description Get a chat snapshot by snapshot ID
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    snapshot_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WorkshopSnapshotResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * /search
+         * @description Search everything
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["SearchResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/reindex": {
         parameters: {
             query?: never;
@@ -1084,6 +1204,13 @@ export interface components {
         AvailableModelsResponse: {
             models: components["schemas"]["AvailableModel"][];
             default_model: string;
+        };
+        /** CreateChatSnapshotPayload */
+        CreateChatSnapshotPayload: {
+            /** Format: uuid */
+            chat_id: string;
+            /** Format: uuid */
+            message_id: string;
         };
         /** DailyUsage */
         DailyUsage: {
@@ -1512,6 +1639,8 @@ export interface components {
         SSOProvidersResponse: {
             providers: string[];
         };
+        /** SearchResponse */
+        SearchResponse: Record<string, never>;
         /** @enum {string} */
         StreamingEntryType: "Content" | "ToolCallStart" | "ToolCallResult" | "ToolCallError";
         /** StreamingResponse */
@@ -1697,6 +1826,24 @@ export interface components {
             /** Format: int32 */
             reasoning_tokens?: number;
             model_used?: string;
+        };
+        /** WorkshopSnapshot */
+        WorkshopSnapshot: {
+            /** Format: uuid */
+            snapshot_id: string;
+            /** Format: uuid */
+            chat_id: string;
+            /** Format: uuid */
+            user_id: string;
+            /** Format: uuid */
+            message_id: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** WorkshopSnapshotResponse */
+        WorkshopSnapshotResponse: {
+            snapshot: components["schemas"]["WorkshopSnapshot"];
+            messages: components["schemas"]["WorkshopMessage"][];
         };
         /** YoutubeMeetingData */
         YoutubeMeetingData: {

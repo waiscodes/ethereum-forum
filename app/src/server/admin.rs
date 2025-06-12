@@ -1,4 +1,4 @@
-use crate::models::topics::{Post, Topic};
+use crate::models::topics::{post::Post, Topic};
 use crate::models::workshop::usage::UserUsageOverview;
 use crate::models::workshop::usage::get_all_users_usage_overview;
 use crate::modules::discourse::{DiscourseService, ForumSearchDocument};

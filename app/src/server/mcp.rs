@@ -8,7 +8,7 @@ use poem_mcpserver::{
 use crate::{
     models::{
         discourse::user::{DiscourseUserProfile, DiscourseUserSummaryResponse},
-        topics::{Post, Topic},
+        topics::{post::Post, Topic},
     },
     modules::discourse::{ForumSearchDocument, LResult},
     state::AppState,

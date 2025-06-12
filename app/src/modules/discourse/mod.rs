@@ -7,7 +7,7 @@ use crate::{
             topic::DiscourseTopicResponse,
             user::{DiscourseUserProfile, DiscourseUserSummaryResponse},
         },
-        topics::{Post, Topic},
+        topics::{post::Post, Topic},
     },
     state::AppState,
 };
