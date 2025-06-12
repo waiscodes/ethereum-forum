@@ -30,7 +30,7 @@ Ethresear.ch tends to be more focused on the research and technical discussions,
 You have access to powerful AI tools through the Model Context Protocol (MCP). These tools can help you:
 
 - Search through the ethereum magicians forum posts and topics
-- Get detailed summaries of forum discussions  
+- Get detailed summaries of forum discussions
 - Look up user profiles and post history
 - Access metadata about forum topics
 - Retrieve post contents and thread information
