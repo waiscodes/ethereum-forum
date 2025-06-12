@@ -5,6 +5,7 @@ import { FiEye, FiHeart, FiMessageSquare } from 'react-icons/fi';
 
 import { Topic } from '@/api/topics';
 import { decodeCategory } from '@/util/category';
+import { mapDiscourseInstanceUrl } from '@/util/discourse';
 import { formatBigNumber } from '@/util/numbers';
 
 import { CategoryTag } from '../CategoryTag';

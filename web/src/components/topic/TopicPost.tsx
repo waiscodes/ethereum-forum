@@ -7,6 +7,7 @@ import { LuHammer, LuShield } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 
 import { Post } from '@/api/topics';
+import { mapDiscourseInstanceUrl } from '@/util/discourse';
 
 import { TimeAgo } from '../TimeAgo';
 import { Tooltip } from '../tooltip/Tooltip';

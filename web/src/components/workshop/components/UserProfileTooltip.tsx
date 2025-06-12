@@ -3,6 +3,7 @@ import { LuLoader, LuUser } from 'react-icons/lu';
 
 import { useUser } from '@/api/user';
 import { Tooltip } from '@/components/tooltip/Tooltip';
+import { mapDiscourseInstanceUrl } from '@/util/discourse';
 
 // User Profile Tooltip Component
 export const UserProfileTooltip = ({
@@ -38,7 +39,7 @@ export const UserProfileTooltip = ({
         const avatarUrl = user.user.avatar_template?.replace('{size}', '40') || '';
         const fullAvatarUrl = avatarUrl.startsWith('http')
             ? avatarUrl
-            : `${mapDiscourseInstanceUrl()}${avatarUrl}`;
+            : `${mapDiscourseInstanceUrl(discourseId)}${avatarUrl}`;
 
         return (
             <div className="p-3 max-w-xs">
