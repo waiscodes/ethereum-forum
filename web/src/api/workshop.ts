@@ -226,3 +226,42 @@ export const useWorkshopStreamMessage = (chatId: string, messageId: string) => {
         isComplete,
     };
 };
+
+export const useWorkshopChatShare = () => {
+    return useMutation({
+        mutationFn: async ({ chatId, messageId }: { chatId: string; messageId: string }) => {
+            const response = await useApi('/ws/share', 'post', {
+                data: { chat_id: chatId, message_id: messageId },
+                contentType: 'application/json; charset=utf-8',
+            });
+
+            return response.data;
+        },
+    });
+};
+
+export const useWorkshopSnapshot = (snapshotId: string) => {
+    return useQuery({
+        queryKey: ['workshop', 'snapshot', snapshotId],
+        queryFn: async () => {
+            const response = await useApi('/ws/share/{snapshot_id}', 'get', {
+                path: { snapshot_id: snapshotId },
+            });
+
+            return response.data;
+        },
+    });
+};
+
+export const useWorkshopSnapshotMessages = (snapshotId: string) => {
+    return useQuery({
+        queryKey: ['workshop', 'snapshot', snapshotId, 'messages'],
+        queryFn: async () => {
+            const response = await useApi('/ws/share/{snapshot_id}/messages', 'get', {
+                path: { snapshot_id: snapshotId },
+            });
+
+            return response.data;
+        },
+    });
+};

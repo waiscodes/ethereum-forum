@@ -781,6 +781,7 @@ impl WorkshopApi {
         payload: Json<CreateChatSnapshotPayload>,
     ) -> Result<Json<WorkshopSnapshot>> {
         let user = auth_user.0.user_id();
+
         let snapshot = WorkshopSnapshot::create(payload.chat_id, payload.message_id, user, &state)
             .await
             .map_err(|e| {
@@ -806,5 +807,31 @@ impl WorkshopApi {
                 poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
             })?;
         Ok(Json(snapshot))
+    }
+
+    /// /ws/share/:snapshot_id/messages
+    /// 
+    /// Get all messages by snapshot ID
+    #[oai(path = "/ws/share/:snapshot_id/messages", method = "get", tag = "ApiTags::Workshop")]
+    async fn get_chat_snapshot_messages(
+        &self,
+        state: Data<&AppState>,
+        #[oai(style = "simple")] snapshot_id: Path<Uuid>,
+    ) -> Result<Json<Vec<WorkshopMessage>>> {
+        let snapshot = WorkshopSnapshot::get_by_snapshot_id(snapshot_id.0, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting chat snapshot: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        let messages = WorkshopMessage::get_messages_upwards(&snapshot.message_id, &state)
+            .await
+            .map_err(|e| {
+                tracing::error!("Error getting chat snapshot messages: {:?}", e);
+                poem::Error::from_status(StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+
+        Ok(Json(messages))
     }
 }

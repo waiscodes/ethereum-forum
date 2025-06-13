@@ -1,11 +1,12 @@
 import { createFileRoute, useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { LuArrowRight, LuLoader, LuShare } from 'react-icons/lu';
 import { match, P } from 'ts-pattern';
 
 import {
     getWorkshopChat,
     useWorkshopChat,
+    useWorkshopChatShare,
     useWorkshopSendMessage,
     WorkshopMessage,
 } from '@/api/workshop';
@@ -75,7 +76,7 @@ function RouteComponent() {
 const ChatWithSidebar = ({ chatId }: { chatId: string }) => {
     const { data: chat } = useWorkshopChat(chatId);
     const [messagePath, setMessagePath] = useState<MessagePath>({});
-    const [useTreeView, setUseTreeView] = useState(true);
+    const useTreeView = true;
 
     // Build message tree - memoized to prevent infinite loops
     const { rootNodes, messageMap } = useMemo(() => {
@@ -148,7 +149,6 @@ const ChatWithSidebar = ({ chatId }: { chatId: string }) => {
                 chat={chat}
                 visibleMessages={visibleMessages}
                 useTreeView={useTreeView}
-                setUseTreeView={setUseTreeView}
                 onNavigateToMessage={handleNavigateToMessage}
             />
         </>
@@ -160,14 +160,12 @@ const Chat = ({
     chat,
     visibleMessages,
     useTreeView,
-    setUseTreeView,
     onNavigateToMessage,
 }: {
     chatId: string;
     chat: any;
     visibleMessages: any[];
     useTreeView: boolean;
-    setUseTreeView: (useTreeView: boolean) => void;
     onNavigateToMessage: (message: WorkshopMessage) => void;
 }) => {
     const [input, setInput] = useState('');
@@ -281,7 +279,7 @@ const Chat = ({
                                         </h1>
                                     </div>
                                     <div className="text-xs flex items-center gap-2">
-                                        <button
+                                        {/* <button
                                             className="button text-xs"
                                             onClick={() => setUseTreeView(!useTreeView)}
                                             title={
@@ -289,11 +287,11 @@ const Chat = ({
                                             }
                                         >
                                             {useTreeView ? 'All' : 'Tree'}
-                                        </button>
-                                        <button className="button flex items-center gap-2">
-                                            <LuShare />
-                                            Share
-                                        </button>
+                                        </button> */}
+                                        <ShareButton
+                                            chatId={chatId}
+                                            messageId={lastVisibleMessage?.message_id ?? ''}
+                                        />
                                     </div>
                                 </div>
                                 <div className="space-y-2 pb-80 relative">
@@ -436,5 +434,32 @@ const InputBox = ({
                 {sending ? <LuLoader className="animate-spin" /> : <LuArrowRight />}
             </button>
         </div>
+    );
+};
+
+export const ShareButton: FC<{ chatId: string; messageId: string }> = ({ chatId, messageId }) => {
+    const { mutate: shareChat } = useWorkshopChatShare();
+    const navigate = useNavigate();
+
+    return (
+        <button
+            className="button flex items-center gap-2"
+            onClick={() =>
+                shareChat(
+                    { chatId, messageId },
+                    {
+                        onSuccess(data) {
+                            navigate({
+                                to: '/chat/share/$snapshotId',
+                                params: { snapshotId: data.snapshot_id.toString() },
+                            });
+                        },
+                    }
+                )
+            }
+        >
+            <LuShare />
+            Share
+        </button>
     );
 };

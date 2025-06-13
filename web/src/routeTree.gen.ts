@@ -20,6 +20,7 @@ import { Route as ChatChatIdImport } from './routes/chat/$chatId'
 import { Route as PmIssueIdIndexImport } from './routes/pm/$issueId/index'
 import { Route as ChatUsageIndexImport } from './routes/chat/usage/index'
 import { Route as SsoProviderIdCallbackImport } from './routes/sso/$providerId/callback'
+import { Route as ChatShareSnapshotIdImport } from './routes/chat/share/$snapshotId'
 import { Route as UDiscourseIdUserIdIndexImport } from './routes/u/$discourseId/$userId/index'
 import { Route as TDiscourseIdTopicIdIndexImport } from './routes/t/$discourseId/$topicId/index'
 
@@ -76,6 +77,12 @@ const ChatUsageIndexRoute = ChatUsageIndexImport.update({
 const SsoProviderIdCallbackRoute = SsoProviderIdCallbackImport.update({
   id: '/sso/$providerId/callback',
   path: '/sso/$providerId/callback',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChatShareSnapshotIdRoute = ChatShareSnapshotIdImport.update({
+  id: '/chat/share/$snapshotId',
+  path: '/chat/share/$snapshotId',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SIndexImport
       parentRoute: typeof rootRoute
     }
+    '/chat/share/$snapshotId': {
+      id: '/chat/share/$snapshotId'
+      path: '/chat/share/$snapshotId'
+      fullPath: '/chat/share/$snapshotId'
+      preLoaderRoute: typeof ChatShareSnapshotIdImport
+      parentRoute: typeof rootRoute
+    }
     '/sso/$providerId/callback': {
       id: '/sso/$providerId/callback'
       path: '/sso/$providerId/callback'
@@ -196,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/c': typeof CIndexRoute
   '/r': typeof RIndexRoute
   '/s': typeof SIndexRoute
+  '/chat/share/$snapshotId': typeof ChatShareSnapshotIdRoute
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage/': typeof ChatUsageIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
@@ -209,6 +224,7 @@ export interface FileRoutesByTo {
   '/c': typeof CIndexRoute
   '/r': typeof RIndexRoute
   '/s': typeof SIndexRoute
+  '/chat/share/$snapshotId': typeof ChatShareSnapshotIdRoute
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage': typeof ChatUsageIndexRoute
   '/pm/$issueId': typeof PmIssueIdIndexRoute
@@ -224,6 +240,7 @@ export interface FileRoutesById {
   '/c/': typeof CIndexRoute
   '/r/': typeof RIndexRoute
   '/s/': typeof SIndexRoute
+  '/chat/share/$snapshotId': typeof ChatShareSnapshotIdRoute
   '/sso/$providerId/callback': typeof SsoProviderIdCallbackRoute
   '/chat/usage/': typeof ChatUsageIndexRoute
   '/pm/$issueId/': typeof PmIssueIdIndexRoute
@@ -240,6 +257,7 @@ export interface FileRouteTypes {
     | '/c'
     | '/r'
     | '/s'
+    | '/chat/share/$snapshotId'
     | '/sso/$providerId/callback'
     | '/chat/usage/'
     | '/pm/$issueId'
@@ -252,6 +270,7 @@ export interface FileRouteTypes {
     | '/c'
     | '/r'
     | '/s'
+    | '/chat/share/$snapshotId'
     | '/sso/$providerId/callback'
     | '/chat/usage'
     | '/pm/$issueId'
@@ -265,6 +284,7 @@ export interface FileRouteTypes {
     | '/c/'
     | '/r/'
     | '/s/'
+    | '/chat/share/$snapshotId'
     | '/sso/$providerId/callback'
     | '/chat/usage/'
     | '/pm/$issueId/'
@@ -280,6 +300,7 @@ export interface RootRouteChildren {
   CIndexRoute: typeof CIndexRoute
   RIndexRoute: typeof RIndexRoute
   SIndexRoute: typeof SIndexRoute
+  ChatShareSnapshotIdRoute: typeof ChatShareSnapshotIdRoute
   SsoProviderIdCallbackRoute: typeof SsoProviderIdCallbackRoute
   PmIssueIdIndexRoute: typeof PmIssueIdIndexRoute
   TDiscourseIdTopicIdIndexRoute: typeof TDiscourseIdTopicIdIndexRoute
@@ -293,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   CIndexRoute: CIndexRoute,
   RIndexRoute: RIndexRoute,
   SIndexRoute: SIndexRoute,
+  ChatShareSnapshotIdRoute: ChatShareSnapshotIdRoute,
   SsoProviderIdCallbackRoute: SsoProviderIdCallbackRoute,
   PmIssueIdIndexRoute: PmIssueIdIndexRoute,
   TDiscourseIdTopicIdIndexRoute: TDiscourseIdTopicIdIndexRoute,
@@ -315,6 +337,7 @@ export const routeTree = rootRoute
         "/c/",
         "/r/",
         "/s/",
+        "/chat/share/$snapshotId",
         "/sso/$providerId/callback",
         "/pm/$issueId/",
         "/t/$discourseId/$topicId/",
@@ -341,6 +364,9 @@ export const routeTree = rootRoute
     },
     "/s/": {
       "filePath": "s/index.tsx"
+    },
+    "/chat/share/$snapshotId": {
+      "filePath": "chat/share/$snapshotId.tsx"
     },
     "/sso/$providerId/callback": {
       "filePath": "sso/$providerId/callback.tsx"
