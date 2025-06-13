@@ -252,16 +252,3 @@ export const useWorkshopSnapshot = (snapshotId: string) => {
         },
     });
 };
-
-export const useWorkshopSnapshotMessages = (snapshotId: string) => {
-    return useQuery({
-        queryKey: ['workshop', 'snapshot', snapshotId, 'messages'],
-        queryFn: async () => {
-            const response = await useApi('/ws/share/{snapshot_id}/messages', 'get', {
-                path: { snapshot_id: snapshotId },
-            });
-
-            return response.data;
-        },
-    });
-};

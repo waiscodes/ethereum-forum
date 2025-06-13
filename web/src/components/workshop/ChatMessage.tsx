@@ -128,11 +128,12 @@ export interface MessageTreeNode {
 export interface ChatMessageProps {
     node?: MessageTreeNode;
     message?: ExtendedWorkshopMessage;
+    editable?: boolean;
     onEdit?: (message: ExtendedWorkshopMessage) => void;
     onNavigate?: (message: ExtendedWorkshopMessage) => void;
 }
 
-export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessageProps) => {
+export const ChatMessage = ({ node, message, editable, onEdit, onNavigate }: ChatMessageProps) => {
     // Support both old and new interfaces
     const messageData = node?.message || convertToExtendedMessage(message!);
     const siblings = node?.siblings || [];
@@ -250,18 +251,19 @@ export const ChatMessage = ({ node, message, onEdit, onNavigate }: ChatMessagePr
                     >
                         <LuCopy />
                     </button>
-                    {match(messageData.sender_role)
-                        .with('user', () => (
-                            <button
-                                className="button gap-2 aspect-square size-8 flex justify-center items-center"
-                                onClick={handleEdit}
-                                title="Edit message"
-                                disabled={!onEdit}
-                            >
-                                <LuPencil />
-                            </button>
-                        ))
-                        .otherwise(() => null)}
+                    {editable &&
+                        match(messageData.sender_role)
+                            .with('user', () => (
+                                <button
+                                    className="button gap-2 aspect-square size-8 flex justify-center items-center"
+                                    onClick={handleEdit}
+                                    title="Edit message"
+                                    disabled={!onEdit}
+                                >
+                                    <LuPencil />
+                                </button>
+                            ))
+                            .otherwise(() => null)}
                 </div>
             </div>
         </div>

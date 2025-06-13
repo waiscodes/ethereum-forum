@@ -300,6 +300,7 @@ const Chat = ({
                                               <ChatMessage
                                                   key={node.message.message_id}
                                                   node={node}
+                                                  editable={true}
                                                   onEdit={handleEditMessage}
                                                   onNavigate={onNavigateToMessage}
                                               />
@@ -308,6 +309,7 @@ const Chat = ({
                                               <ChatMessage
                                                   key={message.message_id}
                                                   message={message}
+                                                  editable={true}
                                                   onEdit={handleEditMessage}
                                               />
                                           ))}
