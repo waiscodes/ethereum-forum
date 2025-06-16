@@ -23,15 +23,13 @@ export const Navigation: React.FC = () => {
                 Navigation
             </div>
             {navItems.map((item) => (
-                <CommandItem
-                    key={item.href}
-                    onSelect={() => handleSelect(item)}
-                    className="flex justify-between"
-                >
-                    {item.title}
-                    {item.short && (
-                        <span className="ml-2 text-xs text-secondary">{item.short}</span>
-                    )}
+                <CommandItem key={item.href} onSelect={() => handleSelect(item)}>
+                    <span className="flex items-center w-full justify-between">
+                        {item.title}
+                        {item.short && (
+                            <span className="ml-2 text-xs text-secondary">{item.short}</span>
+                        )}
+                    </span>
                 </CommandItem>
             ))}
         </CommandGroup>

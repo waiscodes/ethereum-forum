@@ -124,7 +124,7 @@ const CommandItem = React.forwardRef<
     <CommandPrimitive.Item
         ref={ref}
         className={twMerge(
-            'raycast-cmdk-item relative flex w-full cursor-pointer gap-2 select-none items-center rounded-lg px-4 py-2 text-base outline-none transition-colors data-[disabled=true]:pointer-events-none data-[selected=true]:bg-tertiary data-[selected=true]:text-primary data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0',
+            'raycast-cmdk-item relative flex w-full cursor-pointer gap-2 select-none items-center rounded-lg px-4 py-2 text-base outline-none transition-colors hover:bg-secondary data-[selected=true]:bg-secondary data-[selected=true]:text-primary data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0',
             props.className
         )}
         {...props}
