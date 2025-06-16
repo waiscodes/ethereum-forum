@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { FiNavigation } from 'react-icons/fi';
 
 import { CommandGroup, CommandItem } from '../Command';
 import { useCommand } from '../CommandMenu';
@@ -16,7 +17,11 @@ export const Navigation: React.FC = () => {
     const { handleSelect } = useCommand();
 
     return (
-        <CommandGroup heading="Navigation">
+        <CommandGroup>
+            <div className="flex items-center gap-2 my-2 text-base font-semibold">
+                <FiNavigation className="size-5" />
+                Navigation
+            </div>
             {navItems.map((item) => (
                 <CommandItem
                     key={item.href}
